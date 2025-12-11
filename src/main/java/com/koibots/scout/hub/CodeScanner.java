@@ -279,24 +279,39 @@ public class CodeScanner {
              Java2DFrameConverter converter = new Java2DFrameConverter();) {
             grabber.start();
 
+            MultiFormatReader qrReader = new MultiFormatReader();
+            ImageIcon icon = new ImageIcon();
+            SwingUtilities.invokeLater(() -> videoLabel.setIcon(icon));
+
+            System.out.println("Camera started.");
+
             while (!cancelled && qrResult == null) {
                 Frame frameGrab = grabber.grab();
                 if (frameGrab == null) continue;
 
                 BufferedImage img = converter.getBufferedImage(frameGrab);
                 if (img != null) {
+                    // Final for use in the lambda
+                    final BufferedImage displayImage;
+
                     if(getMirror()) {
-                        img = mirrorImage(img);
+                        displayImage = mirrorImage(img);
+                    } else {
+                        displayImage = img;
                     }
+
                     // Update video in Swing safely
-                    ImageIcon icon = new ImageIcon(img);
-                    SwingUtilities.invokeLater(() -> videoLabel.setIcon(icon));
+                    SwingUtilities.invokeLater(() -> {
+                        icon.setImage(displayImage);
+                        videoLabel.repaint();
+                    });
+
 
                     // Try decoding QR code
-                    LuminanceSource source = new BufferedImageLuminanceSource(img);
+                    LuminanceSource source = new BufferedImageLuminanceSource(img); // Use original
                     BinaryBitmap bitmap = new BinaryBitmap(new HybridBinarizer(source));
                     try {
-                        Result result = new MultiFormatReader().decode(bitmap);
+                        Result result = qrReader.decode(bitmap);
                         qrResult = result.getText();
                         cancelled = true; // stop loop
                     } catch (NotFoundException ignored) {
