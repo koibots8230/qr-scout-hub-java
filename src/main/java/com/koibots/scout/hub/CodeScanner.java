@@ -624,7 +624,8 @@ public class CodeScanner {
         out.println("   --choose      Run the GUI camera-chooser.");
         out.println("   --test        Run the QR scanner.");
         out.println("   --device id   Specify the camera device to use for --test");
-        out.println("   --fps FPS     Sets the frames per second. No more than 1000. (default 30)");
+        out.println("   --fps FPS     Sets the camera frames per second. No more than 1000. (default 33)");
+        out.println("   --dfps FPS    Sets the display bframes per second. No more than 1000. (default 33)");
         out.println("   --mirror      Enable mirroring. (default:" + DEFAULT_MIRROR + ")");
         out.println("   --no-mirror   Disable mirroring. (default:" + !DEFAULT_MIRROR + ")");
     }
@@ -637,7 +638,8 @@ public class CodeScanner {
         int argindex = 0;
         int deviceId = 0;
         Operation operation = null;
-        int fps = 30;
+        int fps = 33;
+        int dfps = 33;
         boolean mirror = DEFAULT_MIRROR;
 
         while(argindex < args.length) {
@@ -655,6 +657,8 @@ public class CodeScanner {
                 operation = Operation.test;
             } else if("--fps".equals(arg)) {
                 fps = Integer.parseInt(args[argindex++]);
+            } else if("--dfps".equals(arg)) {
+                dfps = Integer.parseInt(args[argindex++]);
             } else if("--mirror".equals(arg)) {
                 mirror = true;
             } else if("--no-mirror".equals(arg)) {
@@ -703,6 +707,7 @@ public class CodeScanner {
             scanner = new CodeScanner();
             scanner.setCameraDeviceID(deviceId);
             scanner.setCaptureFramesPerSecond(fps);
+            scanner.setDisplayFramesPerSecond(dfps);
             scanner.setMirror(mirror);
 
             String qr = scanner.scanCode();
