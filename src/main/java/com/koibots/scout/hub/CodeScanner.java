@@ -48,6 +48,11 @@ public class CodeScanner {
     private long sleepMillis = DEFAULT_SLEEP_MS;
 
     /**
+     * The display FPS - distinct from the capture FPS.
+     */
+    private int _displayFramesPerSecond = 33;
+
+    /**
      * The modal state of any dialogs shown by this class.
      */
     private boolean modal = true;
@@ -119,6 +124,14 @@ public class CodeScanner {
      */
     public int getCaptureFramesPerSecond() {
         return (int)((double)1000 * 1 / getCaptureSleepMillis());
+    }
+
+    public void setDisplayFramesPerSecond(int framesPerSecond) {
+        _displayFramesPerSecond = framesPerSecond;
+    }
+
+    public int getDisplayFramesPerSecond() {
+        return _displayFramesPerSecond;
     }
 
     /**
@@ -290,6 +303,9 @@ public class CodeScanner {
 
             System.out.println("Camera started.");
 
+            long displayUpdateInterval = (long)1000 * 1 / getDisplayFramesPerSecond();
+            long lastDisplayUpdate = 0;
+
             while (!cancelled && qrResult == null) {
                 Frame frameGrab = grabber.grab();
                 if (frameGrab == null) continue;
@@ -318,11 +334,15 @@ public class CodeScanner {
                         displayImage = img;
                     }
 
-                    // Update video in Swing safely
-                    SwingUtilities.invokeLater(() -> {
-                        icon.setImage(displayImage);
-                        videoLabel.repaint();
-                    });
+                    long now = System.currentTimeMillis();
+                    if(now - lastDisplayUpdate >= displayUpdateInterval) {
+                        lastDisplayUpdate = now;
+                        // Update video in Swing safely
+                        SwingUtilities.invokeLater(() -> {
+                            icon.setImage(displayImage);
+                            videoLabel.repaint();
+                        });
+                    }
 
 
                     // Try decoding QR code
