@@ -42,3 +42,35 @@ as the hardware architecture matches that of the source machine (e.g. aarch64
 to aarch64 or x86-64 to x86-64).
 
 Building an application on Windows and Linux is a future goal.
+
+# Testing individual components
+
+There are command-line interfaces for the Project, GameConfig, and CodeScanner
+classes.
+
+## Project
+The Project class can create a new project, and get info for, insert data
+into, or export data from an existing project. After running `mvn package`
+and `mvn dependency:copy-dependencies`,
+you can run it like this:
+
+```
+$ MAIN_CLASS=com.koibots.scout.hub.Project ./run.sh
+```
+
+This will issue a short help text for what options are available.
+
+## GameConfig
+The GameConfig is able to read a JSON file and print basic information about
+it.
+
+```
+$ MAIN_CLASS=com.koibots.scout.hub.GameConfig ./run.sh
+```
+
+## CodeScanner
+CodeScanner will start a camera and scan a QR code
+
+```
+$ MAIN_CLASS=com.koibots.scout.hub.CodeScanner ./run.sh
+```
