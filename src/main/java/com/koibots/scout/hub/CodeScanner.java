@@ -77,7 +77,7 @@ public class CodeScanner {
      *
      * @param sleep The time to sleep, in milliseconds.
      */
-    public void setSleepMillis(long sleep) {
+    public void setCaptureSleepMillis(long sleep) {
         sleepMillis = sleep;
     }
 
@@ -86,7 +86,7 @@ public class CodeScanner {
      *
      * return The time to sleep, in milliseconds.
      */
-    public long getSleepMillis() {
+    public long getCaptureSleepMillis() {
         return sleepMillis;
     }
 
@@ -105,7 +105,7 @@ public class CodeScanner {
         //
         // Sleep delay = 1000 * 1 / framesPerSecond
 
-        setSleepMillis((long)1000 * 1 / framesPerSecond);
+        setCaptureSleepMillis((long)1000 * 1 / framesPerSecond);
     }
 
     /**
@@ -117,8 +117,8 @@ public class CodeScanner {
      *
      * @return The approximate number of frames per second for the camera.
      */
-    public int getFramesPerSecond() {
-        return (int)((double)1000 * 1 / getSleepMillis());
+    public int getCaptureFramesPerSecond() {
+        return (int)((double)1000 * 1 / getCaptureSleepMillis());
     }
 
     /**
@@ -338,7 +338,7 @@ public class CodeScanner {
                 }
 
                 // Small sleep to reduce CPU usage
-                Thread.sleep(getSleepMillis());
+                Thread.sleep(getCaptureSleepMillis());
             }
 
             grabber.stop();
