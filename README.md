@@ -2,14 +2,18 @@
 A data aggregation hub for QR Scout.
 
 # How to build and run
-This project uses Apache Maven to build. You will need a JDK and Maven 3.6 or
-later installed to build.
+This project uses Apache Maven to build. You will need a JDK Java 21 or later)
+and Maven 3.6 or later installed to build.
 
 ```
 $ mvn package
 ```
 
-This builds a JAR file containing the application.
+This builds a JAR file containing the application. The first time you run
+Maven on this project, it will likely download a **large** number of
+dependencies to your computer. This is because the JavaCV library includes
+a large number of supported platforms and architectures. We may be able to
+trim these down over time to only those platforms we choose to support.
 
 ```
 $ mvn dependency:copy-dependencies
