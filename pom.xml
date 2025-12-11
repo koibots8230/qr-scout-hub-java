@@ -1,0 +1,738 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <!--
+      The POM model version. Always "4.0.0".
+      Docs: https://maven.apache.org/pom.html#modelversion
+    -->
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--
+      Project coordinates (GAV) and packaging.
+      Docs: https://maven.apache.org/pom.html#project-coordinates
+    -->
+    <groupId>koibots</groupId>
+    <artifactId>qr-scout-hub</artifactId>
+    <version>0.0.1</version>
+    <packaging>jar</packaging>
+
+    <!--
+      Arbitrary user-defined properties available via ${...} in the POM.
+      Docs: https://maven.apache.org/pom.html#properties
+    -->
+    <properties>
+      <main.class>com.koibots.scout.hub.Main</main.class>
+      <derby.version>10.17.1.0</derby.version>
+      <javacv.version>1.5.12</javacv.version>
+      <opencsv.version>5.12.0</opencsv.version>
+      <gson.version>2.13.2</gson.version>
+      <zxing.version>3.5.3</zxing.version>
+
+      <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+      <project.build.testSourceEncoding>UTF-8</project.build.testSourceEncoding>
+
+      <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
+      <maven.compiler.release>21</maven.compiler.release>
+
+    </properties>
+
+    <!--
+      Basic project metadata (human-facing).
+      Docs: https://maven.apache.org/pom.html#project-information
+    -->
+    <name>KoiBots QR Scout Hub</name>
+    <description>
+      Works as the data aggregation hub for QR Scout.
+
+      Collects scouting data by scanning QR codes from individual scouters'
+      devices and records those data into an Apache Derby database. Can be
+      exported to CSV for analysis tools which can't directly read Derby
+      databases.
+    </description>
+    <url>https://github.com/koibots8230/qr-scout-hub-java</url>
+    <inceptionYear>2025</inceptionYear>
+
+    <!--
+      Organization information.
+      Docs: https://maven.apache.org/pom.html#organization
+    -->
+    <organization>
+        <name>FRC Team 8230 KoiBots</name>
+        <url>https://koibots.com/</url>
+    </organization>
+
+    <!--
+      License declarations.
+      Docs: https://maven.apache.org/pom.html#licenses
+    -->
+    <licenses>
+      <license>
+        <name>The MIT License</name>
+        <url>opensource.org</url>
+        <distribution>repo</distribution>
+      </license>
+    </licenses>
+
+    <!--
+      Developer metadata.
+      Docs: https://maven.apache.org/pom.html#developers
+    -->
+<!--
+    <developers>
+        <developer>
+            <id></id>
+            <name></name>
+            <email></email>
+            <url></url>
+            <organization></organization>
+            <organizationUrl></organizationUrl>
+            <roles>
+                <role></role>
+            </roles>
+            <timezone></timezone>
+            <properties>
+            </properties>
+        </developer>
+    </developers>
+-->
+
+    <!--
+      Contributor metadata.
+      Docs: https://maven.apache.org/pom.html#contributors
+    -->
+<!--
+    <contributors>
+        <contributor>
+            <name></name>
+            <email></email>
+            <url></url>
+            <organization></organization>
+            <organizationUrl></organizationUrl>
+            <roles>
+                <role></role>
+            </roles>
+            <timezone></timezone>
+            <properties>
+            </properties>
+        </contributor>
+    </contributors>
+-->
+
+    <!--
+      Build configuration: directories, plugins, resources.
+      Docs: https://maven.apache.org/pom.html#build
+    -->
+    <build>
+<!--
+        <sourceDirectory></sourceDirectory>
+        <testSourceDirectory></testSourceDirectory>
+        <outputDirectory></outputDirectory>
+        <testOutputDirectory></testOutputDirectory>
+
+        <extensions>
+            <extension>
+                <groupId></groupId>
+                <artifactId></artifactId>
+                <version></version>
+            </extension>
+        </extensions>
+
+        <defaultGoal></defaultGoal>
+
+        <resources>
+            <resource>
+                <directory></directory>
+                <includes>
+                    <include></include>
+                </includes>
+                <excludes>
+                    <exclude></exclude>
+                </excludes>
+            </resource>
+        </resources>
+
+        <testResources>
+            <testResource>
+                <directory></directory>
+                <includes>
+                    <include></include>
+                </includes>
+                <excludes>
+                    <exclude></exclude>
+                </excludes>
+            </testResource>
+        </testResources>
+-->
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <version>3.12.1</version> <!-- latest fully supports Java 21 -->
+            <configuration>
+              <release>21</release>
+            </configuration>
+          </plugin>
+          <!-- JAR plugin for executable manifest -->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-jar-plugin</artifactId>
+            <version>3.3.0</version> <!-- latest stable version -->
+            <configuration>
+              <archive>
+                <manifest>
+                  <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                  <mainClass>${main.class}</mainClass>
+                </manifest>
+              </archive>
+            </configuration>
+          </plugin>
+
+<!-- Empty plug-in definition to be configured later in profiles. -->
+    <plugin>
+      <groupId>org.codehaus.mojo</groupId>
+      <artifactId>exec-maven-plugin</artifactId>
+      <version>3.2.0</version>
+    </plugin>
+<!--
+            <plugin>
+                <groupId></groupId>
+                <artifactId></artifactId>
+                <version></version>
+                <extensions></extensions>
+                <executions>
+                    <execution>
+                        <id></id>
+                        <phase></phase>
+                        <goals>
+                            <goal></goal>
+                        </goals>
+                        <inherited></inherited>
+                        <configuration>
+                        </configuration>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId></groupId>
+                        <artifactId></artifactId>
+                        <version></version>
+                        <type></type>
+                        <classifier></classifier>
+                        <scope></scope>
+                        <systemPath></systemPath>
+                        <optional></optional>
+                        <exclusions>
+                            <exclusion>
+                                <groupId></groupId>
+                                <artifactId></artifactId>
+                            </exclusion>
+                        </exclusions>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                </configuration>
+            </plugin>
+-->
+        </plugins>
+    </build>
+
+    <!--
+      Dependency management for version constraints and BOMs.
+      Docs: https://maven.apache.org/pom.html#dependencymanagement
+    -->
+<!--
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId></groupId>
+                <artifactId></artifactId>
+                <version></version>
+                <type></type>
+                <classifier></classifier>
+                <scope></scope>
+                <systemPath></systemPath>
+                <optional></optional>
+                <exclusions>
+                    <exclusion>
+                        <groupId></groupId>
+                        <artifactId></artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+-->
+
+    <!--
+      Dependencies needed to build and run the project.
+      Docs: https://maven.apache.org/pom.html#dependencies
+    -->
+    <dependencies>
+      <!-- Apache Derby DB -->
+      <dependency>
+        <groupId>org.apache.derby</groupId>
+        <artifactId>derby</artifactId>
+        <version>${derby.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.derby</groupId>
+        <artifactId>derbytools</artifactId>
+        <version>${derby.version}</version>
+      </dependency>
+
+      <!-- Google GSON for JSON parsing -->
+      <dependency>
+        <groupId>com.google.code.gson</groupId>
+        <artifactId>gson</artifactId>
+        <version>${gson.version}</version>
+      </dependency>
+
+    <!-- JavaCV with all native libraries (OpenCV, FFmpeg, etc.) for image capture -->
+    <dependency>
+        <groupId>org.bytedeco</groupId>
+        <artifactId>javacv-platform</artifactId>
+        <version>${javacv.version}</version> <!-- or newest -->
+    </dependency>
+
+    <!-- ZXing core (QR code decoder) -->
+    <dependency>
+        <groupId>com.google.zxing</groupId>
+        <artifactId>core</artifactId>
+        <version>${zxing.version}</version>
+    </dependency>
+
+    <!-- ZXing javase library which includes BufferedImageLuminanceSource and other nice-to-haves -->
+      <dependency>
+      <groupId>com.google.zxing</groupId>
+      <artifactId>javase</artifactId>
+      <version>${zxing.version}</version>
+    </dependency>
+
+    <!-- OpenCSV for CSV export -->
+    <dependency>
+      <groupId>com.opencsv</groupId>
+      <artifactId>opencsv</artifactId>
+      <version>${opencsv.version}</version>
+    </dependency>
+
+<!--
+        <dependency>
+            <groupId></groupId>
+            <artifactId></artifactId>
+            <version></version>
+            <type></type>
+            <classifier></classifier>
+            <scope></scope>
+            <systemPath></systemPath>
+            <optional></optional>
+            <exclusions>
+                <exclusion>
+                    <groupId></groupId>
+                    <artifactId></artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+-->
+    </dependencies>
+
+    <!--
+      Multi-module project definitions.
+      Docs: https://maven.apache.org/pom.html#modules
+    -->
+<!--
+    <modules>
+        <module></module>
+    </modules>
+-->
+
+    <!--
+      Reporting configuration for Maven site/report generation.
+      Docs: https://maven.apache.org/pom.html#reporting
+    -->
+<!--
+    <reporting>
+        <outputDirectory></outputDirectory>
+        <plugins>
+            <plugin>
+                <groupId></groupId>
+                <artifactId></artifactId>
+                <version></version>
+                <reportSets>
+                    <reportSet>
+                        <id></id>
+                        <reports>
+                            <report></report>
+                        </reports>
+                        <configuration>
+                        </configuration>
+                    </reportSet>
+                </reportSets>
+                <inherited></inherited>
+                <configuration>
+                </configuration>
+            </plugin>
+        </plugins>
+    </reporting>
+-->
+
+    <!--
+      Where project artifacts and site docs are deployed.
+      Docs: https://maven.apache.org/pom.html#distributionmanagement
+    -->
+<!--
+    <distributionManagement>
+        <repository>
+            <id></id>
+            <name></name>
+            <url></url>
+            <layout></layout>
+        </repository>
+        <snapshotRepository>
+            <id></id>
+            <name></name>
+            <url></url>
+            <layout></layout>
+        </snapshotRepository>
+        <site>
+            <id></id>
+            <name></name>
+            <url></url>
+        </site>
+        <downloadUrl></downloadUrl>
+        <relocation>
+            <groupId></groupId>
+            <artifactId></artifactId>
+            <version></version>
+            <message></message>
+        </relocation>
+        <status></status>
+    </distributionManagement>
+-->
+
+    <!--
+      Artifact repositories used to resolve dependencies.
+      Docs: https://maven.apache.org/pom.html#repositories
+    -->
+<!--
+    <repositories>
+        <repository>
+            <id></id>
+            <name></name>
+            <url></url>
+            <layout></layout>
+            <releases>
+                <enabled></enabled>
+                <updatePolicy></updatePolicy>
+                <checksumPolicy></checksumPolicy>
+            </releases>
+            <snapshots>
+                <enabled></enabled>
+                <updatePolicy></updatePolicy>
+                <checksumPolicy></checksumPolicy>
+            </snapshots>
+        </repository>
+    </repositories>
+-->
+
+    <!--
+      Plugin repositories for resolving build plugins.
+      Docs: https://maven.apache.org/pom.html#pluginrepositories
+    -->
+<!--
+    <pluginRepositories>
+        <pluginRepository>
+            <id></id>
+            <name></name>
+            <url></url>
+            <layout></layout>
+            <releases>
+                <enabled></enabled>
+                <updatePolicy></updatePolicy>
+                <checksumPolicy></checksumPolicy>
+            </releases>
+            <snapshots>
+                <enabled></enabled>
+                <updatePolicy></updatePolicy>
+                <checksumPolicy></checksumPolicy>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
+-->
+
+    <!--
+      Profiles allow build customizations based on environment or activation rules.
+      Docs: https://maven.apache.org/pom.html#profiles
+    -->
+    <profiles>
+      <profile>
+        <id>uber</id>
+        <!-- Will build an Uber-JAR: one JAR with *everything* -->
+        <!-- mvn package -Puber -->
+        <build>
+          <plugins>
+            <!-- Maven Shade Plugin -->
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-shade-plugin</artifactId>
+              <version>3.5.0</version>
+              <executions>
+                <execution>
+                  <phase>package</phase>
+                  <goals>
+                    <goal>shade</goal>
+                  </goals>
+                  <configuration>
+                    <transformers>
+                      <!-- Set Main-Class in the manifest -->
+                      <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                        <mainClass>${main.class}</mainClass>
+                      </transformer>
+                    </transformers>
+                  </configuration>
+                </execution>
+              </executions>
+            </plugin>
+          </plugins>
+        </build>
+      </profile>
+
+      <profile>
+        <id>jpackage</id>
+        <!-- Builds an "application" including a JRE and all application assets. -->
+        <!-- mvn package -Pjpackage -->
+        <build>
+          <plugins>
+            <!-- 0. Delete any application bundle if it already exists. -->
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-antrun-plugin</artifactId>
+              <version>3.1.0</version>
+              <executions>
+                <execution>
+                  <id>delete-old-app</id>
+                  <phase>package</phase>
+                  <configuration>
+                    <target>
+                      <!-- MacOS -->
+                      <delete dir="${project.build.directory}/${project.name}.app"/>
+                      <delete file="${project.build.directory}/${project.name}.dmg"/>
+
+                      <!-- Windows -->
+                      <delete file="${project.build.directory}/${project.name}.exe"/>
+                      <delete file="${project.build.directory}/${project.name}.msi"/>
+
+                      <!-- Linux -->
+                      <delete file="${project.build.directory}/${project.name}.deb"/>
+                      <delete file="${project.build.directory}/${project.name}.rpm"/>
+                    </target>
+                  </configuration>
+                  <goals>
+                    <goal>run</goal>
+                  </goals>
+                </execution>
+              </executions>
+            </plugin>
+
+            <!-- 1. Copy runtime dependencies to target/app -->
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-dependency-plugin</artifactId>
+              <version>3.6.0</version>
+              <executions>
+                <execution>
+                  <id>copy-dependencies</id>
+                  <phase>package</phase>
+                  <goals>
+                    <goal>copy-dependencies</goal>
+                  </goals>
+                  <configuration>
+                    <outputDirectory>${project.build.directory}/app</outputDirectory>
+                    <includeScope>runtime</includeScope>
+                  </configuration>
+                </execution>
+              </executions>
+            </plugin>
+
+            <!-- 2. Copy the main application JAR and splash image into target/app -->
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-resources-plugin</artifactId>
+                <version>3.3.1</version>
+                <executions>
+                  <execution>
+                    <id>copy-main-jar</id>
+                    <phase>package</phase>
+                    <goals><goal>copy-resources</goal></goals>
+                    <configuration>
+                    <outputDirectory>${project.build.directory}/app</outputDirectory>
+                    <resources>
+                      <resource>
+                        <directory>${project.build.directory}</directory>
+                        <includes>
+                          <include>${project.build.finalName}.jar</include>
+                        </includes>
+                      </resource>
+                    </resources>
+                  </configuration>
+                </execution>
+                <execution>
+                  <id>copy-splash</id>
+                  <phase>package</phase>
+                  <goals><goal>copy-resources</goal></goals>
+                  <configuration>
+                    <outputDirectory>${project.build.directory}/app</outputDirectory>
+                    <resources>
+                      <resource>
+                        <directory>src/main/resources/images</directory>
+                        <includes>
+                          <include>splash.png</include>
+                        </includes>
+                      </resource>
+                    </resources>
+                  </configuration>
+                </execution>
+              </executions>
+            </plugin>
+  
+            <!-- 4. Generate icon set for the application, based upon the KoiBots logo -->
+            <!-- 5. Call jpackage to build the appliction bundle. -->
+            <plugin>
+              <groupId>org.codehaus.mojo</groupId>
+              <artifactId>exec-maven-plugin</artifactId>
+              <version>3.2.0</version>
+              <executions>
+                <execution>
+                  <id>generate-icns</id>
+                  <phase>generate-resources</phase>
+                  <goals><goal>exec</goal></goals>
+                  <configuration>
+                    <executable>bash</executable>
+                    <arguments>
+                      <argument>-c</argument>
+                      <argument>
+                          set -e &amp;&amp; \
+                          mkdir -p target/icons/myapp.iconset &amp;&amp; \
+                          sips -z 16 16 src/main/resources/icons/koibots-logo.png --out target/icons/myapp.iconset/icon_16x16.png &amp;&amp; \
+                          sips -z 32 32 src/main/resources/icons/koibots-logo.png --out target/icons/myapp.iconset/icon_16x16@2x.png &amp;&amp; \
+                          sips -z 32 32 src/main/resources/icons/koibots-logo.png --out target/icons/myapp.iconset/icon_32x32.png &amp;&amp; \
+                          sips -z 64 64 src/main/resources/icons/koibots-logo.png --out target/icons/myapp.iconset/icon_32x32@2x.png &amp;&amp; \
+                          sips -z 128 128 src/main/resources/icons/koibots-logo.png --out target/icons/myapp.iconset/icon_128x128.png &amp;&amp; \
+                          sips -z 256 256 src/main/resources/icons/koibots-logo.png --out target/icons/myapp.iconset/icon_128x128@2x.png &amp;&amp; \
+                          sips -z 256 256 src/main/resources/icons/koibots-logo.png --out target/icons/myapp.iconset/icon_256x256.png &amp;&amp; \
+                          sips -z 512 512 src/main/resources/icons/koibots-logo.png --out target/icons/myapp.iconset/icon_256x256@2x.png &amp;&amp; \
+                          sips -z 512 512 src/main/resources/icons/koibots-logo.png --out target/icons/myapp.iconset/icon_512x512.png &amp;&amp; \
+                          sips -z 1024 1024 src/main/resources/icons/koibots-logo.png --out target/icons/myapp.iconset/icon_512x512@2x.png &amp;&amp; \
+                          iconutil -c icns target/icons/myapp.iconset -o "target/icons/${project.build.finalName}.icns"
+                      </argument>
+                    </arguments>
+                  </configuration>
+                </execution>
+                <execution>
+                  <id>run-jpackage</id>
+                  <phase>package</phase>
+                  <goals><goal>exec</goal></goals>
+                  <configuration>
+                    <executable>jpackage</executable>
+                    <arguments>
+                      <argument>--name</argument>
+                      <argument>${project.name}</argument>
+
+                      <argument>--input</argument>
+                      <argument>${project.build.directory}/app</argument>
+
+                      <argument>--main-jar</argument>
+                      <argument>${project.build.finalName}.jar</argument>
+
+                      <argument>--main-class</argument>
+                      <argument>${main.class}</argument>
+
+                      <!-- The app type: app-image = .app, dmg = .dmg disk image -->
+                      <argument>--type</argument>
+                      <argument>app-image</argument>
+
+                      <argument>--dest</argument>
+                      <argument>${project.build.directory}</argument>
+
+                      <argument>--mac-package-name</argument>
+                      <argument>${project.name}</argument>
+
+                      <argument>--mac-package-identifier</argument>
+                      <argument>com.koibots.qrscouthub</argument>
+
+                      <!-- Specify the icon set to use for the dock, etc. -->
+                      <argument>--icon</argument>
+                      <argument>${project.build.directory}/icons/${project.build.finalName}.icns</argument>
+
+                      <!-- Show a splash screen image during launch -->
+                      <argument>--java-options</argument>
+                      <argument>-splash:${APPDIR}/splash.png</argument>
+
+                      <argument>--verbose</argument>
+                    </arguments>
+                  </configuration>
+                </execution>
+              </executions>
+            </plugin>
+          </plugins>
+        </build>
+      </profile>
+<!--
+        <profile>
+            <id></id>
+            <activation>
+                <activeByDefault></activeByDefault>
+                <jdk></jdk>
+                <os>
+                    <name></name>
+                    <family></family>
+                    <arch></arch>
+                    <version></version>
+                </os>
+                <property>
+                    <name></name>
+                    <value></value>
+                </property>
+                <file>
+                    <exists></exists>
+                    <missing></missing>
+                </file>
+            </activation>
+            <build>
+                <!- - Build subsection inside profile - ->
+            </build>
+            <modules>
+                <module></module>
+            </modules>
+            <properties>
+            </properties>
+            <repositories>
+                <repository>
+                    <id></id>
+                    <name></name>
+                    <url></url>
+                </repository>
+            </repositories>
+            <pluginRepositories>
+                <pluginRepository>
+                    <id></id>
+                    <name></name>
+                    <url></url>
+                </pluginRepository>
+            </pluginRepositories>
+            <dependencies>
+                <dependency>
+                    <groupId></groupId>
+                    <artifactId></artifactId>
+                    <version></version>
+                </dependency>
+            </dependencies>
+            <reporting>
+                <!- - Reporting subsection inside profile - ->
+            </reporting>
+        </profile>
+-->
+    </profiles>
+</project>
