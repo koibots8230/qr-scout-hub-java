@@ -283,6 +283,8 @@ public class CodeScanner {
             ImageIcon icon = new ImageIcon();
             SwingUtilities.invokeLater(() -> videoLabel.setIcon(icon));
 
+            // Try to re-use the same BufferedImage
+            BufferedImage targetImage = null;
             System.out.println("Camera started.");
 
             while (!cancelled && qrResult == null) {
@@ -295,7 +297,19 @@ public class CodeScanner {
                     final BufferedImage displayImage;
 
                     if(getMirror()) {
-                        displayImage = mirrorImage(img);
+                        if(null == targetImage
+                           || targetImage.getWidth() != img.getWidth()
+                           || targetImage.getHeight() != img.getHeight()
+                           || targetImage.getType() != img.getType()) {
+                            System.out.println("Creating target image with size=" + img.getWidth() + "x" + img.getHeight() + " and type=" + img.getType());
+                            targetImage = new BufferedImage(img.getWidth(), img.getHeight(), img.getType());
+                        }
+                        AffineTransform flipper = AffineTransform.getScaleInstance(-1, 1); // flip horizontally
+                        flipper.translate(-img.getWidth(), 0); // move back into view
+
+                        AffineTransformOp op = new AffineTransformOp(flipper, AffineTransformOp.TYPE_NEAREST_NEIGHBOR);
+
+                        displayImage = op.filter(img, targetImage);
                     } else {
                         displayImage = img;
                     }
@@ -332,14 +346,6 @@ public class CodeScanner {
         SwingUtilities.invokeLater(dialog::dispose);
 
         return qrResult; // either QR code string or null if cancelled
-    }
-
-    private BufferedImage mirrorImage(BufferedImage image) {
-        AffineTransform tx = AffineTransform.getScaleInstance(-1, 1); // flip horizontally
-        tx.translate(-image.getWidth(), 0); // move back into view
-
-        AffineTransformOp op = new AffineTransformOp(tx, AffineTransformOp.TYPE_NEAREST_NEIGHBOR);
-        return op.filter(image, null);
     }
 
     private static void listCameras() {
