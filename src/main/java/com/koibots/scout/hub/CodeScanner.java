@@ -10,6 +10,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -29,6 +31,11 @@ public class CodeScanner {
      * The default sleep time, about 30 FPS.
      */
     private static final long DEFAULT_SLEEP_MS = 30;
+
+    /**
+     * The default mirror mode (mirror = yes).
+     */
+    private static final boolean DEFAULT_MIRROR = true;
 
     /**
      * Flag to cancel scanning.
@@ -59,6 +66,11 @@ public class CodeScanner {
      * The camera device to be used for code scanning.
      */
     private int cameraDeviceID = 0;
+
+    /**
+     * Whether or not to mirror the camera's view on the screen.
+     */
+    private boolean mirror = DEFAULT_MIRROR;
 
     /**
      * Sets the time to sleep between frame captures.
@@ -192,6 +204,14 @@ public class CodeScanner {
         this.cameraDeviceID = cameraDeviceID;
     }
 
+    public void setMirror(boolean mirror) {
+        this.mirror = mirror;
+    }
+
+    public boolean getMirror() {
+        return mirror;
+    }
+
     /**
      * Utility method to creates a standard dialog.
      */
@@ -265,6 +285,9 @@ public class CodeScanner {
 
                 BufferedImage img = converter.getBufferedImage(frameGrab);
                 if (img != null) {
+                    if(getMirror()) {
+                        img = mirrorImage(img);
+                    }
                     // Update video in Swing safely
                     ImageIcon icon = new ImageIcon(img);
                     SwingUtilities.invokeLater(() -> videoLabel.setIcon(icon));
@@ -294,6 +317,14 @@ public class CodeScanner {
         SwingUtilities.invokeLater(dialog::dispose);
 
         return qrResult; // either QR code string or null if cancelled
+    }
+
+    private BufferedImage mirrorImage(BufferedImage image) {
+        AffineTransform tx = AffineTransform.getScaleInstance(-1, 1); // flip horizontally
+        tx.translate(-image.getWidth(), 0); // move back into view
+
+        AffineTransformOp op = new AffineTransformOp(tx, AffineTransformOp.TYPE_NEAREST_NEIGHBOR);
+        return op.filter(image, null);
     }
 
     private static void listCameras() {
@@ -548,6 +579,9 @@ public class CodeScanner {
         out.println("   --choose      Run the GUI camera-chooser.");
         out.println("   --test        Run the QR scanner.");
         out.println("   --device id   Specify the camera device to use for --test");
+        out.println("   --fps FPS     Sets the frames per second. No more than 1000. (default 30)");
+        out.println("   --mirror      Enable mirroring. (default:" + DEFAULT_MIRROR + ")");
+        out.println("   --no-mirror   Disable mirroring. (default:" + !DEFAULT_MIRROR + ")");
     }
 
     private enum Operation {
@@ -558,6 +592,8 @@ public class CodeScanner {
         int argindex = 0;
         int deviceId = 0;
         Operation operation = null;
+        int fps = 30;
+        boolean mirror = DEFAULT_MIRROR;
 
         while(argindex < args.length) {
             String arg = args[argindex++];
@@ -572,6 +608,12 @@ public class CodeScanner {
                 operation = Operation.choose;
             } else if("--test".equals(arg)) {
                 operation = Operation.test;
+            } else if("--fps".equals(arg)) {
+                fps = Integer.parseInt(args[argindex++]);
+            } else if("--mirror".equals(arg)) {
+                mirror = true;
+            } else if("--no-mirror".equals(arg)) {
+                mirror = false;
             } else if("--help".equals(arg) || "-h".equals(arg)) {
                 usage(System.out);
 
@@ -615,6 +657,8 @@ public class CodeScanner {
         case test:
             scanner = new CodeScanner();
             scanner.setCameraDeviceID(deviceId);
+            scanner.setCaptureFramesPerSecond(fps);
+            scanner.setMirror(mirror);
 
             String qr = scanner.scanCode();
 
