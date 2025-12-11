@@ -285,6 +285,9 @@ public class CodeScanner {
 
             // Try to re-use the same BufferedImage
             BufferedImage targetImage = null;
+            AffineTransform flipper = null;
+            AffineTransformOp flipperOp = null;
+
             System.out.println("Camera started.");
 
             while (!cancelled && qrResult == null) {
@@ -303,13 +306,14 @@ public class CodeScanner {
                            || targetImage.getType() != img.getType()) {
                             System.out.println("Creating target image with size=" + img.getWidth() + "x" + img.getHeight() + " and type=" + img.getType());
                             targetImage = new BufferedImage(img.getWidth(), img.getHeight(), img.getType());
+
+                            flipper = AffineTransform.getScaleInstance(-1, 1); // flip horizontally
+                            flipper.translate(-img.getWidth(), 0); // move back into view
+
+                            flipperOp = new AffineTransformOp(flipper, AffineTransformOp.TYPE_NEAREST_NEIGHBOR);
                         }
-                        AffineTransform flipper = AffineTransform.getScaleInstance(-1, 1); // flip horizontally
-                        flipper.translate(-img.getWidth(), 0); // move back into view
 
-                        AffineTransformOp op = new AffineTransformOp(flipper, AffineTransformOp.TYPE_NEAREST_NEIGHBOR);
-
-                        displayImage = op.filter(img, targetImage);
+                        displayImage = flipperOp.filter(img, targetImage);
                     } else {
                         displayImage = img;
                     }
