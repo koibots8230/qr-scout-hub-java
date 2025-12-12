@@ -271,7 +271,7 @@ public class CodeScanner {
      * Opens a window showing the camera feed and scans for QR codes.
      * Blocks until a QR code is detected or the user cancels.
      *
-     * @return The decoded QR code String, or <code>null</code> if canceled.
+     * @return The decoded QR code String, or <code>null</code> if cancelled.
      *
      * @throws FrameGrabber.Exception If the camera could not be opened.
      */
@@ -307,6 +307,24 @@ public class CodeScanner {
 
             long displayUpdateInterval = (long)1000 * 1 / getDisplayFramesPerSecond();
             long lastDisplayUpdate = 0;
+
+            // This method goes into a loop fetching and displaying frames,
+            // decoding any QR codes it sees in the process.
+            //
+            // Note that the calling thread is completely blocked until
+            // the operation is complete. This is intentional, so that the
+            // caller's interface is a simple "String code = scanCode()" call.
+            // There are other ways of doing this such as returning a
+            // Future<String> from this method and having the caller
+            // wait on the value.
+            //
+            // The decision about how to structure this depends heavily
+            // upon the caller and the callee (this method) agreeing on
+            // how threading will work. The current implementation allows
+            // the caller to manage threading (other than UI updates)
+            // which is advantageous from the caller's perspective: this
+            // method isn't starting any new threads which may need to be
+            // somehow managed by the caller, etc.
 
             while (!cancelled && qrResult == null) {
 
@@ -519,7 +537,19 @@ public class CodeScanner {
         return cameraDevices = probeDevices(status);
     }
 
+    /**
+     * Opens a window showing the available cameras for selection.
+     * Blocks until a camera is chosen or the user cancels.
+     *
+     * @return The chosen camera, <code>-1</code> if cancelled,
+     *         <code>-2</code> if no cameras were detected,
+     *         or <code>-3</code> if some other error occurred.
+     *
+     * @throws FrameGrabber.Exception If the camera could not be opened.
+     */
     public int chooseCamera() {
+        cancelled = false; // Clear flag
+
         JDialog dialog = createDialog(getParent(), "Choose Camera");
 
         // Grab a reference to the CENTER component -- a JLabel -- so we can
@@ -562,7 +592,26 @@ public class CodeScanner {
                 content.repaint();
             });
 
-            // Wait for the user to choose a camera
+            // Wait for the user to choose a camera.
+            //
+            // This loop differs from the one in scanCode in that we aren't
+            // doing any useful work during the loop itself. In scanCode, we
+            // are grabbing camera frames and displaying them on the screen,
+            // but here we are just waiting for the user to make a choice.
+            //
+            // It's honestly pretty ugly, but it allows a software interface
+            // where the caller just calls chooseCamera and synchronously
+            // gets an answer. There are other methods such as returning
+            // the Future<Integer> from this method and having the caller
+            // wait on the value.
+            //
+            // The decision about how to structure this depends heavily
+            // upon the caller and the callee (this method) agreeing on
+            // how threading will work. The current implementation allows
+            // the caller to manage threading (other than UI updates)
+            // which is advantageous from the caller's perspective: this
+            // method isn't starting any new threads which may need to be
+            // somehow managed by the caller, etc.
             try {
                 Integer deviceId = null;
                 while(!cancelled && null == deviceId) {
