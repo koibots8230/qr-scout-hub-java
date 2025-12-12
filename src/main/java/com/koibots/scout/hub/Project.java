@@ -1,12 +1,13 @@
 package com.koibots.scout.hub;
 
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintStream;
-import java.io.PrintWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
@@ -752,9 +753,9 @@ public class Project {
 
             try {
                 if(null != output) {
-                    out = new FileWriter(output);
+                    out = new OutputStreamWriter(new FileOutputStream(output), StandardCharsets.UTF_8);
                 } else {
-                    out = new PrintWriter(System.out);
+                    out = new OutputStreamWriter(System.out, StandardCharsets.UTF_8);
                 }
                 project.exportDatabase(out);
             } finally {
