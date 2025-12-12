@@ -203,6 +203,7 @@ public class GameConfig {
                 f.type = (String)data.get("type");
                 f.required = Boolean.TRUE.equals(data.get("required"));
                 f.code = (String)data.get("code");
+                f.defaultValue = String.valueOf(data.get("defaultValue"));
 
                 fields.add(f);
             }
