@@ -18,6 +18,7 @@
     <Bug pattern="SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING" />
   </Match>
 
+  <!-- These methods cannot be made safe. -->
   <Match>
     <Class name="com.koibots.scout.hub.CodeScanner" />
     <Or>
@@ -29,6 +30,23 @@
         <Method name="setParent" params="java.awt.Frame" />
         <Bug pattern="EI_EXPOSE_REP2" />
       </And>
+    </Or>
+  </Match>
+
+  <!-- All of these values should be set before any threading shenanigans occur, or be read after. -->
+  <!-- The fact that they aren't 100% bulletproof isn't really a concern. -->
+  <Match>
+    <Class name="com.koibots.scout.hub.CodeScanner" />
+    <Or>
+      <Field name="cameraDeviceID" />
+      <Field name="displayFramesPerSecond" />
+      <Field name="sleepMillis" />
+      <Field name="mirror" />
+      <Field name="modal" />
+    </Or>
+    <Or>
+      <Bug pattern="AT_STALE_THREAD_WRITE_OF_PRIMITIVE" />
+      <Bug pattern="AT_NONATOMIC_64BIT_PRIMITIVE" />
     </Or>
   </Match>
 </FindBugsFilter>
