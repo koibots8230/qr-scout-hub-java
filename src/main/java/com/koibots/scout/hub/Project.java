@@ -485,14 +485,16 @@ public class Project {
     private static void deleteAll(File directory) {
         File[] files = directory.listFiles();
 
-        for(File file : files) {
-            if(file.isDirectory()) {
-                // Delete contents
-                deleteAll(file);
-            } else {
-                // Delete file
-                if(!file.delete()) {
-                    System.err.println("Failed to delete " + file.getAbsolutePath());
+        if(null != files) {
+            for(File file : files) {
+                if(file.isDirectory()) {
+                    // Delete contents
+                    deleteAll(file);
+                } else {
+                    // Delete file
+                    if(!file.delete()) {
+                        System.err.println("Failed to delete " + file.getAbsolutePath());
+                    }
                 }
             }
         }
