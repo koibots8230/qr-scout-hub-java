@@ -272,8 +272,10 @@ public class CodeScanner {
      * Blocks until a QR code is detected or the user cancels.
      *
      * @return The decoded QR code String, or <code>null</code> if canceled.
+     *
+     * @throws FrameGrabber.Exception If the camera could not be opened.
      */
-    public String scanCode() {
+    public String scanCode() throws FrameGrabber.Exception {
         cancelled = false;
 
         JDialog dialog = createDialog(getParent(), "QR Code Scanner");
@@ -307,6 +309,7 @@ public class CodeScanner {
             long lastDisplayUpdate = 0;
 
             while (!cancelled && qrResult == null) {
+
                 Frame frameGrab = grabber.grab();
                 if (frameGrab == null) continue;
 
@@ -358,16 +361,18 @@ public class CodeScanner {
                 }
 
                 // Small sleep to reduce CPU usage
-                Thread.sleep(getCaptureSleepMillis());
+                try {
+                    Thread.sleep(getCaptureSleepMillis());
+                } catch (InterruptedException e) {
+                    cancelled = true;
+                }
             }
 
             grabber.stop();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } finally {
+            // Close the frame safely
+            SwingUtilities.invokeLater(dialog::dispose);
         }
-
-        // Close the frame safely
-        SwingUtilities.invokeLater(dialog::dispose);
 
         return qrResult; // either QR code string or null if cancelled
     }
@@ -634,7 +639,7 @@ public class CodeScanner {
         list, probe, choose, test;
     }
     // Example usage
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         int argindex = 0;
         int deviceId = 0;
         Operation operation = null;

@@ -62,6 +62,8 @@ import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.WindowConstants;
 import javax.swing.filechooser.FileFilter;
 
+import org.bytedeco.javacv.FrameGrabber;
+
 //
 // Project directory structure:
 //
@@ -117,6 +119,8 @@ public class Main {
     private Action _scanAction;
     private Action _importAction;
     private Action _exportAction;
+
+    private volatile int cameraFailures = 0;
 
     /**
      * An instance of the code scanner. Re-use the same one to retain
@@ -269,16 +273,32 @@ public class Main {
             @Override
             public void actionPerformed(ActionEvent e) {
                 new Thread(() -> {
-                    String code = _scanner.scanCode();
+                    try {
+                        String code = _scanner.scanCode();
 
-                    if(null != code) {
-                        System.out.println("Got code: " + code);
+                        if(null != code) {
+                            System.out.println("Got code: " + code);
 
-                        _recordText.setText(code);
+                            _recordText.setText(code);
 
-                        _importAction.setEnabled(true);
-                    } else {
-                        System.out.println("User cancelled code capture");
+                            _importAction.setEnabled(true);
+                        } else {
+                            System.out.println("User cancelled code capture");
+                        }
+                    } catch (FrameGrabber.Exception fge) {
+                        if(cameraFailures < 1) {
+                            SwingUtilities.invokeLater(() ->
+                                JOptionPane.showMessageDialog(_main,
+                                    "Failed to open the camera. If you just gave permission to use the camera, please try one more time, or quit the app and re-launch it.",
+                                    "Camera Failure",
+                                    JOptionPane.INFORMATION_MESSAGE)
+                            );
+                        } else {
+                            showError(fge);
+                        }
+                        ++cameraFailures;
+                    } catch (Throwable t) {
+                        showError(t);
                     }
                 }).start();
             }
@@ -783,7 +803,7 @@ public class Main {
 
         dialog.setResizable(true);
 
-        dialog.setVisible(true);
+        SwingUtilities.invokeLater(() -> dialog.setVisible(true));
     }
 
     private String getFileContents(URL url) {
