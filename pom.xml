@@ -516,6 +516,8 @@
                   <phase>package</phase>
                   <configuration>
                     <target>
+                      <delete dir="${project.build.directory}/app" />
+
                       <!-- MacOS -->
                       <delete dir="${project.build.directory}/${project.name}.app"/>
                       <delete file="${project.build.directory}/${project.name}.dmg"/>
@@ -596,14 +598,34 @@
                 </execution>
               </executions>
             </plugin>
-  
-            <!-- 4. Generate icon set for the application, based upon the KoiBots logo -->
-            <!-- 5. Call jpackage to build the appliction bundle. -->
+
+            <!-- 4. Delete unnecessary libraries that bloat the app bundle -->
+            <!-- 5. Generate icon set for the application, based upon the KoiBots logo -->
+            <!-- 6. Call jpackage to build the appliction bundle. -->
             <plugin>
               <groupId>org.codehaus.mojo</groupId>
               <artifactId>exec-maven-plugin</artifactId>
               <version>3.2.0</version>
               <executions>
+                <execution>
+                  <id>prune-superfluous-libraries</id>
+                  <phase>package</phase>
+                  <goals><goal>exec</goal></goals>
+                  <configuration>
+                    <executable>bash</executable>
+                    <arguments>
+                      <argument>-c</argument>
+                      <argument>
+                          ls -1 target/app/*x86* target/app/*windows* target/app/*linux* target/app/*ios* target/app/*android* &amp;&amp; \
+                          rm -f target/app/*x86* &amp;&amp; \
+                          rm -f target/app/*windows* &amp;&amp; \
+                          rm -f target/app/*linux* &amp;&amp; \
+                          rm -f target/app/*ios* &amp;&amp; \
+                          rm -f target/app/*android*
+                      </argument>
+                    </arguments>
+                  </configuration>
+                </execution>
                 <execution>
                   <id>generate-icns</id>
                   <phase>generate-resources</phase>
@@ -669,8 +691,6 @@
 
                       <argument>--resource-dir</argument>
                       <argument>${project.basedir}/src/jpackage</argument>
-
-
 
                       <!-- Specify the icon set to use for the dock, etc. -->
                       <argument>--icon</argument>
