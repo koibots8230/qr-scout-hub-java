@@ -17,4 +17,18 @@
     <Method name="createTables" />
     <Bug pattern="SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING" />
   </Match>
+
+  <Match>
+    <Class name="com.koibots.scout.hub.CodeScanner" />
+    <Or>
+      <And>
+        <Method name="getParent" params="" />
+        <Bug pattern="EI_EXPOSE_REP" />
+      </And>
+      <And>
+        <Method name="setParent" params="java.awt.Frame" />
+        <Bug pattern="EI_EXPOSE_REP2" />
+      </And>
+    </Or>
+  </Match>
 </FindBugsFilter>
