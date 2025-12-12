@@ -119,22 +119,12 @@ public class Project {
 
         String url = "jdbc:derby:" + dbDir.getAbsolutePath() + ";create=true;";
 
-        Connection conn = null;
-
-        try {
-            conn = DriverManager.getConnection(url);
-
+        try(Connection conn = DriverManager.getConnection(url)) {
             _derbyLoaded = true;
 
             createTables(getGameConfig(), conn);
 
             setDatabaseURL("jdbc:derby:" + dbDir.getAbsolutePath()); // without "create"
-        } finally {
-            if(null != conn) try {
-                conn.close();
-            } catch (SQLException sqle) {
-                sqle.printStackTrace();
-            }
         }
     }
 
@@ -155,7 +145,6 @@ public class Project {
         System.out.println("Creating table: " + sql);
 
         try(PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-
             ps.executeUpdate();
         }
     }
@@ -170,40 +159,19 @@ public class Project {
     public int getRecordCount() throws SQLException {
         String databaseURL = getDatabaseURL();
 
-        Connection conn = null;
-
-        try {
-            conn = DriverManager.getConnection(databaseURL);
-
+        try(Connection conn = DriverManager.getConnection(databaseURL)) {
             return getRecordCount(conn);
-        } finally {
-            if(null != conn) try { conn.close(); }
-            catch (SQLException sqle) {
-                sqle.printStackTrace();
-            }
         }
     }
 
     private int getRecordCount(Connection conn) throws SQLException {
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-
-        try {
-            ps = conn.prepareStatement("SELECT COUNT(*) AS cnt FROM \"stand_scouting\"");
-
-            rs = ps.executeQuery();
+        try(PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) AS cnt FROM \"stand_scouting\"");
+            ResultSet rs = ps.executeQuery();) {
 
             if(rs.next()) {
                 return rs.getInt("cnt");
             } else {
                 return 0;
-            }
-        } finally {
-            if(null != rs) try { rs.close(); } catch (SQLException sqle) {
-                sqle.printStackTrace();
-            }
-            if(null != ps) try { ps.close(); } catch (SQLException sqle) {
-                sqle.printStackTrace();
             }
         }
     }
@@ -212,10 +180,7 @@ public class Project {
         if(null == databaseURL)
             return;
 
-        Connection conn = null;
-
-        try {
-            conn = DriverManager.getConnection(databaseURL);
+        try(Connection conn = DriverManager.getConnection(databaseURL)) {
 
             _derbyLoaded = true;
 
@@ -224,10 +189,6 @@ public class Project {
             System.out.println("Completed loading database " + databaseURL + " with " + count + " records");
 
             setDatabaseURL(databaseURL);
-        } finally {
-            if(null != conn) try { conn.close(); }catch (SQLException sqle) {
-                sqle.printStackTrace();
-            }
         }
     }
 
@@ -246,52 +207,47 @@ public class Project {
 
         System.out.println("Config: " + config);
 
-        Connection conn = null;
-        ResultSet rs = null;
-        try {
-            conn = DriverManager.getConnection(databaseURL);
+        try(Connection conn = DriverManager.getConnection(databaseURL)) {
 
-            _derbyLoaded = true;
+            ResultSet rs = null;
+            try {
+                _derbyLoaded = true;
 
-            // NOTE: stand_scouting is CASE SENSITIVE here
-            rs = conn.getMetaData().getColumns(null, "APP", "stand_scouting", null);
+                // NOTE: stand_scouting is CASE SENSITIVE here
+                rs = conn.getMetaData().getColumns(null, "APP", "stand_scouting", null);
 
-            // Ensure that the db structure matches the project config
-            HashMap<String,String> dbFields = new HashMap<String,String>();
-            while(rs.next()) {
-                dbFields.put(rs.getString("COLUMN_NAME"), rs.getString("TYPE_NAME"));
-            }
-
-            // Check all columns are defined
-            for(Field field : config.getFields()) {
-                String columnName = normalizeColumnName(field.getCode());
-
-                if(!dbFields.containsKey(columnName)) {
-                    throw new IllegalStateException("Config contains field not found in database: " + field.getCode() + " / " + columnName);
+                // Ensure that the db structure matches the project config
+                HashMap<String,String> dbFields = new HashMap<String,String>();
+                while(rs.next()) {
+                    dbFields.put(rs.getString("COLUMN_NAME"), rs.getString("TYPE_NAME"));
                 }
-            }
 
-            for(Map.Entry<String,String> entry : dbFields.entrySet()) {
-                String columnName = entry.getKey();
+                // Check all columns are defined
+                for(Field field : config.getFields()) {
+                    String columnName = normalizeColumnName(field.getCode());
 
-                if(!"id".equals(columnName)) {
-                    Field field = getFieldFromSQLColumn(config, columnName);
-                    if(null == field) {
-                        throw new IllegalStateException("Database contains field not found in configuration: " + columnName);
+                    if(!dbFields.containsKey(columnName)) {
+                        throw new IllegalStateException("Config contains field not found in database: " + field.getCode() + " / " + columnName);
                     }
                 }
-            }
 
-            System.out.println("Verification complete");
-        } finally {
-            if(null != conn) try { conn.close(); }
-            catch (SQLException sqle) {
-                sqle.printStackTrace();
-            }
+                for(Map.Entry<String,String> entry : dbFields.entrySet()) {
+                    String columnName = entry.getKey();
 
-            if(null != rs) try { rs.close(); }
-            catch (SQLException sqle) {
-                sqle.printStackTrace();
+                    if(!"id".equals(columnName)) {
+                        Field field = getFieldFromSQLColumn(config, columnName);
+                        if(null == field) {
+                            throw new IllegalStateException("Database contains field not found in configuration: " + columnName);
+                        }
+                    }
+                }
+
+                System.out.println("Verification complete");
+            } finally {
+                if(null != rs) try { rs.close(); }
+                catch (SQLException sqle) {
+                    sqle.printStackTrace();
+                }
             }
         }
     }
@@ -358,21 +314,16 @@ public class Project {
     public void insertRecord(String codeData) throws SQLException {
         String databaseURL = getDatabaseURL();
 
-        Connection conn = null;
-        PreparedStatement ps = null;
-
         Map<Field,String> data = parseCodeData(codeData);
 
         System.out.println("Parsed code data: " + data);
 
-        try {
-            conn = DriverManager.getConnection(databaseURL);
+        String insertStatement = getInsertStatement();
 
-            String insertStatement = getInsertStatement();
+        System.out.println("Insert statement: " + insertStatement);
 
-            System.out.println("Insert statement: " + insertStatement);
-
-            ps = conn.prepareStatement(insertStatement);
+        try(Connection conn = DriverManager.getConnection(databaseURL);
+            PreparedStatement ps = conn.prepareStatement(insertStatement)) {
 
             Collection<Field> fields = getGameConfig().getFields();
 
@@ -402,16 +353,6 @@ public class Project {
             }
 
             ps.executeUpdate();
-        } finally {
-            if(null != ps) try { ps.close(); }
-            catch (SQLException sqle) {
-                sqle.printStackTrace();
-            }
-
-            if(null != conn) try { conn.close(); }
-            catch (SQLException sqle) {
-                sqle.printStackTrace();
-            }
         }
     }
 
@@ -424,10 +365,6 @@ public class Project {
      * @throws SQLException If there is a database error.
      */
     public void exportDatabase(Writer out) throws IOException, SQLException {
-        Connection conn = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-
         StringBuilder sql = new StringBuilder("SELECT ");
 
         GameConfig config = getGameConfig();
@@ -442,12 +379,9 @@ public class Project {
         }
         sql.append(" FROM \"stand_scouting\"");
 
-        try {
-            conn = DriverManager.getConnection(getDatabaseURL());
-
-            ps = conn.prepareStatement(sql.toString());
-
-            rs = ps.executeQuery();
+        try (Connection conn = DriverManager.getConnection(getDatabaseURL());
+             PreparedStatement ps = conn.prepareStatement(sql.toString());
+             ResultSet rs = ps.executeQuery()) {
 
             ResultSetMetaData rsmd = rs.getMetaData();
 
@@ -469,21 +403,6 @@ public class Project {
 
                     csv.writeNext(data);
                 }
-            }
-        } finally {
-            if(null != rs) try { rs.close(); }
-            catch (SQLException sqle) {
-                sqle.printStackTrace();
-            }
-
-            if(null != ps) try { ps.close(); }
-            catch (SQLException sqle) {
-                sqle.printStackTrace();
-            }
-
-            if(null != conn) try { conn.close(); }
-            catch (SQLException sqle) {
-                sqle.printStackTrace();
             }
         }
     }
@@ -619,12 +538,9 @@ public class Project {
         if(_derbyLoaded) {
             System.out.println("Shutting down Derby...");
 
-            try {
-                // This should throw a SQLException
-                Connection conn = DriverManager.getConnection("jdbc:derby:;shutdown=true");
-
+            // NOTE: This getConnection() call should throw a SQLException
+            try (Connection conn = DriverManager.getConnection("jdbc:derby:;shutdown=true");) {
                 // Just in case it does not for some reason, close the Connection.
-                conn.close();
             } catch (SQLException sqle) {
                 if (( (sqle.getErrorCode() == 50000)
                         && ("XJ015".equals(sqle.getSQLState()) ))) {
