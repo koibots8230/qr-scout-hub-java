@@ -195,6 +195,18 @@
       <artifactId>exec-maven-plugin</artifactId>
       <version>3.2.0</version>
     </plugin>
+
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-site-plugin</artifactId>
+            <version>3.21.0</version>
+        </plugin>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-project-info-reports-plugin</artifactId>
+            <version>3.9.0</version>
+        </plugin>
+
 <!--
             <plugin>
                 <groupId></groupId>
@@ -352,10 +364,26 @@
       Reporting configuration for Maven site/report generation.
       Docs: https://maven.apache.org/pom.html#reporting
     -->
-<!--
     <reporting>
-        <outputDirectory></outputDirectory>
+<!--
+        <outputDirectory>${project.build.directory}/site</outputDirectory>
+-->
         <plugins>
+          <plugin>
+            <groupId>com.github.spotbugs</groupId>
+            <artifactId>spotbugs-maven-plugin</artifactId>
+            <version>4.9.8.2</version>
+            <reportSets>
+              <reportSet>
+                <reports>
+                  <report>spotbugs</report>
+                  <!-- Optional: also generate XML output -->
+                  <!-- <report>spotbugsXml</report> -->
+                </reports>
+              </reportSet>
+            </reportSets>
+          </plugin>
+<!--
             <plugin>
                 <groupId></groupId>
                 <artifactId></artifactId>
@@ -374,9 +402,9 @@
                 <configuration>
                 </configuration>
             </plugin>
+-->
         </plugins>
     </reporting>
--->
 
     <!--
       Where project artifacts and site docs are deployed.
