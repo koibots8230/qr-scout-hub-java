@@ -662,6 +662,9 @@
                       <argument>--mac-package-identifier</argument>
                       <argument>com.koibots.qrscouthub</argument>
 
+                      <argument>--resource-dir</argument>
+                      <argument>${project.basedir}/src/jpackage</argument>
+
                       <!-- Specify the icon set to use for the dock, etc. -->
                       <argument>--icon</argument>
                       <argument>${project.build.directory}/icons/${project.build.finalName}.icns</argument>
