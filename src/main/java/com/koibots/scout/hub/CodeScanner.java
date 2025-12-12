@@ -333,30 +333,34 @@ public class CodeScanner {
 
                 BufferedImage img = converter.getBufferedImage(frameGrab);
                 if (img != null) {
-                    // Final for use in the lambda
-                    final BufferedImage displayImage;
-
-                    if(getMirror()) {
-                        if(null == targetImage
-                           || targetImage.getWidth() != img.getWidth()
-                           || targetImage.getHeight() != img.getHeight()
-                           || targetImage.getType() != img.getType()) {
-                            System.out.println("Creating target image with size=" + img.getWidth() + "x" + img.getHeight() + " and type=" + img.getType());
-                            targetImage = new BufferedImage(img.getWidth(), img.getHeight(), img.getType());
-
-                            flipper = AffineTransform.getScaleInstance(-1, 1); // flip horizontally
-                            flipper.translate(-img.getWidth(), 0); // move back into view
-
-                            flipperOp = new AffineTransformOp(flipper, AffineTransformOp.TYPE_NEAREST_NEIGHBOR);
-                        }
-
-                        displayImage = flipperOp.filter(img, targetImage);
-                    } else {
-                        displayImage = img;
-                    }
 
                     long now = System.currentTimeMillis();
                     if(now - lastDisplayUpdate >= displayUpdateInterval) {
+                        // Update the GUI at displayUpdateInterval and maybe not
+                        // every single time through the loop
+
+                        // Final for use in the lambda
+                        final BufferedImage displayImage;
+
+                        if(getMirror()) {
+                            if(null == targetImage
+                               || targetImage.getWidth() != img.getWidth()
+                               || targetImage.getHeight() != img.getHeight()
+                               || targetImage.getType() != img.getType()) {
+                                System.out.println("Creating target image with size=" + img.getWidth() + "x" + img.getHeight() + " and type=" + img.getType());
+                                targetImage = new BufferedImage(img.getWidth(), img.getHeight(), img.getType());
+
+                                flipper = AffineTransform.getScaleInstance(-1, 1); // flip horizontally
+                                flipper.translate(-img.getWidth(), 0); // move back into view
+
+                                flipperOp = new AffineTransformOp(flipper, AffineTransformOp.TYPE_NEAREST_NEIGHBOR);
+                            }
+
+                            displayImage = flipperOp.filter(img, targetImage);
+                        } else {
+                            displayImage = img;
+                        }
+
                         lastDisplayUpdate = now;
                         // Update video in Swing safely
                         SwingUtilities.invokeLater(() -> {
