@@ -8,6 +8,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -100,7 +101,7 @@ public class GameConfig {
      * @return The List of scouting Fields.
      */
     public List<Field> getFields() {
-        return fields;
+        return Collections.unmodifiableList(fields);
     }
 
     @Override
