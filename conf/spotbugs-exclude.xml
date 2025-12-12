@@ -4,9 +4,17 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="https://github.com/spotbugs/filter/4.8.4 https://raw.githubusercontent.com/spotbugs/spotbugs/4.8.4/spotbugs/etc/findbugsfilter.xsd">
 
+  <!-- The QuitHandler is specifically designed to shut-down the JVM -->
   <Match>
     <Class name="com.koibots.scout.hub.Main$ApplicationQuitHandler" />
     <Method name="quit" />
     <Bug pattern="DM_EXIT" />
+  </Match>
+
+  <!-- It's okay to use a non-constant string here; we are providing our own escaping -->
+  <Match>
+    <Class name="com.koibots.scout.hub.Project" />
+    <Method name="createTables" />
+    <Bug pattern="SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING" />
   </Match>
 </FindBugsFilter>
