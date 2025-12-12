@@ -32,6 +32,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -130,7 +131,7 @@ public class Main {
     /**
      * The number of camera failures since process start.
      */
-    private volatile int cameraFailures = 0;
+    private AtomicInteger cameraFailures = new AtomicInteger(0);
 
     /**
      * The directory where a file was last loaded or saved.
@@ -301,7 +302,7 @@ public class Main {
                             System.out.println("User cancelled code capture");
                         }
                     } catch (FrameGrabber.Exception fge) {
-                        if(cameraFailures < 1) {
+                        if(cameraFailures.get() < 1) {
                             SwingUtilities.invokeLater(() ->
                                 JOptionPane.showMessageDialog(_main,
                                     "Failed to open the camera. If you just gave permission to use the camera, please try one more time, or quit the app and re-launch it.",
@@ -311,7 +312,7 @@ public class Main {
                         } else {
                             showError(fge);
                         }
-                        ++cameraFailures;
+                        cameraFailures.incrementAndGet();
                     } catch (Throwable t) {
                         showError(t);
                     }
