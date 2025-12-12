@@ -377,24 +377,13 @@ public class Main {
         menu.add(new JMenuItem(_exportAction));
 
         // MacOS has its own quit menu under the application menu
+
+        ApplicationQuitHandler quitHandler = new ApplicationQuitHandler();
         if(!isMacOS) {
             item = new JMenuItem("Quit");
             item.setMnemonic('q');
             item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, metaKey));
-            item.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    System.err.println("Shutting down normally (menu action handler) ...");
-
-                    try {
-                        Project.dispose();
-                    } catch (Throwable t) {
-                        showError(t);
-                    }
-
-                    System.exit(0);
-                }
-            });
+            item.addActionListener(quitHandler);
             menu.add(item);
         }
 
@@ -417,22 +406,7 @@ public class Main {
         }
 
         Desktop desktop = Desktop.getDesktop();
-        QuitHandler quitHandler = new QuitHandler() {
-            @Override
-            public void handleQuitRequestWith(QuitEvent e, QuitResponse response) {
-                System.err.println("Shutting down normally (quit handler) ...");
 
-                savePreferences();
-
-                try {
-                    Project.dispose();
-                } catch (Throwable t) {
-                    showError(t);
-                }
-
-                response.performQuit();
-            }
-        };
         if(desktop.isSupported(Desktop.Action.APP_QUIT_HANDLER)) {
             desktop.setQuitHandler(quitHandler);
         }
@@ -958,6 +932,33 @@ public class Main {
             ioe.printStackTrace();
 
             return null;
+        }
+    }
+
+    private class ApplicationQuitHandler
+        implements ActionListener, QuitHandler
+    {
+        private void quit() {
+            System.err.println("Shutting down normally (menu action handler) ...");
+
+            try {
+                Project.dispose();
+            } catch (Throwable t) {
+                showError(t);
+            }
+
+            System.exit(0);
+        }
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            quit();
+        }
+
+        @Override
+        public void handleQuitRequestWith(QuitEvent e, QuitResponse response) {
+            quit();
+
+            response.performQuit();
         }
     }
 }
