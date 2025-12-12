@@ -459,9 +459,10 @@ public class CodeScanner {
                 System.out.println("Camera Metadata: " + grabber.getMetadata());
 
                 grabber.stop();
-            } catch (Exception e) {
+            } catch (FrameGrabber.Exception fge) {
                 // No more devices
                 System.out.println("No device at index " + i + "; stopping");
+
                 break;
             }
         }
@@ -484,9 +485,10 @@ public class CodeScanner {
                 devices.add(deviceName);
 
                 grabber.stop();
-            } catch (Exception e) {
+            } catch (FrameGrabber.Exception fge) {
                 // No more devices
                 System.out.println("No device at index " + i + "; stopping");
+
                 break;
             }
         }
