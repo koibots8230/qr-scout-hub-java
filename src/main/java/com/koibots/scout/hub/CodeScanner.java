@@ -50,7 +50,7 @@ public class CodeScanner {
     /**
      * The display FPS - distinct from the capture FPS.
      */
-    private int _displayFramesPerSecond = 33;
+    private int displayFramesPerSecond = 33;
 
     /**
      * The modal state of any dialogs shown by this class.
@@ -127,11 +127,11 @@ public class CodeScanner {
     }
 
     public void setDisplayFramesPerSecond(int framesPerSecond) {
-        _displayFramesPerSecond = framesPerSecond;
+        displayFramesPerSecond = framesPerSecond;
     }
 
     public int getDisplayFramesPerSecond() {
-        return _displayFramesPerSecond;
+        return displayFramesPerSecond;
     }
 
     /**
