@@ -32,6 +32,9 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.prefs.BackingStoreException;
+import java.util.prefs.Preferences;
+
 import javax.swing.Action;
 import javax.swing.ActionMap;
 import javax.swing.AbstractAction;
@@ -73,6 +76,10 @@ import org.bytedeco.javacv.FrameGrabber;
 public class Main {
     private static final String PROGRAM_NAME = "KoiBots Scouting Hub";
     private static final String ABOUT_HTML_URL = "/resources/navigator/about.html";
+
+    private static final String PREFS_KEY_FILE_DIALOG_DIRECTORY = "file.dialog.directory";
+    private static final String PREFS_KEY_CAMERA_DEVICE_ID = "camera.device.id";
+    private static final String PREFS_KEY_LAST_OPEN_PROJECT = "last.project.directory";
 
     private static final Collection<String> IMAGE_URLs = Arrays.asList(new String[] {
             "/resources/icons/koibots-logo.png",
@@ -120,7 +127,15 @@ public class Main {
     private Action _importAction;
     private Action _exportAction;
 
+    /**
+     * The number of camera failures since process start.
+     */
     private volatile int cameraFailures = 0;
+
+    /**
+     * The directory where a file was last loaded or saved.
+     */
+    private File fileDialogDirectory;
 
     /**
      * An instance of the code scanner. Re-use the same one to retain
@@ -407,6 +422,8 @@ public class Main {
             public void handleQuitRequestWith(QuitEvent e, QuitResponse response) {
                 System.err.println("Shutting down normally (quit handler) ...");
 
+                savePreferences();
+
                 try {
                     Project.dispose();
                 } catch (Throwable t) {
@@ -572,8 +589,123 @@ public class Main {
         _scanner = new CodeScanner();
         _scanner.setParent(_main);
 
+        loadPreferences();
+
         System.out.println(System.currentTimeMillis() + ", " + (System.currentTimeMillis() - elapsed) + " :  Showing main window...");
         _main.setVisible(true);
+    }
+
+    /**
+     * Sets the directory where file dialogs should be focused when opened.
+     *
+     * This directory will be persisted between application launches.
+     *
+     * @param dir The directory where file dialogs should be focused when
+     *        opened.
+     */
+    private void setFileDialogDirectory(File dir) {
+        fileDialogDirectory = dir;
+    }
+
+    /**
+     * Gets the directory where file dialogs should be focused when opened.
+     *
+     * This directory will be persisted between application launches.
+     *
+     * @return The directory where file dialogs should be focused when
+     *         opened.
+     */
+    private File getFileDialogDirectory() {
+        if(null == fileDialogDirectory) {
+            // Not set: try to get from preferences
+            Preferences prefs = Preferences.userNodeForPackage(Main.class);
+
+            String fileDialogPath = prefs.get(PREFS_KEY_FILE_DIALOG_DIRECTORY, null);
+            System.out.println("Loaded file dialog path from preferences: " + fileDialogPath);
+            if(null != fileDialogPath) {
+                File dir = new File(fileDialogPath);
+                if(dir.isDirectory()) {
+                    fileDialogDirectory = dir;
+                } else {
+                    fileDialogPath = null; // Run the fallback behavior
+                }
+            }
+
+            if(null == fileDialogPath) {
+                // No preference established, or preference is invalid
+
+                // Either choose the current working directory or the user's
+                // home directory, whichever is more specific. The CWD is
+                // root if this is a MacOS application bundle, so we don't
+                // want to choose that.
+                File cwd = new File(".");
+                File userHome = new File(System.getProperty("user.home"));
+
+                fileDialogDirectory = cwd.getAbsolutePath().length() >= userHome.getAbsolutePath().length() ? cwd : userHome;
+            }
+        }
+
+        return fileDialogDirectory;
+    }
+
+    private void loadPreferences() {
+        Preferences prefs = Preferences.userNodeForPackage(Main.class);
+
+        // File dialog path
+        String fileDialogPath = prefs.get(PREFS_KEY_FILE_DIALOG_DIRECTORY, null);
+        System.out.println("Loaded file dialog path from preferences: " + fileDialogPath);
+        if(null != fileDialogPath) {
+            File dir = new File(fileDialogPath);
+            if(dir.isDirectory()) {
+                setFileDialogDirectory(dir);
+            } else {
+                fileDialogPath = null; // Run the fallback behavior below
+            }
+        }
+        if(null == fileDialogPath) {
+            // No preference established, or preference is invalid
+
+            // Either choose the current working directory or the user's
+            // home directory, whichever is more specific. The CWD is
+            // root if this is a MacOS application bundle, so we don't
+            // want to choose that.
+            File cwd = new File(".");
+            File userHome = new File(System.getProperty("user.home"));
+
+            setFileDialogDirectory(cwd.getAbsolutePath().length() >= userHome.getAbsolutePath().length() ? cwd : userHome);
+        }
+
+        // Camera device id
+        String cameraDeviceId = prefs.get(PREFS_KEY_CAMERA_DEVICE_ID, null);
+        if(null != cameraDeviceId) {
+            try {
+                _scanner.setCameraDeviceID(Integer.parseInt(cameraDeviceId));
+            } catch (NumberFormatException nfe) {
+                // Ignore
+            }
+        }
+
+        String lastProjectDirectory = prefs.get(PREFS_KEY_LAST_OPEN_PROJECT, null);
+        if(null != lastProjectDirectory) {
+            System.out.println("Last open project: " + lastProjectDirectory);
+        }
+    }
+
+    private void savePreferences() {
+        Preferences prefs = Preferences.userNodeForPackage(Main.class);
+
+        prefs.put(PREFS_KEY_FILE_DIALOG_DIRECTORY, getFileDialogDirectory().getAbsolutePath());
+        prefs.put(PREFS_KEY_CAMERA_DEVICE_ID, String.valueOf(_scanner.getCameraDeviceID()));
+        if(null != _project) {
+            prefs.put(PREFS_KEY_LAST_OPEN_PROJECT, _project.getDirectory().getAbsolutePath());
+        }
+
+        try {
+            prefs.flush();
+        } catch (BackingStoreException e) {
+            // Not much we can do about this
+            e.printStackTrace();
+        }
     }
 
     private Icon getIcon(String iconPath) {
@@ -601,7 +733,7 @@ public class Main {
 
     private File getNewFilename() {
         JFileChooser chooser = new JFileChooser();
-        chooser.setCurrentDirectory(new File("."));
+        chooser.setCurrentDirectory(getFileDialogDirectory());
 
         chooser.setDialogTitle("New Project");
         chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -621,6 +753,8 @@ public class Main {
                         "File Exists",
                         JOptionPane.WARNING_MESSAGE);
             } else {
+                setFileDialogDirectory(chooser.getCurrentDirectory());
+
                 return selectedFile;
             }
         }
@@ -628,7 +762,7 @@ public class Main {
 
     private File getConfigFilename() {
         JFileChooser chooser = new JFileChooser();
-        chooser.setCurrentDirectory(new File("."));
+        chooser.setCurrentDirectory(getFileDialogDirectory());
         chooser.setDialogTitle("Choose Scouting Config");
         chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         chooser.setMultiSelectionEnabled(false);
@@ -650,22 +784,26 @@ public class Main {
         if (result != JFileChooser.APPROVE_OPTION) {
             return null;
         } else {
+            setFileDialogDirectory(chooser.getCurrentDirectory());
+
             return chooser.getSelectedFile();
         }
     }
 
     private void openProjectJFileChooser() {
-        JFileChooser jfc = new JFileChooser();
+        JFileChooser chooser = new JFileChooser();
 
-        jfc.setCurrentDirectory(new File("."));
-        jfc.setMultiSelectionEnabled(false);
-        jfc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        chooser.setCurrentDirectory(getFileDialogDirectory());
+        chooser.setMultiSelectionEnabled(false);
+        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
-        int status = jfc.showOpenDialog(_main);
+        int status = chooser.showOpenDialog(_main);
 
         if(JFileChooser.APPROVE_OPTION == status) {
+            setFileDialogDirectory(chooser.getCurrentDirectory());
+
             try {
-                openProject(jfc.getSelectedFile());
+                openProject(chooser.getSelectedFile());
             } catch (Throwable t) {
                 showError(t);
             }
