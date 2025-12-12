@@ -154,9 +154,10 @@ public class Project {
 
         System.out.println("Creating table: " + sql);
 
-        PreparedStatement ps = conn.prepareStatement(sql.toString());
+        try(PreparedStatement ps = conn.prepareStatement(sql.toString())) {
 
-        ps.executeUpdate();
+            ps.executeUpdate();
+        }
     }
 
     /**
