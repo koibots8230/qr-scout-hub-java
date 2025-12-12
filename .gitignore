@@ -16,3 +16,8 @@ buildNumber.properties
 # JDT-specific (Eclipse Java Development Tools)
 /.classpath
 /.settings
+
+# MacOS directory config files
+.DS_Store
+# vi temp files
+.*.sw*
