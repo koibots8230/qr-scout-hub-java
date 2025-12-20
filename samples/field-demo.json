@@ -1,0 +1,175 @@
+{
+  "$schema": "https://frc2713.github.io/QRScout/schema.json",
+  "title": "QRScout",
+  "page_title": "Field Demo",
+  "teamNumber": 8230,
+  "delimiter": "\t",
+  "sections": [
+    {
+      "name": "Text/Bool Fields",
+      "preserveDataOnReset": true,
+      "fields": [
+        {
+          "title" : "Standard Text",
+          "code" : "standardText",
+          "type" : "text"
+        },
+        {
+          "title" : "Static Text",
+          "code" : "staticText",
+          "type" : "text",
+          "formResetBehavior" : "preserve",
+          "defaultValue" : "I stick around"
+        },
+        {
+          "title" : "Standard Boolean",
+          "code" : "standardBool",
+          "type" : "boolean"
+        },
+        {
+          "title" : "Default True",
+          "code" : "boolDefTrue",
+          "type" : "boolean",
+          "defaultValue" : true
+        },
+        {
+          "title" : "Default False",
+          "code" : "boolDefFalse",
+          "type" : "boolean",
+          "defaultValue" : false
+        },
+        {
+          "title" : "Sticky Boolean",
+          "code" : "boolDefFalseSticky",
+          "type" : "boolean",
+          "defaultValue" : false,
+          "formResetBehavior" : "preserve"
+        }
+      ]
+    },
+    {
+      "name" : "Numbers",
+      "fields" : [
+        {
+          "title" : "Simple Number",
+          "code" : "simpleNum",
+          "type" : "number"
+        },
+        {
+          "title" : "Default Value",
+          "code" : "defaultNum",
+          "type" : "number",
+          "defaultValue" : 7
+        },
+        {
+          "title" : "Sticky Value",
+          "code" : "stickyNum",
+          "type" : "number",
+          "defaultValue" : 2,
+          "formResetBehavior" : "preserve"
+        },
+        {
+          "title" : "Clamped 5-10",
+          "code" : "clampedNum",
+          "type" : "number",
+          "min" : "5",
+          "max" : "10"
+        },
+        {
+          "title" : "Negative",
+          "code" : "negNum",
+          "type" : "number",
+          "min" : -9,
+          "max" : 9,
+          "defaultValue" : 0
+        }
+      ]
+    },
+    {
+      "name" : "Selects",
+      "fields" : [
+        {
+          "title" : "Single Select",
+          "code" : "singleSelect",
+          "type" : "select",
+          "choices" : {
+            "a" : "Boxers",
+            "b" : "Briefs"
+          }
+        },
+        {
+          "title" : "Sticky Select",
+          "code" : "stickySelect",
+          "type" : "select",
+          "choices" : {
+            "a" : "Boxers",
+            "b" : "Briefs"
+          },
+          "formResetBehavior" : "preserve"
+        },
+        {
+          "title" : "Multi-Select",
+          "code" : "multiSelect",
+          "type" : "multi-select",
+          "choices" : {
+            "a" : "Boxers",
+            "b" : "Briefs",
+            "c" : "Commando"
+          },
+          "formResetBehavior" : "preserve"
+        }
+      ]
+    },
+    {
+      "name" : "Timers",
+      "fields" : [
+        {
+          "title" : "Lap Timer",
+          "code" : "lapTimer",
+          "type" : "timer",
+          "outputType" : "list"
+        },
+        {
+          "title" : "Average Timer",
+          "code" : "avgTimer",
+          "type" : "timer",
+          "outputType" : "average"
+        },
+        {
+          "title" : "Total Timer",
+          "code" : "totalTimer",
+          "type" : "timer",
+          "outputType" : "total"
+        },
+        {
+          "title" : "Sticky Timer",
+          "code" : "totalTimerSticky",
+          "type" : "timer",
+          "outputType" : "total",
+          "formResetBehavior" : "preserve"
+        }
+      ]
+    },
+    {
+      "name" : "Images",
+      "fields" : [
+        {
+          "title" : "KoiBots Logo",
+          "code" : "kbLogo",
+          "type" : "image",
+          "defaultValue" : "https://koibots.com/_assets/media/4eec6592fb39f1ec82e70c45148ed37a.png",
+          "value":""
+        },
+        {
+          "title" : "Small Logo",
+          "code" : "kbLogoSmall",
+          "type" : "image",
+          "defaultValue" : "https://koibots.com/_assets/media/4eec6592fb39f1ec82e70c45148ed37a.png",
+          "value":"",
+          "width" : "100px",
+          "height" : "100px"
+        }
+      ]
+    }
+  ]
+}

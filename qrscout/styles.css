@@ -1,0 +1,196 @@
+body {
+  background-color: black;
+  color:white;
+  font-family:sans-serif;
+}
+h1 {
+  text-align:center;
+  font-variant-caps: small-caps;
+}
+
+h2 {
+  padding:1ex;
+  margin:0;
+  background-color:blue;
+  color:white;
+  border-top-left-radius: .5rem;
+  border-top-right-radius: .5rem;
+  font-variant-caps: small-caps;
+}
+
+h3 {
+  padding:1ex;
+  margin:0;
+  background-color:#303030;
+  color:white;
+  font-variant-caps: small-caps;
+  border-top-left-radius: .5rem;
+  border-top-right-radius: .5rem;
+}
+
+#sections {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.section {
+  border:1px solid blue;
+  margin-left: 1.5rem;
+  margin-right: 0;
+  border-radius: .5rem;
+}
+
+.field {
+  margin:.5rem;
+  margin-bottom:1rem;
+  text-align:center;
+  border:1px solid #303030;
+  border-radius: .5rem;
+}
+
+.field input, .field select {
+  margin:.5rem;
+}
+.field input[type != 'checkbox'] {
+  width:12rem;
+}
+.field select {
+  width:12rem;
+}
+
+.field input.counter {
+  width:2rem;
+  color:white;
+  background-color:transparent;
+  border:none;
+  text-align:center;
+  font-size:x-large;
+}
+
+.lap-timer .display {
+  margin:.5rem;
+  font-size:x-large;
+}
+
+.lap-timer .cumulative-display {
+  margin:.5rem;
+}
+
+.field input[type='checkbox'] {
+  transform: scale(1.5);
+  cursor:pointer;
+}
+
+.counter-button, .lap-timer button {
+  font-size:x-large;
+  cursor:pointer;
+  user-select:none;
+ /* -moz-user-select: none; */
+  border: 1px solid #303030;
+  padding: .2rem .5rem;
+  border-radius:.25rem;
+  background-color:transparent;
+  color:white;
+}
+
+.lap-timer button {
+  padding-top:.4rem;
+  padding-bottom:.1rem;
+  margin:0 .25rem;
+}
+
+.counter-button:hover .lap-timer button:hover {
+  background-color:#303030;
+}
+
+.field img {
+  width:100%;
+  height:auto;
+  cursor:zoom-in;
+}
+
+#popup {
+  position: fixed;
+  inset: 0;
+  background-color : rgb(0,0,0,.9);
+  text-align : center;
+  vertical-align : middle;
+  cursor:zoom-out;
+}
+
+/* Get rid of the input type='number' spinners */
+/* Chrome, Edge, Safari */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Firefox */
+input[type=number] {
+    -moz-appearance: textfield;
+}
+
+#buttons button {
+  border:1px solid blue;
+  border-radius: .25rem;
+  color:white;
+  background-color:blue;
+  font-size: x-large;
+  padding: 1ex 1em;
+  cursor: pointer;
+}
+
+#buttons {
+  margin-top:2rem;
+  text-align:center;
+}
+
+button:hover {
+  border-color:white;
+}
+
+#sprites { display:none; }
+
+.modal {
+  display: none; /* Hidden by default */
+  position: fixed;
+  z-index: 1000;
+  left: 5%;
+  top: 5%;
+  width: 90%;
+  height: 90%;
+  overflow: auto; /* Enable scrolling if needed */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background-color:black;
+  border:2px solid white;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  position: relative;
+  max-width: 90%;
+  max-height: 90%;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.close {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 24px;
+  font-weight: bold;
+  cursor: pointer;
+  color:white;
+}
+.close:hover {
+  color: #f00;
+}
+
+.hidden {
+  display:none;
+}

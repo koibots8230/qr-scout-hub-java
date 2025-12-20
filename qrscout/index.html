@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title id="title"></title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="custom.css" />
+  <link rel="icon" type="image/png" href="koibots-logo.png">
+  <script src="qrscout.js"></script>
+  <script src="timer.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrious/dist/qrious.min.js"></script>
+</head>
+<body>
+  <form id="form">
+    <div id="main"></div>
+    <div id="buttons">
+      <button id="generate-qr-code" type="button">Generate QR Code</button>
+      <button id="reset" type="reset">Reset Form</button>
+    </div>
+  </form>
+  <!-- A hidden pop-up for showing QR codes -->
+  <div id="qr-popup" class="modal" style="display:none;">
+    <div class="modal-content">
+      <span id="qr-close" class="close">&times;</span>
+      <h1 id="qr-title"></h1>
+      <div id="qr-container"></div>
+    </div>
+  </div>
+  <!-- A hidden pop-up for showing images -->
+  <div id="popup" class="hidden"></div>
+
+  <!-- SVG images for re-use -->
+  <div id="sprites">
+    <svg xmlns="http://www.w3.org/2000/svg">
+      <!-- Start icon (play) -->
+      <symbol id="icon-start" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <polygon points="8,5 19,12 8,19"/>
+      </symbol>
+
+      <!-- Stop icon -->
+      <symbol id="icon-stop" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <rect x="6" y="6" width="12" height="12"/>
+      </symbol>
+
+      <!-- Lap icon (clock with circular arrow) -->
+      <symbol id="icon-lap" viweBox="0 0 24 24" fill="none" stroke="currentColor">
+
+        <!-- Clock body -->
+        <path d="M8.5 4.87 A8 8 0 1 1 4.5 11.8"></path>
+
+        <!-- Arrow head-->
+        <path d="M4.5 10.8 L2.38 12.92 M4.5 10.8 L6.62 12.92"></path>
+
+        <!-- Clock hands -->
+        <path d="M12 12 L12 8 M12 12 L16 12"></path>
+
+        <!-- Buzzer -->
+        <path d="M9 1.0 L15 1.0"></path>
+
+      </symbol>
+
+      <!-- Pause icon for sprite -->
+      <symbol id="icon-pause" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <rect x="6" y="4" width="4" height="16" fill="currentColor"></rect>
+        <rect x="14" y="4" width="4" height="16" fill="currentColor"></rect>
+      </symbol>
+
+      <symbol id="icon-reset" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <!-- Curved arrow -->
+        <path d="M18 18 A8 8 0 0 0 6 6"></path>
+
+        <!-- arrow head -->
+        <path d="M6 5.5 L6 3.5" fill="currentColor" />
+      </symbol>
+
+    </svg>
+  </div>
+
+  <!-- A template for lap-timers -->
+  <template id="lap-timer-template">
+    <div class="lap-timer">
+    
+      <!-- Timer display and cumulative display -->
+      <div class="display" data-current>00.00</div>
+
+      <!-- Control buttons using SVG sprite -->
+      <div class="controls">
+        <button type="button" data-start>
+          <svg width="24" height="24"><use href="#icon-start"></use></svg>
+        </button>
+
+        <button class="hidden" type="button" data-stop>
+          <svg width="24" height="24"><use href="#icon-pause"></use></svg>
+        </button>
+
+        <button type="button" data-lap>
+          <svg width="24" height="24"><use href="#icon-lap"></use></svg>
+        </button>
+
+        <button type="button" data-reset>
+          <svg width="24" height="24"><use href="#icon-reset"></use></svg>
+        </button>
+      </div>
+
+      <div class="cumulative-display">
+        <span data-total>00.00</span>
+        (<span data-laps>0</span>)
+      </div>
+    </div>
+  </template>
+</body>
+</html>
+
