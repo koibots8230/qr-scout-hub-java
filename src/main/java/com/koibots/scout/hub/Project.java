@@ -1,8 +1,11 @@
 package com.koibots.scout.hub;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintStream;
@@ -423,6 +426,8 @@ public class Project {
     public List<Object[]> queryDatabase(String sql)
         throws IOException, SQLException
     {
+        System.out.println("Running query: " + sql);
+
         try (Connection conn = DriverManager.getConnection(getDatabaseURL());
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -609,6 +614,8 @@ public class Project {
         out.println("    -o, --output       Write output (e.g. export) to the specified file. (default stdout)");
         out.println("    -x, --export       Exports a project's database.");
         out.println("    -a, --add data     Adds a record to the project's database. (Tab-separated string)");
+        out.println("    -q, --query sql    Query the database with the specified SQL query.");
+        out.println("    --query-file file  Query the database with a SQL query stored in the specified file.");
     }
 
     private enum Operation {
@@ -639,6 +646,10 @@ public class Project {
                 operation = Operation.query;
 
                 query = args[argindex++];
+            } else if("--query-file".equals(arg)) {
+                operation = Operation.query;
+
+                query = readFile(args[argindex++]).trim();
             } else if("--new".equals(arg) || "-n".equals(arg)) {
                 operation = Operation.create;
             } else if("--directory".equals(arg) || "-d".equals(arg)) {
@@ -764,5 +775,22 @@ public class Project {
         }
 
         Project.dispose();
+    }
+
+    private static String readFile(String filename)
+        throws IOException
+    {
+        try(BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(filename), StandardCharsets.UTF_8))) {
+
+            StringBuilder sql = new StringBuilder();
+
+            String line;
+
+            while(null != (line = in.readLine())) {
+                sql.append(line).append('\n');
+            }
+
+            return sql.toString();
+        }
     }
 }
