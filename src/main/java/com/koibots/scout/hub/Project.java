@@ -696,7 +696,7 @@ public class Project {
             System.out.println();
             System.out.println("Scouting fields:");
             for(Field field : config.getFields()) {
-                System.out.println("  " + field.getTitle());
+                System.out.println("  " + field.getTitle() + " / " + field.getCode());
             }
         } else if(Operation.add == operation) {
             if(null == directory) {
