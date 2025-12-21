@@ -91,7 +91,7 @@ public class Project {
     }
 
     private static String normalizeColumnName(String column) {
-        return column.toLowerCase().replaceAll("[^a-z]+", "_");
+        return column.toUpperCase().replaceAll("[^A-Z]+", "_");
     }
 
     private static Field getFieldFromSQLColumn(GameConfig config, String sqlColumnName) {
@@ -130,10 +130,10 @@ public class Project {
 
     // NOTE: Caller is responsible for resource management
     private static void createTables(GameConfig config, Connection conn) throws SQLException {
-        StringBuilder sql = new StringBuilder("CREATE TABLE \"stand_scouting\" (\"id\" INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1)");
+        StringBuilder sql = new StringBuilder("CREATE TABLE stand_scouting (id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1)");
 
         for(GameConfig.Field field : config.getFields()) {
-            sql.append(", \"") // NOTE: Using explicit " surrounding the column name to preserve (lower) case
+            sql.append(", \"") // NOTE: Using explicit " surrounding the column name to protect keywords, etc.
             .append(normalizeColumnName(field.getCode()))
             .append("\" ")
             .append(getSQLDataType(field.getType()))
@@ -165,7 +165,7 @@ public class Project {
     }
 
     private int getRecordCount(Connection conn) throws SQLException {
-        try(PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) AS cnt FROM \"stand_scouting\"");
+        try(PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) AS cnt FROM stand_scouting");
             ResultSet rs = ps.executeQuery();) {
 
             if(rs.next()) {
@@ -214,7 +214,7 @@ public class Project {
                 _derbyLoaded = true;
 
                 // NOTE: stand_scouting is CASE SENSITIVE here
-                rs = conn.getMetaData().getColumns(null, "APP", "stand_scouting", null);
+                rs = conn.getMetaData().getColumns(null, "APP", "STAND_SCOUTING", null);
 
                 // Ensure that the db structure matches the project config
                 HashMap<String,String> dbFields = new HashMap<String,String>();
@@ -234,7 +234,7 @@ public class Project {
                 for(Map.Entry<String,String> entry : dbFields.entrySet()) {
                     String columnName = entry.getKey();
 
-                    if(!"id".equals(columnName)) {
+                    if(!"id".equalsIgnoreCase(columnName)) {
                         Field field = getFieldFromSQLColumn(config, columnName);
                         if(null == field) {
                             throw new IllegalStateException("Database contains field not found in configuration: " + columnName);
@@ -253,7 +253,7 @@ public class Project {
     }
 
     private String getInsertStatement() {
-        StringBuilder insert = new StringBuilder("INSERT INTO \"stand_scouting\" (");
+        StringBuilder insert = new StringBuilder("INSERT INTO stand_scouting (");
 
         Collection<Field> fields = getGameConfig().getFields();
 
@@ -377,7 +377,7 @@ public class Project {
 
             sql.append('"').append(normalizeColumnName(field.getCode())).append('"');
         }
-        sql.append(" FROM \"stand_scouting\"");
+        sql.append(" FROM stand_scouting");
 
         try (Connection conn = DriverManager.getConnection(getDatabaseURL());
              PreparedStatement ps = conn.prepareStatement(sql.toString());
