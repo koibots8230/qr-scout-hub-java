@@ -17,8 +17,10 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.koibots.scout.hub.GameConfig.Field;
@@ -418,6 +420,40 @@ public class Project {
         return "Project { dir=" + getDirectory() + ", game=" + getGameConfig().getPageTitle() + " }";
     }
 
+    public List<Object[]> queryDatabase(String sql)
+        throws IOException, SQLException
+    {
+        try (Connection conn = DriverManager.getConnection(getDatabaseURL());
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+               ResultSetMetaData rsmd = rs.getMetaData();
+
+               ArrayList<Object[]> rows = new ArrayList<>();
+
+               final int columnCount = rsmd.getColumnCount();
+               Object[] headers = new String[columnCount];
+
+               for(int i=0; i<columnCount; ) {
+                   headers[i] = rsmd.getColumnLabel(++i);
+               }
+
+               rows.add(headers);
+
+               while(rs.next()) {
+                   Object[] data = new Object[columnCount];
+
+                   for(int i=0; i < rsmd.getColumnCount(); ) {
+                       data[i] = rs.getObject(++i);
+                   }
+
+                   rows.add(data);
+               }
+
+               return rows;
+        }
+    }
+
     /**
      * Creates a new project.
      *
@@ -579,6 +615,7 @@ public class Project {
         create,
         info,
         add,
+        query,
         export;
     }
 
@@ -588,6 +625,7 @@ public class Project {
         File configFile = null;
         File output = null;
         String data = null;
+        String query = null;
         Operation operation = null;
 
         while(argindex < args.length) {
@@ -597,6 +635,10 @@ public class Project {
                 operation = Operation.info;
             } else if("--export".equals(arg) || "-x".equals(arg)) {
                 operation = Operation.export;
+            } else if("--query".equals(arg)) {
+                operation = Operation.query;
+
+                query = args[argindex++];
             } else if("--new".equals(arg) || "-n".equals(arg)) {
                 operation = Operation.create;
             } else if("--directory".equals(arg) || "-d".equals(arg)) {
@@ -657,6 +699,20 @@ public class Project {
             Project project = Project.loadProject(directory);
 
             project.insertRecord(data);
+        } else if(Operation.query == operation) {
+            Project project = Project.loadProject(directory);
+
+            List<Object[]> rows = project.queryDatabase(query);
+
+            for(Object[] row : rows) {
+                for(int i=0; i<row.length; ++i) {
+                    if(i > 0) System.out.print(',');
+
+                    System.out.print(row[i]);
+                }
+
+                System.out.println();
+            }
         } else if(Operation.export == operation) {
             if(null == directory) {
                 System.err.println("Must specify --directory");
