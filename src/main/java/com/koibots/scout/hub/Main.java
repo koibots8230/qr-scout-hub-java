@@ -367,6 +367,53 @@ public class Main {
             }
         };
 
+        Action chooseCameraAction = new AbstractAction() {
+            {
+                putValue(Action.NAME, "Choose Camera");
+                putValue(Action.SHORT_DESCRIPTION, "Allow you to choose the camera device to use.");
+                putValue(Action.MNEMONIC_KEY, (int)'c');
+            }
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                new Thread(() -> {
+                    _scanner.chooseCamera();
+
+                    // NOTE: chooseCamera already sets the device to be used
+                    // with later CodeScanner-related operations (e.g. "scan").
+                }).start();
+            }
+        };
+
+        Action justScanNow = new AbstractAction() {
+            {
+                putValue(Action.NAME, "Scan Code");
+                putValue(Action.SHORT_DESCRIPTION, "Scan a QR code and show the data.");
+                putValue(Action.MNEMONIC_KEY, (int)'s');
+                putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_S, metaKey | KeyEvent.SHIFT_DOWN_MASK));
+            }
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                new Thread(() -> {
+                    try {
+                        String code = _scanner.scanCode();
+
+                        if(null != code) {
+                            SwingUtilities.invokeLater(() ->
+                            JOptionPane.showMessageDialog(_main,
+                                    "Code scanned; data:\n" + code.replaceAll("\t", "\u2409"),
+                                    "Code Scanned",
+                                    JOptionPane.INFORMATION_MESSAGE)
+                                    );
+                        }
+                    } catch (Exception ex) {
+                        showError(ex);
+                    }
+                }).start();
+            }
+        };
+
         JMenu menu = new JMenu("File");
         JMenuItem item;
 
@@ -389,6 +436,12 @@ public class Main {
         }
 
         JMenuBar menubar = new JMenuBar();
+
+        menubar.add(menu);
+
+        menu = new JMenu("Tools");
+        menu.add(new JMenuItem(chooseCameraAction));
+        menu.add(new JMenuItem(justScanNow));
 
         menubar.add(menu);
 
