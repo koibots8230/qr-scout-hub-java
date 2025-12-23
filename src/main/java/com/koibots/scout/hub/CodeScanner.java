@@ -575,6 +575,8 @@ public class CodeScanner {
             // Build a drop-down of cameras
             JComboBox<String> dropdown = new JComboBox<String>(cameras);
 
+            dropdown.setSelectedIndex(getCameraDeviceID());
+
             JPanel panel = new JPanel(new FlowLayout());
 
             JButton okButton = new JButton("Choose");
