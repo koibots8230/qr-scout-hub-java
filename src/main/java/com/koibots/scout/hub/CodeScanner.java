@@ -711,7 +711,7 @@ public class CodeScanner {
                 operation = Operation.list;
             } else if("--probe".equals(arg)) {
                 operation = Operation.probe;
-            } else if("choose".equals(arg)) {
+            } else if("--choose".equals(arg)) {
                 operation = Operation.choose;
             } else if("--test".equals(arg)) {
                 operation = Operation.test;
