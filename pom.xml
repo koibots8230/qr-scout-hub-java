@@ -541,9 +541,9 @@
       </profile>
 
       <profile>
-        <id>jpackage</id>
+        <id>jpackage-mac</id>
         <!-- Builds an "application" including a JRE and all application assets. -->
-        <!-- mvn package -Pjpackage -->
+        <!-- mvn package -Pjpackage-mac -->
         <build>
           <plugins>
             <!-- 0. Delete any application bundle if it already exists. -->
@@ -736,6 +736,220 @@
                       <!-- Specify the icon set to use for the dock, etc. -->
                       <argument>--icon</argument>
                       <argument>${project.build.directory}/icons/${project.build.finalName}.icns</argument>
+
+                      <!-- Show a splash screen image during launch -->
+                      <argument>--java-options</argument>
+                      <argument>-splash:${APPDIR}/splash.png</argument>
+
+                      <argument>--verbose</argument>
+                    </arguments>
+                  </configuration>
+                </execution>
+              </executions>
+            </plugin>
+          </plugins>
+        </build>
+      </profile>
+
+      <profile>
+        <id>jpackage-win</id>
+        <!-- Builds an "application" directory including a JRE and all application assets. -->
+        <!-- mvn package -Pjpackage-win -->
+        <build>
+          <plugins>
+            <!-- 0. Delete any application bundle if it already exists. -->
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-antrun-plugin</artifactId>
+              <version>3.1.0</version>
+              <executions>
+                <execution>
+                  <id>delete-old-app</id>
+                  <phase>package</phase>
+                  <configuration>
+                    <target>
+                      <delete dir="${project.build.directory}/app" />
+
+                      <!-- MacOS -->
+                      <delete dir="${project.build.directory}/${project.name}.app"/>
+                      <delete file="${project.build.directory}/${project.name}.dmg"/>
+
+                      <!-- Windows -->
+                      <delete file="${project.build.directory}/${project.name}.exe"/>
+                      <delete file="${project.build.directory}/${project.name}.msi"/>
+                      <delete dir="${project.build.directory}/${project.name}"/>
+
+                      <!-- Linux -->
+                      <delete file="${project.build.directory}/${project.name}.deb"/>
+                      <delete file="${project.build.directory}/${project.name}.rpm"/>
+                    </target>
+                  </configuration>
+                  <goals>
+                    <goal>run</goal>
+                  </goals>
+                </execution>
+              </executions>
+            </plugin>
+
+            <!-- 1. Copy runtime dependencies to target/app -->
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-dependency-plugin</artifactId>
+              <version>3.6.0</version>
+              <executions>
+                <execution>
+                  <id>copy-dependencies</id>
+                  <phase>package</phase>
+                  <goals>
+                    <goal>copy-dependencies</goal>
+                  </goals>
+                  <configuration>
+                    <outputDirectory>${project.build.directory}/app</outputDirectory>
+                    <includeScope>runtime</includeScope>
+                  </configuration>
+                </execution>
+              </executions>
+            </plugin>
+
+            <!-- 2. Copy the main application JAR and splash image into target/app -->
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-resources-plugin</artifactId>
+                <version>3.3.1</version>
+                <executions>
+                  <execution>
+                    <id>copy-main-jar</id>
+                    <phase>package</phase>
+                    <goals><goal>copy-resources</goal></goals>
+                    <configuration>
+                    <outputDirectory>${project.build.directory}/app</outputDirectory>
+                    <resources>
+                      <resource>
+                        <directory>${project.build.directory}</directory>
+                        <includes>
+                          <include>${project.build.finalName}.jar</include>
+                        </includes>
+                      </resource>
+                    </resources>
+                  </configuration>
+                </execution>
+                <execution>
+                  <id>copy-splash</id>
+                  <phase>package</phase>
+                  <goals><goal>copy-resources</goal></goals>
+                  <configuration>
+                    <outputDirectory>${project.build.directory}/app</outputDirectory>
+                    <resources>
+                      <resource>
+                        <directory>src/main/resources/images</directory>
+                        <includes>
+                          <include>splash.png</include>
+                        </includes>
+                      </resource>
+                    </resources>
+                  </configuration>
+                </execution>
+                <!-- Copy the .ico file into the right place -->
+                <execution>
+                  <id>copy-ico-file</id>
+                  <phase>package</phase>
+                  <goals><goal>copy-resources</goal></goals>
+                  <configuration>
+                    <outputDirectory>${project.build.directory}/icons</outputDirectory>
+                    <resources>
+                      <resource>
+                        <directory>src/jpackage/</directory>
+                        <includes>
+                          <include>${project.build.finalName}.ico</include>
+                        </includes>
+                      </resource>
+                    </resources>
+                  </configuration>
+                </execution>
+              </executions>
+            </plugin>
+
+            <!-- 4. Delete unnecessary libraries that bloat the app bundle -->
+            <!-- 6. Call jpackage to build the appliction bundle. -->
+            <plugin>
+              <groupId>org.codehaus.mojo</groupId>
+              <artifactId>exec-maven-plugin</artifactId>
+              <version>3.2.0</version>
+              <executions>
+                <execution>
+                  <id>prune-superfluous-libraries</id>
+                  <phase>package</phase>
+                  <goals><goal>exec</goal></goals>
+                  <configuration>
+                    <executable>cmd.exe</executable>
+                    <arguments>
+                      <argument>/C</argument>
+                      <argument>
+                          dir target\app\*macos* target\app\*linux* target\app\*ios* target\app\*android* &amp; del target\app\*macos* target\app\*linux* target\app\*ios* target\app\*android*
+                      </argument>
+                    </arguments>
+                  </configuration>
+                </execution>
+<!--
+                <execution>
+                  <id>generate-icns</id>
+                  <phase>generate-resources</phase>
+                  <goals><goal>exec</goal></goals>
+                  <configuration>
+                    <executable>bash</executable>
+                    <arguments>
+                      <argument>-c</argument>
+                      <argument>
+                          set -e &amp;&amp; \
+                          mkdir -p target/icons/myapp.iconset &amp;&amp; \
+                          sips -z 16 16 src/main/resources/icons/koibots-logo.png - -out target/icons/myapp.iconset/icon_16x16.png &amp;&amp; \
+                          sips -z 32 32 src/main/resources/icons/koibots-logo.png - -out target/icons/myapp.iconset/icon_16x16@2x.png &amp;&amp; \
+                          sips -z 32 32 src/main/resources/icons/koibots-logo.png - -out target/icons/myapp.iconset/icon_32x32.png &amp;&amp; \
+                          sips -z 64 64 src/main/resources/icons/koibots-logo.png - -out target/icons/myapp.iconset/icon_32x32@2x.png &amp;&amp; \
+                          sips -z 128 128 src/main/resources/icons/koibots-logo.png - -out target/icons/myapp.iconset/icon_128x128.png &amp;&amp; \
+                          sips -z 256 256 src/main/resources/icons/koibots-logo.png - -out target/icons/myapp.iconset/icon_128x128@2x.png &amp;&amp; \
+                          sips -z 256 256 src/main/resources/icons/koibots-logo.png - -out target/icons/myapp.iconset/icon_256x256.png &amp;&amp; \
+                          sips -z 512 512 src/main/resources/icons/koibots-logo.png - -out target/icons/myapp.iconset/icon_256x256@2x.png &amp;&amp; \
+                          sips -z 512 512 src/main/resources/icons/koibots-logo.png - -out target/icons/myapp.iconset/icon_512x512.png &amp;&amp; \
+                          sips -z 1024 1024 src/main/resources/icons/koibots-logo.png - -out target/icons/myapp.iconset/icon_512x512@2x.png &amp;&amp; \
+                          iconutil -c icns target/icons/myapp.iconset -o "target/icons/${project.build.finalName}.icns"
+                      </argument>
+                    </arguments>
+                  </configuration>
+                </execution>
+-->
+                <execution>
+                  <id>run-jpackage</id>
+                  <phase>package</phase>
+                  <goals><goal>exec</goal></goals>
+                  <configuration>
+                    <executable>jpackage</executable>
+                    <arguments>
+                      <argument>--name</argument>
+                      <argument>${project.name}</argument>
+
+                      <argument>--input</argument>
+                      <argument>${project.build.directory}/app</argument>
+
+                      <argument>--main-jar</argument>
+                      <argument>${project.build.finalName}.jar</argument>
+
+                      <argument>--main-class</argument>
+                      <argument>${main.class}</argument>
+
+                      <!-- The app type: app-image = .app, dmg = .dmg disk image -->
+                      <argument>--type</argument>
+                      <argument>app-image</argument>
+
+                      <argument>--dest</argument>
+                      <argument>${project.build.directory}</argument>
+
+                      <argument>--resource-dir</argument>
+                      <argument>${project.basedir}/src/jpackage</argument>
+
+                      <!-- Specify the icon set to use for the dock, etc. -->
+                      <argument>--icon</argument>
+                      <argument>${project.build.directory}/icons/${project.build.finalName}.ico</argument>
 
                       <!-- Show a splash screen image during launch -->
                       <argument>--java-options</argument>
