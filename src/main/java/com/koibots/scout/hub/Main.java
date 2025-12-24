@@ -83,9 +83,14 @@ public class Main {
     private static final String PREFS_KEY_LAST_OPEN_PROJECT = "last.project.directory";
 
     private static final Collection<String> IMAGE_URLs = Arrays.asList(new String[] {
-            "/resources/icons/koibots-logo.png",
-            "/resources/icons/koibots-logo-1024x1024.png",
-            "/resources/icons/koibots-logo-32x32.png"
+            "/icons/koibots-logo-16x16.png",
+            "/icons/koibots-logo-20x20.png",
+            "/icons/koibots-logo-24x24.png",
+            "/icons/koibots-logo-32x32.png",
+            "/icons/koibots-logo-40x40.png",
+            "/icons/koibots-logo-48x48.png",
+            "/icons/koibots-logo-64x64.png",
+            "/icons/koibots-logo.png"
     });
 
     public static void main(String[] args) {
