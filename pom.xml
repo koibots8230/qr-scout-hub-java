@@ -710,6 +710,9 @@
                       <argument>--input</argument>
                       <argument>${project.build.directory}/app</argument>
 
+                      <argument>--add-modules</argument>
+                      <argument>java.base,java.desktop,java.prefs,java.sql</argument>
+
                       <argument>--main-jar</argument>
                       <argument>${project.build.finalName}.jar</argument>
 
@@ -902,6 +905,9 @@
 
                       <argument>--input</argument>
                       <argument>${project.build.directory}/app</argument>
+
+                      <argument>--add-modules</argument>
+                      <argument>java.base,java.desktop,java.prefs,java.sql</argument>
 
                       <argument>--main-jar</argument>
                       <argument>${project.build.finalName}.jar</argument>
@@ -1120,6 +1126,9 @@
 
                       <argument>--input</argument>
                       <argument>${project.build.directory}/app</argument>
+
+                      <argument>--add-modules</argument>
+                      <argument>java.base,java.desktop,java.prefs,java.sql</argument>
 
                       <argument>--main-jar</argument>
                       <argument>${project.build.finalName}.jar</argument>
