@@ -660,8 +660,9 @@
                     <arguments>
                       <argument>-c</argument>
                       <argument>
-                          ls -1 target/app/*x86* target/app/*windows* target/app/*linux* target/app/*ios* target/app/*android* &amp;&amp; \
-                          rm -f target/app/*x86* &amp;&amp; \
+                          del=$( [ "$(arch)" = 'arm64' ] &amp;&amp; echo x86 || echo arm64 ) &amp;&amp; \
+                          ls -1 target/app/*${del}* target/app/*windows* target/app/*linux* target/app/*ios* target/app/*android* &amp;&amp; \
+                          rm -f target/app/*${del}* &amp;&amp; \
                           rm -f target/app/*windows* &amp;&amp; \
                           rm -f target/app/*linux* &amp;&amp; \
                           rm -f target/app/*ios* &amp;&amp; \
@@ -732,6 +733,10 @@
                       <argument>${project.basedir}/src/jpackage/entitlements.plist</argument>
 
                       <argument>--mac-sign</argument>
+<!--
+<argument>- -mac-app-image-sign-identity</argument>
+<argument>Christopher Schultz Code Signing</argument>
+-->
 
                       <argument>--resource-dir</argument>
                       <argument>${project.basedir}/src/jpackage</argument>
@@ -874,8 +879,9 @@
                     <arguments>
                       <argument>-c</argument>
                       <argument>
-                          ls -1 target/app/*x86* target/app/*windows* target/app/*macos* target/app/*ios* target/app/*android* &amp;&amp; \
-                          rm -f target/app/*x86* &amp;&amp; \
+                          del=$( [ "$(arch)" = 'arm64' -o "$(arch)" = 'aarch64' ] &amp;&amp; echo x86 || echo arm64 ) &amp;&amp; \
+                          ls -1 target/app/*${del}* target/app/*windows* target/app/*macos* target/app/*ios* target/app/*android* &amp;&amp; \
+                          rm -f target/app/*${del}* &amp;&amp; \
                           rm -f target/app/*windows* &amp;&amp; \
                           rm -f target/app/*macos* &amp;&amp; \
                           rm -f target/app/*ios* &amp;&amp; \
