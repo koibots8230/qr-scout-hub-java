@@ -36,7 +36,7 @@ This application can be bundled as a self-contained MacOS application
 $ mvn package -Pjpackage-mac
 ```
 
-This will create a directory target/KoiBots QR Scout Hub.app containing the
+This will create a directory `target/KoiBots QR Scout Hub.app` containing the
 complete MacOS application. You can copy this file to other machines as long
 as the hardware architecture matches that of the source machine (e.g. aarch64
 to aarch64 or x86-64 to x86-64).
@@ -47,12 +47,21 @@ On Microsoft Windows, you can build an application directory using this command:
 C:> mvn package -Pjpackage-win
 ```
 
-This will create a directory target/KoiBots QR Scout Hub containing a Windows
+This will create a directory `target/KoiBots QR Scout Hub` containing a Windows
 .exe binary and all supporting files. You can copy this to other machines as long
-as the hardware architecture matches that of the source machine (e.g. x86-86 to
+as the hardware architecture matches that of the source machine (e.g. x86-64 to
 x86-64 or arm64 to arm64).
 
-Building an application on Linux is a future goal.
+On Linux, you can build an application directory using this command:
+
+```
+$ mvn package -Pjpackage-linux-app
+```
+
+This will create a directory `target/KoiBots QR Scout Hub` containing a binary
+launcher and all supporting files. you can copy this to other machines as long
+as the hardware architecture matches that of the source machine (e.g. x86-x64 to
+x86-64 or arm64 to arm64).
 
 # Testing individual components
 
