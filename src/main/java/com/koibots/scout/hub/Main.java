@@ -382,10 +382,30 @@ public class Main {
             @Override
             public void actionPerformed(ActionEvent e) {
                 new Thread(() -> {
-                    _scanner.chooseCamera();
+                    int cameraDeviceID = _scanner.chooseCamera();
+
+                    System.out.println("Got chosen camera device: " + cameraDeviceID);
 
                     // NOTE: chooseCamera already sets the device to be used
                     // with later CodeScanner-related operations (e.g. "scan").
+
+                    if(-3 == cameraDeviceID) {
+                        // This was an error
+                        SwingUtilities.invokeLater(() ->
+                        JOptionPane.showMessageDialog(_main,
+                                "Failed to open the camera. If you just gave permission to use the camera, please try one more time, or quit the app and re-launch it.",
+                                "Camera Failure",
+                                JOptionPane.INFORMATION_MESSAGE)
+                                );
+                    } else if(-2 == cameraDeviceID) {
+                        // No cameras detected
+                        SwingUtilities.invokeLater(() ->
+                        JOptionPane.showMessageDialog(_main,
+                                "No cameras detected. If you just gave permission to use the camera, please try one more time, or quit the app and re-launch it.",
+                                "No Cameras Found",
+                                JOptionPane.INFORMATION_MESSAGE)
+                                );
+                    }
                 }).start();
             }
         };
@@ -412,8 +432,20 @@ public class Main {
                                     JOptionPane.INFORMATION_MESSAGE)
                                     );
                         }
-                    } catch (Exception ex) {
-                        showError(ex);
+                    } catch (FrameGrabber.Exception fge) {
+                        if(cameraFailures.get() < 1) {
+                            SwingUtilities.invokeLater(() ->
+                                JOptionPane.showMessageDialog(_main,
+                                    "Failed to open the camera. If you just gave permission to use the camera, please try one more time, or quit the app and re-launch it.",
+                                    "Camera Failure",
+                                    JOptionPane.INFORMATION_MESSAGE)
+                            );
+                        } else {
+                            showError(fge);
+                        }
+                        cameraFailures.incrementAndGet();
+                    } catch (Throwable t) {
+                        showError(t);
                     }
                 }).start();
             }
