@@ -358,6 +358,8 @@ public class Main {
                 putValue(Action.SHORT_DESCRIPTION, "Exports the database to CSV.");
                 putValue(Action.LARGE_ICON_KEY, getIcon("/images/export.png"));
                 putValue(Action.MNEMONIC_KEY, (int)'x');
+
+                setEnabled(false);
             }
 
             @Override
@@ -917,10 +919,10 @@ public class Main {
             _cardLayout.next(_cardPanel);
 
             _scanAction.setEnabled(true);
+            _exportAction.setEnabled(true);
+            _closeAction.setEnabled(true);
 
             _statusLine.setText("Record count: " + recordCount);
-
-            _closeAction.setEnabled(true);
 
             JOptionPane.showMessageDialog(_main, "Successfully loaded project \"" + projectName + "\"", "Project Loaded", JOptionPane.INFORMATION_MESSAGE);
         });
@@ -980,7 +982,7 @@ public class Main {
     }
 
     private void showHelp() {
-        JOptionPane.showConfirmDialog(_main, "Not yet implemented", "Help", JOptionPane.OK_OPTION);
+        JOptionPane.showConfirmDialog(_main, "Not yet implemented", "Help", JOptionPane.OK_CANCEL_OPTION);
     }
 
     private void showError(Throwable t) {
