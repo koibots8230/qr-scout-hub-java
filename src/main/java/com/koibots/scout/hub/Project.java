@@ -642,7 +642,7 @@ public class Project {
                 operation = Operation.info;
             } else if("--export".equals(arg) || "-x".equals(arg)) {
                 operation = Operation.export;
-            } else if("--query".equals(arg)) {
+            } else if("--query".equals(arg) || "-q".equals(arg)) {
                 operation = Operation.query;
 
                 query = args[argindex++];
@@ -658,7 +658,7 @@ public class Project {
                 configFile = new File(args[argindex++]);
             } else if("--output".equals(arg) || "-o".equals(arg)) {
                 output = new File(args[argindex++]);
-            } else if("--add".equals(arg) || "-q".equals(arg)) {
+            } else if("--add".equals(arg) || "-a".equals(arg)) {
                 operation = Operation.add;
                 data = args[argindex++];
             } else if("--help".equals(arg) || "-h".equals(arg)) {
