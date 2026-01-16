@@ -134,85 +134,85 @@ public class GameConfig {
     public static GameConfig readURL(URL url) throws IOException {
         Gson gson = new Gson();
 
-        Reader reader = new InputStreamReader(url.openStream(), StandardCharsets.UTF_8);
+        try(Reader reader = new InputStreamReader(url.openStream(), StandardCharsets.UTF_8)) {
+            //
+            // Config file structure
+            //
+            // sections : [
+            //   { "name" : sectionName,
+            //     "fields" : [
+            //       { "title", ...
+            //     ]
+            // ]
 
-        //
-        // Config file structure
-        //
-        // sections : [
-        //   { "name" : sectionName,
-        //     "fields" : [
-        //       { "title", ...
-        //     ]
-        // ]
+            Map<?, ?> data = gson.fromJson(reader, Map.class);
 
-        Map<?, ?> data = gson.fromJson(reader, Map.class);
+            Object o = data.get("page_title");
 
-        Object o = data.get("page_title");
-
-        if(null == o || !(o instanceof String)) {
-            throw new IOException("Config has no 'page_title' property");
-        }
-
-        GameConfig config = new GameConfig();
-
-        config.pageTitle = (String)o;
-
-        o = data.get("sections");
-        if(null == o) {
-            throw new IOException("Config file has no 'sections' property");
-        }
-
-        if(!(o instanceof Collection<?>)) {
-            throw new IOException("Config file contains suspicious 'sections' property: expected Collection, got type=" + o.getClass().getName());
-        }
-
-        ArrayList<Field> fields = new ArrayList<Field>();
-
-        for(Object section : (Collection<?>)o) {
-            if(!(section instanceof Map<?,?>)) {
-                throw new IOException("Config file contains suspicious 'section': expected Map, got type=" + section.getClass().getName());
+            if(null == o || !(o instanceof String)) {
+                throw new IOException("Config has no 'page_title' property");
             }
 
-            o = ((Map<?,?>)section).get("name");
+            GameConfig config = new GameConfig();
 
-            if(!(o instanceof String)) {
-                throw new IOException("Config file contains section with no name");
-            }
+            config.pageTitle = (String)o;
 
-            String sectionName = (String)o;
-
-            o = ((Map<?,?>)section).get("fields");
-
+            o = data.get("sections");
             if(null == o) {
-                throw new IOException("Section " + sectionName + " contains no fields");
-            }
-            if(!(o instanceof Collection<?>)) {
-                throw new IOException("Config file section " + sectionName + " contains suspicious 'fields': expected Collection, got type=" + o.getClass().getName());
+                throw new IOException("Config file has no 'sections' property");
             }
 
-            for(Object field : (Collection<?>)o) {
-                if(!(field instanceof Map<?,?>)) {
-                    throw new IOException("Config file section " + sectionName + " contains suspicious field: expected Map, got type=" + field.getClass().getName());
+            if(!(o instanceof Collection<?>)) {
+                throw new IOException("Config file contains suspicious 'sections' property: expected Collection, got type=" + o.getClass().getName());
+            }
+
+            ArrayList<Field> fields = new ArrayList<Field>();
+
+            for(Object section : (Collection<?>)o) {
+                if(!(section instanceof Map<?,?>)) {
+                    throw new IOException("Config file contains suspicious 'section': expected Map, got type=" + section.getClass().getName());
                 }
 
-                data = (Map<?,?>)field;
+                o = ((Map<?,?>)section).get("name");
 
-                Field f = new Field();
-                f.title = (String)data.get("title");
-                f.description = (String)data.get("description");
-                f.type = (String)data.get("type");
-                f.required = Boolean.TRUE.equals(data.get("required"));
-                f.code = (String)data.get("code");
-                f.defaultValue = String.valueOf(data.get("defaultValue"));
+                if(!(o instanceof String)) {
+                    throw new IOException("Config file contains section with no name");
+                }
 
-                fields.add(f);
+                String sectionName = (String)o;
+
+                o = ((Map<?,?>)section).get("fields");
+
+                if(null == o) {
+                    throw new IOException("Section " + sectionName + " contains no fields");
+                }
+                if(!(o instanceof Collection<?>)) {
+                    throw new IOException("Config file section " + sectionName + " contains suspicious 'fields': expected Collection, got type=" + o.getClass().getName());
+                }
+
+                for(Object field : (Collection<?>)o) {
+                    if(!(field instanceof Map<?,?>)) {
+                        throw new IOException("Config file section " + sectionName + " contains suspicious field: expected Map, got type=" + field.getClass().getName());
+                    }
+
+                    data = (Map<?,?>)field;
+
+                    Field f = new Field();
+                    f.title = (String)data.get("title");
+                    f.description = (String)data.get("description");
+                    f.type = (String)data.get("type");
+                    f.required = Boolean.TRUE.equals(data.get("required"));
+                    f.code = (String)data.get("code");
+                    f.defaultValue = String.valueOf(data.get("defaultValue"));
+
+                    fields.add(f);
+                }
             }
+
+            config.fields = fields;
+
+            return config;
         }
-
-        config.fields = fields;
-
-        return config;
     }
 
     public static void main(String[] args) throws Exception {

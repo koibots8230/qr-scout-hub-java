@@ -43,25 +43,23 @@ public class Analytic {
     private void loadFromFile(File file) throws IOException {
         Gson gson = new Gson();
 
-        FileReader reader = new FileReader(file, StandardCharsets.UTF_8);
+        try(FileReader reader = new FileReader(file, StandardCharsets.UTF_8)) {
 
-        //
-        // Config file structure
-        //
-        //   { "name" : anyliticName,
-        //     "query" : sqlQuery }.
-        //
+            //
+            // Config file structure
+            //
+            //   { "name" : anyliticName,
+            //     "query" : sqlQuery }.
+            //
 
-        Map<?, ?> data = gson.fromJson(reader, Map.class);
+            Map<?, ?> data = gson.fromJson(reader, Map.class);
 
-        setName((String)data.get("name"));
-        sendQuery((String)data.get("query"));
-
+            setName((String)data.get("name"));
+            sendQuery((String)data.get("query"));
+        }
     }
 
     public static void main(String[] args) throws Exception {
         System.out.println(loadAnalytic(new File(args[0])));
     }
 }
-
-
