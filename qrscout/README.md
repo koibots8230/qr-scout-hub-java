@@ -1,4 +1,4 @@
-This is the KoiBots clone of FRC 5713 Red Hawk Robotics QR Scout.
+This is the KoiBots clone of FRC 2713 Red Hawk Robotics QR Scout.
 
 We blatently stole all of their ideas but re-implemented them with a
 (hopefully) more straightforward design using only HTML, CSS, and javascript.
@@ -7,7 +7,7 @@ The only library added is QRious for QR-code generation.
 The interface is built dynamically by loading a configuration file called
 <code>config.json</code> which will be loaded relative to index.html.
 It is in JSON format and follows the specification designed by FRC team
-5713 and documented here:
+2713 and documented here:
 
 https://github.com/FRC2713/QRScout?tab=readme-ov-file#configjson
 
