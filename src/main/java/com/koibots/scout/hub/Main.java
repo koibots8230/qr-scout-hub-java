@@ -272,13 +272,7 @@ public class Main {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                _project = null;
-
-                _cardLayout.first(_cardPanel);
-                _closeAction.setEnabled(false);
-                _exportAction.setEnabled(false);
-                _main.setTitle(PROGRAM_NAME);
-                _statusLine.setText("Project closed.");
+                closeProject();
             }
         };
 
@@ -358,8 +352,6 @@ public class Main {
                 putValue(Action.SHORT_DESCRIPTION, "Exports the database to CSV.");
                 putValue(Action.LARGE_ICON_KEY, getIcon("/images/export.png"));
                 putValue(Action.MNEMONIC_KEY, (int)'x');
-
-                setEnabled(false);
             }
 
             @Override
@@ -481,7 +473,6 @@ public class Main {
         menu = new JMenu("Tools");
         menu.add(new JMenuItem(chooseCameraAction));
         menu.add(new JMenuItem(justScanNow));
-
         menubar.add(menu);
 
         menu = new JMenu("Help");
@@ -647,6 +638,7 @@ public class Main {
         _closeAction.setEnabled(false);
         _scanAction.setEnabled(false);
         _importAction.setEnabled(false);
+        _exportAction.setEnabled(true);
 
         _main.setSize(800, 600);
 
@@ -925,14 +917,25 @@ public class Main {
 
             _cardLayout.next(_cardPanel);
 
+            _closeAction.setEnabled(true);
             _scanAction.setEnabled(true);
             _exportAction.setEnabled(true);
-            _closeAction.setEnabled(true);
 
             _statusLine.setText("Record count: " + recordCount);
 
             JOptionPane.showMessageDialog(_main, "Successfully loaded project \"" + projectName + "\"", "Project Loaded", JOptionPane.INFORMATION_MESSAGE);
         });
+    }
+
+    private void closeProject() {
+        _cardLayout.first(_cardPanel);
+        _closeAction.setEnabled(false);
+        _scanAction.setEnabled(false);
+        _exportAction.setEnabled(false);
+        _main.setTitle(PROGRAM_NAME);
+        _statusLine.setText("Project closed.");
+
+        _project = null;
     }
 
     private int insertRecord(String codeData) throws SQLException {
