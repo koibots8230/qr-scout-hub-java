@@ -24,15 +24,25 @@ import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.io.UncheckedIOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.jar.JarFile;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -130,6 +140,7 @@ public class Main {
     // Actions which can be manifested as buttons or menu items
     private Action _closeAction;
     private Action _scanAction;
+    private Action _launchWebappAction;
     private Action _importAction;
     private Action _exportAction;
 
@@ -319,6 +330,34 @@ public class Main {
             }
         };
 
+        _launchWebappAction = new AbstractAction() {
+            {
+                putValue(Action.NAME, "Launch Web Application");
+                putValue(Action.SHORT_DESCRIPTION, "Launches the QR Scout Web Application locally for testing.");
+                putValue(Action.MNEMONIC_KEY, (int)'w');
+                putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_W, metaKey | KeyEvent.SHIFT_DOWN_MASK));
+            }
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    buildWebApplication();
+
+                    startWebServer();
+
+                    if(null == webServer) {
+                        showError(new Throwable("Oh noes!"));
+                    }
+
+                    URI uri = new URI("http://localhost:" + webServer.getPort() + "/");
+
+                    Desktop.getDesktop().browse(uri);
+                } catch (Throwable t) {
+                    showError(t);
+                }
+            }
+        };
+
         _importAction = new AbstractAction() {
             {
                 putValue(Action.NAME, "Import");
@@ -473,6 +512,7 @@ public class Main {
         menu = new JMenu("Tools");
         menu.add(new JMenuItem(chooseCameraAction));
         menu.add(new JMenuItem(justScanNow));
+        menu.add(new JMenuItem(_launchWebappAction));
         menubar.add(menu);
 
         menu = new JMenu("Help");
@@ -639,6 +679,7 @@ public class Main {
         _scanAction.setEnabled(false);
         _importAction.setEnabled(false);
         _exportAction.setEnabled(true);
+        _launchWebappAction.setEnabled(false);
 
         _main.setSize(800, 600);
 
@@ -919,6 +960,7 @@ public class Main {
 
             _closeAction.setEnabled(true);
             _scanAction.setEnabled(true);
+            _launchWebappAction.setEnabled(true);
             _exportAction.setEnabled(true);
 
             _statusLine.setText("Record count: " + recordCount);
@@ -932,6 +974,7 @@ public class Main {
         _closeAction.setEnabled(false);
         _scanAction.setEnabled(false);
         _exportAction.setEnabled(false);
+        _launchWebappAction.setEnabled(false);
         _main.setTitle(PROGRAM_NAME);
         _statusLine.setText("Project closed.");
 
@@ -1021,6 +1064,128 @@ public class Main {
         SwingUtilities.invokeLater(() -> dialog.setVisible(true));
     }
 
+    private SimpleHttpServer webServer;
+
+    private void buildWebApplication() throws IOException {
+        // Create the target directory if necessary
+        Path targetDir = new File(_project.getDirectory(), "web").toPath();
+        Files.createDirectories(targetDir);
+
+        //
+        // First, copy all of the stock QR Scout files from the current JAR
+        // file into the target directory.
+        //
+
+        AtomicInteger copiedFiles = new AtomicInteger(0);
+
+        String sourceResourceName = "qrscout"; // Relative without leading /
+        try {
+            URL url = getClass().getClassLoader().getResource(sourceResourceName);
+            if (url != null && url.getProtocol().equals("file")) {
+                // Exploded classpath
+                Path srcDir = Paths.get(url.toURI());
+                Files.walk(srcDir).forEach(p -> {
+                    try {
+                        Path dest = targetDir.resolve(srcDir.relativize(p).toString());
+                        if (Files.isDirectory(p)) {
+                            Files.createDirectories(dest);
+                        } else {
+                            Files.copy(p, dest, StandardCopyOption.REPLACE_EXISTING);
+                            copiedFiles.incrementAndGet();
+                        }
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                });
+            } else {
+                // Running from JAR: enumerate current JAR
+                String jarPath = getClass()
+                        .getProtectionDomain()
+                        .getCodeSource()
+                        .getLocation()
+                        .getPath();
+
+                String pathPrefix = sourceResourceName + "/";
+                try (JarFile jar = new JarFile(URLDecoder.decode(jarPath, "UTF-8"))) {
+                    jar.stream()
+                    .filter(e -> e.getName().startsWith(pathPrefix) && !e.isDirectory())
+                    .forEach(entry -> {
+                        Path dest = targetDir.resolve(entry.getName().substring(pathPrefix.length()));
+                        try {
+                            Files.createDirectories(dest.getParent());
+                            try (InputStream in = jar.getInputStream(entry)) {
+                                Files.copy(in, dest, StandardCopyOption.REPLACE_EXISTING);
+                                copiedFiles.incrementAndGet();
+                            }
+                        } catch (IOException ex) {
+                            // Must wrap this in an unchecked exception because
+                            // Consumer.accept (which is what this lambda
+                            // actually is) doesn't allow any checked
+                            // exceptions.
+                            //
+                            // We will unwrap it later if it gets thrown,
+                            // and re-throw the original exception.
+                            throw new UncheckedIOException(ex);
+                        }
+                    });
+                }
+            }
+        } catch (UncheckedIOException uioe) {
+            // Unwrap this unchecked exception
+            throw uioe.getCause();
+        } catch (URISyntaxException use) {
+            // Shouldn't happen, since these URIs are being generated by the JVM
+            throw new IOException(use.getMessage(), use);
+        }
+
+        if(0 == copiedFiles.get()) {
+            throw new IOException("Could not find QR Scout web application source. Packaging error?");
+        }
+
+        // Finally, copy the config.json file from the project into the target
+        Files.copy(new File(_project.getDirectory(), "config.json").toPath(),
+                targetDir.resolve("config.json"),
+                StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    private void startWebServer() {
+        if(null == webServer) {
+            try {
+                SimpleHttpServer server = new SimpleHttpServer(8080, new File(_project.getDirectory(), "web").toPath());
+                server.start();
+
+                server.addRequestListener(new SimpleHttpServer.RequestListener() {
+
+                    @Override
+                    public void requestErrored(Throwable t) {
+                        System.err.println("HTTP server request error:");
+                        t.printStackTrace();
+                    }
+
+                    @Override
+                    public void requestProcessed(int responseCode, Path path, long length) {
+                        System.out.println("HTTP Server: " + responseCode + " " + path + " len=" + length);
+                    }
+                });
+                webServer = server;
+            } catch (IOException e) {
+                showError(e);
+            }
+        }
+    }
+
+    private void stopWebServer() {
+        if(null != webServer) {
+            System.out.println("Stopping web server...");
+
+            webServer.shutdown();
+
+            System.out.println("Stopped web server.");
+
+            webServer = null;
+        }
+    }
+
     private String getFileContents(URL url) {
         try (BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream(), "UTF-8"))) {
             StringBuilder sb = new StringBuilder();
@@ -1043,6 +1208,8 @@ public class Main {
     {
         private void quit() {
             System.err.println("Shutting down normally (menu action handler) ...");
+
+            stopWebServer();
 
             try {
                 Project.dispose();
