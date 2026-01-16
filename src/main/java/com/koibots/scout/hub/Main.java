@@ -752,6 +752,16 @@ public class Main {
         String lastProjectDirectory = prefs.get(PREFS_KEY_LAST_OPEN_PROJECT, null);
         if(null != lastProjectDirectory) {
             System.out.println("Last open project: " + lastProjectDirectory);
+            if(null != lastProjectDirectory) {
+                File projectDir = new File(lastProjectDirectory);
+                if(projectDir.isDirectory()) {
+                    try {
+                        loadProject(projectDir);
+                    } catch (Exception e) {
+                        showError(e);
+                    }
+                }
+            }
         }
     }
 
@@ -1036,6 +1046,8 @@ public class Main {
             } catch (Throwable t) {
                 showError(t);
             }
+
+            savePreferences();
 
             System.exit(0);
         }
