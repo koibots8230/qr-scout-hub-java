@@ -486,11 +486,8 @@ public class Main {
 
         menu = new JMenu("Help");
         item = new JMenuItem("Help");
-        item.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                SwingUtilities.invokeLater(() -> showHelp() );
-            }
+        item.addActionListener((e) -> {
+            SwingUtilities.invokeLater(() -> showHelp() );
         });
         menu.add(item);
         menubar.add(menu);
