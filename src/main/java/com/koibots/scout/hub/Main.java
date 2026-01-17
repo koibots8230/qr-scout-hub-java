@@ -57,6 +57,7 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.InputMap;
 import javax.swing.JButton;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
@@ -96,6 +97,7 @@ public class Main {
     private static final String PREFS_KEY_FILE_DIALOG_DIRECTORY = "file.dialog.directory";
     private static final String PREFS_KEY_CAMERA_DEVICE_ID = "camera.device.id";
     private static final String PREFS_KEY_LAST_OPEN_PROJECT = "last.project.directory";
+    private static final String PREFS_KEY_INSERT_IMMEDIATELY = "insert.immediately";
 
     private static final Collection<String> IMAGE_URLs = Arrays.asList(new String[] {
             "/icons/koibots-logo-16x16.png",
@@ -159,6 +161,7 @@ public class Main {
     private Action _launchWebappAction;
 
     private ApplicationQuitHandler _quitHandler;
+    JCheckBoxMenuItem _importImmediatelyOption = null;
 
     /**
      * The number of camera failures since process start.
@@ -175,6 +178,19 @@ public class Main {
      * configuration such as FPS, camera device, etc.
      */
     private CodeScanner _scanner;
+
+    /**
+     * Whether or not to insert records immediately without asking.
+     */
+    private boolean _insertImmediately = true;
+
+    public void setInsertImmediately(boolean insertImmediately) {
+        _insertImmediately = insertImmediately;
+    }
+
+    public boolean getInsertImmediately() {
+        return _insertImmediately;
+    }
 
     /**
      * These menus and menu items are dynamic, and will need to be updated
@@ -338,6 +354,10 @@ public class Main {
 
                             _recordText.setText(code);
 
+                            if(getInsertImmediately()) {
+                                insertRecord(code);
+                            }
+
                             _importAction.setEnabled(true);
                         } else {
                             System.out.println("User cancelled code capture");
@@ -401,17 +421,7 @@ public class Main {
             @Override
             public void actionPerformed(ActionEvent e) {
                 new Thread(() -> {
-                    try {
-                        int recordCount = insertRecord(_recordText.getText());
-
-                        SwingUtilities.invokeLater(() -> {
-                            _recordText.setText("Import successful.");
-                            _statusLine.setText("Record count: " + recordCount);
-                            _importAction.setEnabled(false);
-                        });
-                    } catch (Throwable t) {
-                        showError(t);
-                    }
+                    insertRecord(_recordText.getText());
                 }).start();
             }
         };
@@ -561,6 +571,12 @@ public class Main {
         if(isMacOS) {
             // On MacOS, this will cause MacOS to add a "search" bar to the 'help' menu.
         }
+
+        _importImmediatelyOption = new JCheckBoxMenuItem("Import Immediately");
+        _importImmediatelyOption.addActionListener((e) -> {
+            JCheckBoxMenuItem i = (JCheckBoxMenuItem)e.getSource();
+            setInsertImmediately(i.isSelected());
+        });
 
         Desktop desktop = Desktop.getDesktop();
         _quitHandler = new ApplicationQuitHandler();
@@ -770,6 +786,10 @@ public class Main {
 //        _windowMenu.add(_projectMenuItem);
 //        menubar.add(_windowMenu);
 
+        menu = new JMenu("Options");
+        menu.add(_importImmediatelyOption);
+        menubar.add(menu);
+
         menu = new JMenu("Help");
         item = new JMenuItem("Help");
         item.addActionListener((e) -> {
@@ -895,6 +915,9 @@ public class Main {
                 }
             }
         }
+
+        setInsertImmediately(prefs.getBoolean(PREFS_KEY_INSERT_IMMEDIATELY, false));
+        _importImmediatelyOption.setSelected(getInsertImmediately());
     }
 
     private void savePreferences() {
@@ -902,6 +925,7 @@ public class Main {
 
         prefs.put(PREFS_KEY_FILE_DIALOG_DIRECTORY, getFileDialogDirectory().getAbsolutePath());
         prefs.put(PREFS_KEY_CAMERA_DEVICE_ID, String.valueOf(_scanner.getCameraDeviceID()));
+        prefs.putBoolean(PREFS_KEY_INSERT_IMMEDIATELY, getInsertImmediately());
         if(null != _project) {
             prefs.put(PREFS_KEY_LAST_OPEN_PROJECT, _project.getDirectory().getAbsolutePath());
         }
@@ -1081,10 +1105,20 @@ public class Main {
         _project = null;
     }
 
-    private int insertRecord(String codeData) throws SQLException {
-        _project.insertRecord(codeData);
+    private void insertRecord(String codeData) {
+        try {
+            _project.insertRecord(codeData);
 
-        return _project.getRecordCount();
+            int recordCount = _project.getRecordCount();
+
+            SwingUtilities.invokeLater(() -> {
+                _recordText.setText("Import successful.");
+                _statusLine.setText("Record count: " + recordCount);
+                _importAction.setEnabled(false);
+            });
+        } catch (Throwable t) {
+            showError(t);
+        }
     }
 
     private void exportDatabase() throws IOException, SQLException {
