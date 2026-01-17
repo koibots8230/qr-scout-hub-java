@@ -2,6 +2,7 @@ package com.koibots.scout.hub;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -25,6 +26,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.commons.lang3.ObjectUtils.Null;
 
 import com.koibots.scout.hub.GameConfig.Field;
 import com.opencsv.CSVWriter;
@@ -50,6 +53,11 @@ public class Project {
      */
     private GameConfig config;
 
+    /**
+     * The list of anylitics
+     */
+    private List<Analytic> analytics = new ArrayList<>();
+
     private Project() {
         // Only define a private constructor: clients must use static Factory methods.
     }
@@ -72,6 +80,34 @@ public class Project {
 
     private void setDatabaseURL(String databaseURL) {
         this.databaseURL = databaseURL;
+    }
+
+    public void addAnalytic(File file) throws IOException{
+        analytics.add(Analytic.loadAnalytic(file));
+    }
+
+    private void loadAnalytics() throws IOException {
+        System.out.println("running loadAnalytics\n");
+        File dir = new File(getDirectory(), "Analytics");
+        if (dir.exists()) {
+            File files[] = dir.listFiles(new FileFilter() {
+
+                @Override
+                public boolean accept(File pathname) {
+                    if (pathname.getName().endsWith(".json")){
+                        return true;
+                    }
+                    return false;
+                }   
+            });
+            for (File file : files) {
+                addAnalytic(file);
+            }
+        }
+    }
+
+    public String getAnalytics() {
+        return analytics.toString();
     }
 
     private String getDatabaseURL() {
@@ -565,6 +601,7 @@ public class Project {
         } catch (SQLException sqle) {
             throw new IOException("Database error", sqle);
         }
+        project.loadAnalytics();
 
         return project;
     }
@@ -695,6 +732,7 @@ public class Project {
             System.out.println("Record count: " + project.getRecordCount());
             System.out.println();
             System.out.println("Scouting fields:");
+            System.out.println("analytics: " + project.getAnalytics());
             for(Field field : config.getFields()) {
                 System.out.println("  " + field.getTitle() + " / " + field.getCode());
             }
