@@ -2,7 +2,6 @@ package com.koibots.scout.hub;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -85,21 +84,19 @@ public class Project {
     }
 
     private void loadAnalytics() throws IOException {
-        System.out.println("running loadAnalytics\n");
         File dir = new File(getDirectory(), "Analytics");
         if (dir.exists()) {
-            File files[] = dir.listFiles(new FileFilter() {
-
-                @Override
-                public boolean accept(File pathname) {
-                    if (pathname.getName().endsWith(".json")){
-                        return true;
-                    }
-                    return false;
-                }
+            File files[] = dir.listFiles((path) -> {
+                return path.getName().toLowerCase().endsWith(".json");
             });
+
             for (File file : files) {
-                addAnalytic(file);
+                try {
+                    addAnalytic(file);
+                } catch (IOException ioe) {
+                    // Log to stderr but continue
+                    ioe.printStackTrace();
+                }
             }
         }
     }
