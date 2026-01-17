@@ -160,6 +160,13 @@ public class Main {
      */
     private CodeScanner _scanner;
 
+    /**
+     * These menus and menu items are dynamic, and will need to be updated
+     * at various times.
+     */
+    private JMenu _windowMenu;
+    private JMenuItem _projectMenuItem;
+
     public void safeInit() {
         try {
             init();
@@ -514,6 +521,15 @@ public class Main {
         menu.add(new JMenuItem(justScanNow));
         menu.add(new JMenuItem(_launchWebappAction));
         menubar.add(menu);
+
+        _projectMenuItem = new JMenuItem("Project");
+        _windowMenu = new JMenu("Window");
+        _projectMenuItem.addActionListener((e) -> {
+            _main.toFront();
+            _main.requestFocus();
+        });
+        _windowMenu.add(_projectMenuItem);
+        menubar.add(_windowMenu);
 
         menu = new JMenu("Help");
         item = new JMenuItem("Help");
