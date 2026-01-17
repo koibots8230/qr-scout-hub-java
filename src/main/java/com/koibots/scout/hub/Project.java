@@ -27,8 +27,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.ObjectUtils.Null;
-
 import com.koibots.scout.hub.GameConfig.Field;
 import com.opencsv.CSVWriter;
 
@@ -98,7 +96,7 @@ public class Project {
                         return true;
                     }
                     return false;
-                }   
+                }
             });
             for (File file : files) {
                 addAnalytic(file);
@@ -106,8 +104,8 @@ public class Project {
         }
     }
 
-    public String getAnalytics() {
-        return analytics.toString();
+    public List<Analytic> getAnalytics() {
+        return analytics;
     }
 
     private String getDatabaseURL() {
