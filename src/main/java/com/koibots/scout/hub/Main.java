@@ -1399,9 +1399,10 @@ public class Main {
                                     wnd.toFront();
                                     wnd.requestFocus();
                                 });
-                                break;
+                                return;
                             }
                         }
+
                         // Nope? Okay, create a new window and register it.
                         AnalyticWindow aw = new AnalyticWindow(a);
                         aw.init();
