@@ -21,7 +21,7 @@ public class Analytic {
         return name;
     }
 
-    public void sendQuery(String query) {
+    public void setQuery(String query) {
         this.query = query;
     }
 
@@ -55,7 +55,7 @@ public class Analytic {
             Map<?, ?> data = gson.fromJson(reader, Map.class);
 
             setName((String)data.get("name"));
-            sendQuery((String)data.get("query"));
+            setQuery((String)data.get("query"));
         }
     }
 
