@@ -138,11 +138,19 @@ public class Main {
     private Project _project;
 
     // Actions which can be manifested as buttons or menu items
+    private Action _newAction;
+    private Action _openAction;
     private Action _closeAction;
+
     private Action _scanAction;
-    private Action _launchWebappAction;
     private Action _importAction;
     private Action _exportAction;
+
+    private Action _justScanNow;
+    private Action _chooseCameraAction;
+    private Action _launchWebappAction;
+
+    private ApplicationQuitHandler _quitHandler;
 
     /**
      * The number of camera failures since process start.
@@ -175,10 +183,9 @@ public class Main {
         }
     }
 
-    public void init() {
-        String osName = System.getProperty("os.name");
-        boolean isMacOS = osName != null && osName.matches(".*Mac OS X.*");
+    private boolean isMacOS = System.getProperty("os.name") != null && System.getProperty("os.name").matches(".*Mac OS X.*");
 
+    public void init() {
         long elapsed = System.currentTimeMillis();
 
         System.out.println(System.currentTimeMillis() + ", " + (System.currentTimeMillis() - elapsed) + " :  Initilizing UI...");
@@ -238,7 +245,7 @@ public class Main {
 
         int metaKey = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
 
-        Action newAction = new AbstractAction() {
+        _newAction = new AbstractAction() {
             {
                 putValue(Action.NAME, "New...");
                 putValue(Action.SHORT_DESCRIPTION, "Creates a new project.");
@@ -265,7 +272,7 @@ public class Main {
             }
         };
 
-        Action openAction = new AbstractAction() {
+        _openAction = new AbstractAction() {
             {
                 putValue(Action.NAME, "Open...");
                 putValue(Action.SHORT_DESCRIPTION, "Opens a project.");
@@ -412,7 +419,7 @@ public class Main {
             }
         };
 
-        Action chooseCameraAction = new AbstractAction() {
+        _chooseCameraAction = new AbstractAction() {
             {
                 putValue(Action.NAME, "Choose Camera");
                 putValue(Action.SHORT_DESCRIPTION, "Allow you to choose the camera device to use.");
@@ -450,7 +457,7 @@ public class Main {
             }
         };
 
-        Action justScanNow = new AbstractAction() {
+        _justScanNow = new AbstractAction() {
             {
                 putValue(Action.NAME, "Scan Code");
                 putValue(Action.SHORT_DESCRIPTION, "Scan a QR code and show the data.");
@@ -491,61 +498,15 @@ public class Main {
             }
         };
 
-        JMenu menu = new JMenu("File");
-        JMenuItem item;
-
-        menu.add(new JMenuItem(newAction));
-
-        menu.add(new JMenuItem(openAction));
-
-        menu.add(new JMenuItem(_closeAction));
-        menu.add(new JMenuItem(_exportAction));
-
-        // MacOS has its own quit menu under the application menu
-
-        ApplicationQuitHandler quitHandler = new ApplicationQuitHandler();
-        if(!isMacOS) {
-            item = new JMenuItem("Quit");
-            item.setMnemonic('q');
-            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, metaKey));
-            item.addActionListener(quitHandler);
-            menu.add(item);
-        }
-
-        JMenuBar menubar = new JMenuBar();
-
-        menubar.add(menu);
-
-        menu = new JMenu("Tools");
-        menu.add(new JMenuItem(chooseCameraAction));
-        menu.add(new JMenuItem(justScanNow));
-        menu.add(new JMenuItem(_launchWebappAction));
-        menubar.add(menu);
-
-        _projectMenuItem = new JMenuItem("Project");
-        _windowMenu = new JMenu("Window");
-        _projectMenuItem.addActionListener((e) -> {
-            _main.toFront();
-            _main.requestFocus();
-        });
-        _windowMenu.add(_projectMenuItem);
-        menubar.add(_windowMenu);
-
-        menu = new JMenu("Help");
-        item = new JMenuItem("Help");
-        item.addActionListener((e) -> {
-            SwingUtilities.invokeLater(() -> showHelp() );
-        });
-        menu.add(item);
-        menubar.add(menu);
         if(isMacOS) {
             // On MacOS, this will cause MacOS to add a "search" bar to the 'help' menu.
         }
 
         Desktop desktop = Desktop.getDesktop();
+        _quitHandler = new ApplicationQuitHandler();
 
         if(desktop.isSupported(Desktop.Action.APP_QUIT_HANDLER)) {
-            desktop.setQuitHandler(quitHandler);
+            desktop.setQuitHandler(_quitHandler);
         }
 
         if(desktop.isSupported(Desktop.Action.APP_ABOUT)) {
@@ -624,7 +585,7 @@ public class Main {
             });
         }
 
-        _main.setJMenuBar(menubar);
+        _main.setJMenuBar(createMenuBar());
         _main.setLocationByPlatform(true);
         _main.addWindowListener(new WindowAdapter() {
             @Override
@@ -644,11 +605,11 @@ public class Main {
         // Welcome panel
         JPanel welcomePanel = new JPanel(new FlowLayout());
 
-        JButton button = new JButton(newAction);
+        JButton button = new JButton(_newAction);
         adjust(button);
         welcomePanel.add(button);
 
-        button = new JButton(openAction);
+        button = new JButton(_openAction);
         adjust(button);
         welcomePanel.add(button);
 
@@ -706,6 +667,56 @@ public class Main {
 
         System.out.println(System.currentTimeMillis() + ", " + (System.currentTimeMillis() - elapsed) + " :  Showing main window...");
         _main.setVisible(true);
+    }
+
+    private JMenuBar createMenuBar() {
+        JMenuBar menubar = new JMenuBar();
+
+        JMenu menu = new JMenu("File");
+        JMenuItem item;
+
+        menu.add(new JMenuItem(_newAction));
+        menu.add(new JMenuItem(_openAction));
+        menu.add(new JMenuItem(_closeAction));
+        menu.add(new JMenuItem(_exportAction));
+
+        // MacOS has its own quit menu under the application menu
+        if(!isMacOS) {
+            int metaKey = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
+
+            item = new JMenuItem("Quit");
+            item.setMnemonic('q');
+            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, metaKey));
+            item.addActionListener(_quitHandler);
+            menu.add(item);
+        }
+
+        menubar.add(menu);
+
+        menu = new JMenu("Tools");
+        menu.add(new JMenuItem(_chooseCameraAction));
+        menu.add(new JMenuItem(_justScanNow));
+        menu.add(new JMenuItem(_launchWebappAction));
+        menubar.add(menu);
+
+        _projectMenuItem = new JMenuItem("Project");
+        _windowMenu = new JMenu("Window");
+        _projectMenuItem.addActionListener((e) -> {
+            _main.toFront();
+            _main.requestFocus();
+        });
+        _windowMenu.add(_projectMenuItem);
+        menubar.add(_windowMenu);
+
+        menu = new JMenu("Help");
+        item = new JMenuItem("Help");
+        item.addActionListener((e) -> {
+            SwingUtilities.invokeLater(() -> showHelp() );
+        });
+        menu.add(item);
+        menubar.add(menu);
+
+        return menubar;
     }
 
     /**
