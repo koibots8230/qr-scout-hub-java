@@ -730,10 +730,10 @@ public class Project {
             System.out.println("Record count: " + project.getRecordCount());
             System.out.println();
             System.out.println("Scouting fields:");
-            System.out.println("analytics: " + project.getAnalytics());
             for(Field field : config.getFields()) {
                 System.out.println("  " + field.getTitle() + " / " + field.getCode());
             }
+            System.out.println("Analytics: " + project.getAnalytics());
         } else if(Operation.add == operation) {
             if(null == directory) {
                 System.err.println("Must specify --directory");
