@@ -9,6 +9,7 @@ import java.awt.FlowLayout;
 import java.awt.Image;
 import java.awt.Taskbar;
 import java.awt.Toolkit;
+import java.awt.Window;
 import java.awt.desktop.AboutEvent;
 import java.awt.desktop.AboutHandler;
 import java.awt.desktop.OpenFilesEvent;
@@ -41,6 +42,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.jar.JarFile;
 import java.util.prefs.BackingStoreException;
@@ -65,7 +67,9 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JRootPane;
 import javax.swing.JScrollPane;
+import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextPane;
 import javax.swing.KeyStroke;
@@ -75,6 +79,7 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.WindowConstants;
 import javax.swing.filechooser.FileFilter;
+import javax.swing.table.AbstractTableModel;
 
 import org.bytedeco.javacv.FrameGrabber;
 
@@ -132,6 +137,8 @@ public class Main {
      */
     private JLabel _statusLine;
 
+    private AnalyticsWindow _analyticsWindow;
+
     /**
      * The currently open project.
      */
@@ -145,6 +152,7 @@ public class Main {
     private Action _scanAction;
     private Action _importAction;
     private Action _exportAction;
+    private Action _analyticsAction;
 
     private Action _justScanNow;
     private Action _chooseCameraAction;
@@ -172,8 +180,8 @@ public class Main {
      * These menus and menu items are dynamic, and will need to be updated
      * at various times.
      */
-    private JMenu _windowMenu;
-    private JMenuItem _projectMenuItem;
+//    private JMenu _windowMenu;
+//    private JMenuItem _projectMenuItem;
 
     public void safeInit() {
         try {
@@ -298,6 +306,15 @@ public class Main {
             @Override
             public void actionPerformed(ActionEvent e) {
                 closeProject();
+
+                _project = null;
+
+                _cardLayout.first(_cardPanel);
+                _closeAction.setEnabled(false);
+                _exportAction.setEnabled(false);
+                _analyticsAction.setEnabled(false);
+                _main.setTitle(PROGRAM_NAME);
+                _statusLine.setText("Project closed.");
             }
         };
 
@@ -416,6 +433,49 @@ public class Main {
                         showError(t);
                     }
                 }).start();
+            }
+        };
+
+        _analyticsAction = new AbstractAction() {
+            {
+                putValue(Action.NAME, "Analytics");
+                putValue(Action.SHORT_DESCRIPTION, "Run analyses against your scouting database.");
+//                putValue(Action.LARGE_ICON_KEY, getIcon("/images/export.png"));
+                putValue(Action.MNEMONIC_KEY, (int)'y');
+                putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_Y, metaKey));
+
+                setEnabled(false);
+            }
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // If the window already exists, just show it.
+                //
+                // When the window closes, null-out the reference
+                // so we can re-create it the next time it's requested.
+                if(null == _analyticsWindow) {
+                    _analyticsWindow = new AnalyticsWindow();
+                    _analyticsWindow.init();
+                    JMenuItem item = new JMenuItem("Analytics");
+                    item.addActionListener((ev) -> {
+                        _analyticsWindow.toFront();
+                        _analyticsWindow.requestFocus();
+                    });
+//                    _windowMenu.add(item);
+                    _analyticsWindow.addWindowListener(new WindowAdapter() {
+                        @Override
+                        public void windowClosing(WindowEvent e) {
+//                            removeWindowMenuItem(_analyticsWindow.getTitle());
+                            _analyticsWindow = null;
+                        }
+                    });
+
+                    SwingUtilities.invokeLater(() -> {
+                       _analyticsWindow.setVisible(true);
+                       _analyticsWindow.toFront();
+                       _analyticsWindow.requestFocus();
+                    });
+                }
             }
         };
 
@@ -657,6 +717,7 @@ public class Main {
         _importAction.setEnabled(false);
         _exportAction.setEnabled(true);
         _launchWebappAction.setEnabled(false);
+        _analyticsAction.setEnabled(false);
 
         _main.setSize(800, 600);
 
@@ -697,16 +758,17 @@ public class Main {
         menu.add(new JMenuItem(_chooseCameraAction));
         menu.add(new JMenuItem(_justScanNow));
         menu.add(new JMenuItem(_launchWebappAction));
+        menu.add(new JMenuItem(_analyticsAction));
         menubar.add(menu);
 
-        _projectMenuItem = new JMenuItem("Project");
-        _windowMenu = new JMenu("Window");
-        _projectMenuItem.addActionListener((e) -> {
-            _main.toFront();
-            _main.requestFocus();
-        });
-        _windowMenu.add(_projectMenuItem);
-        menubar.add(_windowMenu);
+//        _projectMenuItem = new JMenuItem("Project");
+//        _windowMenu = new JMenu("Window");
+//        _projectMenuItem.addActionListener((e) -> {
+//            _main.toFront();
+//            _main.requestFocus();
+//        });
+//        _windowMenu.add(_projectMenuItem);
+//        menubar.add(_windowMenu);
 
         menu = new JMenu("Help");
         item = new JMenuItem("Help");
@@ -718,6 +780,15 @@ public class Main {
 
         return menubar;
     }
+
+//    private void removeWindowMenuItem(String windowTitle) {
+//        for(int i=0; i<_windowMenu.getItemCount(); ++i) {
+//            JMenuItem item = _windowMenu.getItem(i);
+//            if(windowTitle.equals(item.getName())) {
+//                _windowMenu.remove(item);
+//            }
+//        }
+//    }
 
     /**
      * Sets the directory where file dialogs should be focused when opened.
@@ -812,6 +883,7 @@ public class Main {
         String lastProjectDirectory = prefs.get(PREFS_KEY_LAST_OPEN_PROJECT, null);
         if(null != lastProjectDirectory) {
             System.out.println("Last open project: " + lastProjectDirectory);
+
             if(null != lastProjectDirectory) {
                 File projectDir = new File(lastProjectDirectory);
                 if(projectDir.isDirectory()) {
@@ -989,6 +1061,7 @@ public class Main {
             _scanAction.setEnabled(true);
             _launchWebappAction.setEnabled(true);
             _exportAction.setEnabled(true);
+            _analyticsAction.setEnabled(true);
 
             _statusLine.setText("Record count: " + recordCount);
 
@@ -1248,6 +1321,7 @@ public class Main {
 
             System.exit(0);
         }
+
         @Override
         public void actionPerformed(ActionEvent e) {
             quit();
@@ -1258,6 +1332,218 @@ public class Main {
             quit();
 
             response.performQuit();
+        }
+    }
+
+    // NOTE: The stuff below was written VERY quickly and probably
+    // doesn't represent the "best" way to implement all this from
+    // an Object-Oriented perspective. But we'll get there ;)
+
+    private static class StandardWindowClosingAction
+        extends AbstractAction
+    {
+        private static final long serialVersionUID = -1629294416355233718L;
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            Window window = SwingUtilities.getWindowAncestor(
+                    (Component) e.getSource()
+                    );
+
+            if (window != null) {
+                window.dispatchEvent(
+                        new WindowEvent(window, WindowEvent.WINDOW_CLOSING)
+                        );
+            }
+        }
+    }
+
+    // Notifies all listeners that the window is closing, then close
+    // the window.
+    private static Action windowClosingAction = new StandardWindowClosingAction();
+
+    /**
+     * A window to display the list of possible analytics.
+     */
+    private class AnalyticsWindow
+        extends JFrame
+    {
+        private static final long serialVersionUID = 3889703546419862758L;
+
+        public void init() {
+            setTitle("Analytics");
+
+            setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+            setupCloseBehavior(getRootPane(), new StandardWindowClosingAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    _analyticWindows.remove(null);
+
+                    super.actionPerformed(e);
+                }
+            });
+
+            JPanel contents = new JPanel();
+            contents.setLayout(new BoxLayout(contents, BoxLayout.Y_AXIS));
+
+            if(null != _project.getAnalytics()) {
+                for(Analytic a : _project.getAnalytics()) {
+                    JButton ab = new JButton(a.getName());
+                    ab.addActionListener((e) -> {
+                        // Check to see if a window for this Analytic is
+                        // already open. If it is already open, just bring it
+                        // to the foreground.
+                        for(AnalyticWindow wnd : _analyticWindows) {
+                            if(a.equals(wnd.getAnalytic())) {
+                                SwingUtilities.invokeLater(() -> {
+                                    wnd.toFront();
+                                    wnd.requestFocus();
+                                });
+                                break;
+                            }
+                        }
+                        // Nope? Okay, create a new window and register it.
+                        AnalyticWindow aw = new AnalyticWindow(a);
+                        aw.init();
+
+                        // Remember that we opened this Window
+                        _analyticWindows.add(aw);
+
+                        SwingUtilities.invokeLater(() -> aw.setVisible(true));
+                    });
+                    contents.add(ab);
+                }
+            }
+
+            setJMenuBar(createMenuBar());
+
+            setContentPane(contents);
+
+            pack();
+        }
+    }
+
+    private static void setupCloseBehavior(JRootPane rootPane, Action action) {
+        InputMap inputMap = rootPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = rootPane.getActionMap();
+
+        inputMap.put(KeyStroke.getKeyStroke("ESCAPE"), "closeDialog");
+        int metaKey = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_W, metaKey), "closeDialog");
+        if(null != action) {
+            actionMap.put("closeDialog", action);
+        }
+    }
+
+    /**
+     * A list of Windows that are actually open.
+     *
+     * We use this to avoid opening the same window multiple times.
+     */
+    private ArrayList<AnalyticWindow> _analyticWindows = new ArrayList<AnalyticWindow>();
+
+    /**
+     * A window to show a single analytic and its results.
+     */
+    private class AnalyticWindow
+        extends JFrame
+    {
+        private static final long serialVersionUID = 6695278361287847426L;
+
+        private Analytic _analytic;
+        private AnalyticTableModel _tableModel = new AnalyticTableModel();
+
+        public AnalyticWindow(Analytic analytic) {
+            _analytic = analytic;
+        }
+
+        public Analytic getAnalytic() {
+            return _analytic;
+        }
+
+        public void init() {
+            setTitle(_analytic.getName());
+
+            setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+            setupCloseBehavior(getRootPane(), windowClosingAction);
+
+            JPanel contents = new JPanel(new BorderLayout());
+
+            runQuery();
+
+            JTable table = new JTable(_tableModel);
+            table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+            contents.add(new JScrollPane(table), BorderLayout.CENTER);
+
+            JPanel buttons = new JPanel();
+            JButton run = new JButton("Run");
+            run.addActionListener((e) -> {
+                runQuery();
+
+            });
+            buttons.add(run);
+            contents.add(buttons, BorderLayout.SOUTH);
+
+            setContentPane(contents);
+
+            pack();
+        }
+
+        private void runQuery() {
+            System.out.println("Running query: " + _analytic.getQuery());
+            try {
+                _tableModel.setData(_project.queryDatabase(_analytic.getQuery()));
+            } catch (SQLException sqle) {
+                showError(sqle);
+                return;
+            } catch (IOException ioe) {
+                showError(ioe);
+                return;
+            }
+        }
+
+        private static class AnalyticTableModel
+            extends AbstractTableModel
+        {
+            private static final long serialVersionUID = 3348828243019993524L;
+
+            private List<Object[]> _data;
+            public void setData(List<Object[]> data) {
+                _data = data;
+
+                // Let listeners like JTable know that the structure of the
+                // table including headings, column and row count, and
+                // cell data types have changed.
+                fireTableStructureChanged();
+            }
+
+            @Override
+            public int getRowCount() {
+                // _data[0] contains the headers, so the row count is one less
+                return _data.size() - 1;
+            }
+
+            @Override
+            public int getColumnCount() {
+                return _data.get(0).length;
+            }
+
+            @Override
+            public String getColumnName(int columnIndex) {
+                return String.valueOf(_data.get(0)[columnIndex]);
+            }
+
+            @Override
+            public Class<?> getColumnClass(int columnIndex) {
+                // Always use String for now
+                return String.class;
+            }
+
+            @Override
+            public Object getValueAt(int rowIndex, int columnIndex) {
+                // Always use String for now
+                return String.valueOf(_data.get(rowIndex + 1)[columnIndex]);
+            }
         }
     }
 }
