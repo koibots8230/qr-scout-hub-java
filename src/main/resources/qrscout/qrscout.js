@@ -101,7 +101,7 @@ function startApp() {
 
   // Ask the user before resetting the form
   document.getElementById('reset').onclick = function() {
-    return confirm('Are you sure you want to reset the form?') && resetTimers();
+    return confirm('Are you sure you want to reset the form?') && resetForm();
   };
 
   main.appendChild(container);
@@ -109,6 +109,34 @@ function startApp() {
   LapTimer.initTimers();
 
   console.log('UI complete.');
+}
+
+/**
+ * Resets the form, respecting the formResetBehavior of various fields.
+ *
+ * Note that 'preserve' formResetBehavior is handled by an event handler on
+ * each field.
+ */
+function resetForm() {
+  resetTimers();
+  incrementFields();
+}
+
+/**
+ * Increment fields that requested incrementing.
+ */
+function incrementFields() {
+  const incrementFields = document.querySelectorAll('.increment');
+
+  incrementFields.forEach(increment => {
+console.log('Incrementing field', increment);
+    try {
+      const incremented = parseInt(increment.value) + 1;
+      increment.value = increment.defaultValue = incremented;
+    } catch (e) {
+      console.log(e);
+    }
+  });
 }
 
 /**
@@ -175,7 +203,7 @@ function createField(field) {
      break;
 
     default:
-      alert('Unsupported field type for field "' + field.title + ': ' + field.type);
+      alert('Unsupported field type for field "' + field.title + '": ' + field.type);
       break;
   }
 
@@ -219,6 +247,10 @@ function makeNumberField(field) {
     'defaultValue' : field.defaultValue
   };
 
+  if(field.formResetBehavior == 'increment') {
+    attrs.class += ' increment';
+  }
+
   let number = makeElement('input', attrs);
 
   if(field.formResetBehavior == 'preserve') {
@@ -252,6 +284,10 @@ function makeCounterField(field) {
     'value' : field.defaultValue,
     'defaultValue' : field.defaultValue
   };
+
+  if(field.formResetBehavior == 'increment') {
+    attrs.class += ' increment';
+  }
 
   if(field.type == 'range') {
     attrs.type = 'number';
