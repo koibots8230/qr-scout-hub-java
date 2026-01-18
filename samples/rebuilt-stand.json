@@ -1,0 +1,274 @@
+{
+  "title": "QRScout",
+  "page_title": "Rebuilt",
+  "delimiter": "\t",
+  "teamNumber": 8230,
+  "theme": {
+    "light": {
+      "background": "0 0% 100%",
+      "foreground": "0 0% 3.9%",
+      "card": "0 0% 100%",
+      "card_foreground": "0 0% 3.9%",
+      "popover": "0 0% 100%",
+      "popover_foreground": "0 0% 3.9%",
+      "primary": "354.44 71.3% 47.9%",
+      "primary_foreground": "0 85.7% 97.3%",
+      "secondary": "0 0% 96.1%",
+      "secondary_foreground": "0 0% 9%",
+      "muted": "0 0% 96.1%",
+      "muted_foreground": "0 0% 45.1%",
+      "accent": "0 0% 96.1%",
+      "accent_foreground": "0 0% 9%",
+      "destructive": "0 84.2% 60.2%",
+      "destructive_foreground": "0 0% 98%",
+      "border": "0 0% 89.8%",
+      "input": "0 0% 89.8%",
+      "ring": "354.44 71.3% 47.9%",
+      "chart_1": "12 76% 61%",
+      "chart_2": "173 58% 39%",
+      "chart_3": "197 37% 24%",
+      "chart_4": "43 74% 66%",
+      "chart_5": "27 87% 67%"
+    },
+    "dark": {
+      "background": "0 0% 3.9%",
+      "foreground": "0 0% 98%",
+      "card": "0 0% 3.9%",
+      "card_foreground": "0 0% 98%",
+      "popover": "0 0% 3.9%",
+      "popover_foreground": "0 0% 98%",
+      "primary": "354.44 71.3% 47.9%",
+      "primary_foreground": "0 85.7% 97.3%",
+      "secondary": "0 0% 14.9%",
+      "secondary_foreground": "0 0% 98%",
+      "muted": "0 0% 14.9%",
+      "muted_foreground": "0 0% 63.9%",
+      "accent": "0 0% 14.9%",
+      "accent_foreground": "0 0% 98%",
+      "destructive": "0 62.8% 30.6%",
+      "destructive_foreground": "0 0% 98%",
+      "border": "0 0% 14.9%",
+      "input": "0 0% 14.9%",
+      "ring": "354.44 71.3% 47.9%",
+      "chart_1": "220 70% 50%",
+      "chart_2": "160 60% 45%",
+      "chart_3": "30 80% 55%",
+      "chart_4": "280 65% 60%",
+      "chart_5": "340 75% 55%"
+    }
+  },
+  "sections" : [
+    {
+      "name": "Prematch",
+      "fields": [
+        {
+          "title": "Scouter Initials",
+          "description": "Enter the initials of the scouter.",
+          "type": "text",
+          "required": true,
+          "code": "scouter",
+          "formResetBehavior": "preserve",
+          "defaultValue": ""
+        },
+        {
+          "title": "Match Number",
+          "description": "Enter the match number.",
+          "type": "number",
+          "required": true,
+          "code": "matchNumber",
+          "formResetBehavior": "increment",
+          "defaultValue": 1
+        },
+        {
+          "title": "Robot",
+          "description": "The robot you are scouting this match, based on driver station position.",
+          "type": "select",
+          "required": true,
+          "code": "robot",
+          "formResetBehavior": "preserve",
+          "defaultValue": "R1",
+          "choices": {
+            "R1": "Red 1",
+            "R2": "Red 2",
+            "R3": "Red 3",
+            "B1": "Blue 1",
+            "B2": "Blue 2",
+            "B3": "Blue 3"
+          }
+        },
+        {
+          "title": "Team Number",
+          "description": "The team number of the robot you're scouting.",
+          "type": "number",
+          "required": true,
+          "code": "teamNumber",
+          "formResetBehavior": "reset",
+          "defaultValue": 0,
+          "min": 0,
+          "max": 19999
+        },
+        {
+          "title": "Starting Position",
+          "description": "The starting position of the robot.",
+          "type": "select",
+          "required": true,
+          "code": "Prsp",
+          "formResetBehavior": "reset",
+          "defaultValue": "",
+          "choices": {
+            "R1": "Not Sure",
+            "R2": "Not Sure 2",
+            "R3": "Not Sure 3"
+          }
+        },
+        {
+          "title": "No Show",
+          "description": "Check if the robot did not show up for the match.",
+          "type": "boolean",
+          "required": false,
+          "code": "noShow",
+          "formResetBehavior": "reset",
+          "defaultValue": false
+        }
+      ]
+    },
+    {
+      "name" : "Autonomous",
+      "fields" : [
+        {
+          "title" : "Have auto?",
+          "description" : "Does the robot have an auto?",
+          "code" : "A_exists",
+          "type" : "boolean"
+        }, 
+        {
+          "title" : "Auto Fuel",
+          "description" : "How many fuel did the robot score during auto?",
+          "code" : "A_fuel",
+          "type" : "counter"
+        },
+        {
+          "title" : "Climb",
+          "description" : "Did the robot climp during auto?",
+          "code" : "A_climb",
+          "type" : "boolean"
+        }
+      ]
+    },
+    {
+      "name" : "Teleop",
+      "fields" : [
+        {
+          "title" : "Fuel Scored",
+          "description" : "The number of points scored for fuel.",
+          "code" : "T_fuel",
+          "type" : "counter"
+        },
+        {
+          "title" : "Fuel Transferred",
+          "description" : "The number of fuel transferred from the center to the alliance area.",
+          "code" : "T_fuel_trans",
+          "type" : "counter"
+        },
+        {
+          "title" : "Bump Cycles",
+          "description" : "The number of times the robot went over the bump.",
+          "code" : "T_bump",
+          "type" : "counter"
+        },
+        {
+          "title" : "Trench Cycles",
+          "description" : "The number of times the robot went through the trench.",
+          "code" : "T_trench",
+          "type" : "counter"
+        }
+      ]
+    },
+    {
+      "name" : "Endgame",
+      "fields" : [
+        {
+          "title" : "Climb",
+          "description" : "",
+          "code" : "E_climb",
+          "type" : "select",
+          "choices": {
+            "L0": "None",
+            "L1": "L1",
+            "L2": "L2",
+            "L3": "L3"
+          }
+        },
+        {
+          "title": "Crossed Field/Played Defense?",
+          "type": "boolean",
+          "required": false,
+          "code": "T_defense"
+        },
+        {
+          "title": "Was Robot Defended by Other Alliance?",
+          "type": "boolean",
+          "code": "T_defended"
+        }
+      ]
+    },
+    {
+      "name": "Postmatch",
+      "fields": [
+        {
+          "title": "Offense Skill",
+          "type": "range",
+          "required": false,
+          "code": "P_os",
+          "defaultValue": 3,
+          "min": 1,
+          "max": 5
+        },
+        {
+          "title" : "Shooting Accuracy",
+          "description" : "How accurate was the shooter?",
+          "code" : "P_accuracy",
+          "type" : "select",
+          "choices" : {
+            "A0" : "Benchy McBenchface",
+            "A1" : "Barry Brick",
+            "A2" : "Andreas Chrysanthou",
+            "A3" : "Sharquille O'Neal",
+            "A4" : "LePrawn James"
+          }
+        },
+        {
+          "title": "Defensive Skill",
+          "type": "range",
+          "required": false,
+          "code": "iP_ds",
+          "defaultValue": 0,
+          "min": 1,
+          "max": 5
+        },
+        {
+          "title": "Yellow/Red Card",
+          "type": "select",
+          "required": true,
+          "code": "P_card",
+          "defaultValue": "No Card",
+          "choices": {
+            "No Card": "No Card",
+            "Yellow": "Yellow Card",
+            "Red": "Red Card"
+          }
+        },
+        {
+          "title": "Comments",
+          "type": "text",
+          "required": false,
+          "code": "P_comments",
+          "formResetBehavior": "reset",
+          "defaultValue": "",
+          "min": 0,
+          "max": 100
+        }
+      ]
+    }
+  ]
+}
