@@ -175,7 +175,7 @@ function createField(field) {
      break;
 
     default:
-      alert('Unsupported field type: ' + field.type);
+      alert('Unsupported field type for field "' + field.title + ': ' + field.type);
       break;
   }
 
