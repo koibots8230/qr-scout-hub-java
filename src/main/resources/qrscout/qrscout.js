@@ -149,9 +149,12 @@ function createField(field) {
       break;
 
     case 'number' :
+      element = makeNumberField(field);
+      break;
+
     case 'counter' :
     case 'range' :
-      element = makeNumberField(field);
+      element = makeCounterField(field);
       break;
 
     case 'boolean' :
@@ -206,6 +209,27 @@ function makeTextField(field) {
 }
 
 function makeNumberField(field) {
+  let attrs = {
+    'id' : 'field_' + field.code,
+    'type' : 'text',
+    'class' : 'number',
+    'readonly' : 'readonly',
+    'name' : field.code,
+    'value' : field.defaultValue,
+    'defaultValue' : field.defaultValue
+  };
+
+  let number = makeElement('input', attrs);
+
+  if(field.formResetBehavior == 'preserve') {
+    // Update the default value with each change
+    number.addEventListener('change', function() { this.defaultValue = this.value; });
+  }
+
+  return number;
+}
+
+function makeCounterField(field) {
   let items = [];
 
   if(!field.hasOwnProperty('min')) {

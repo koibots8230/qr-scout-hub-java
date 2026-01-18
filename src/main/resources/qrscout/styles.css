@@ -78,6 +78,15 @@ select {
   width:12rem;
 }
 
+.field input.number {
+  width:4rem;
+  color:white;
+  background-color:transparent;
+  border:none;
+  text-align:center;
+  font-size:x-large;
+}
+
 .field input.counter {
   width:2rem;
   color:white;
