@@ -79,6 +79,8 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.WindowConstants;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.table.AbstractTableModel;
 
@@ -775,6 +777,36 @@ public class Main {
         menu.add(new JMenuItem(_justScanNow));
         menu.add(new JMenuItem(_launchWebappAction));
         menu.add(new JMenuItem(_analyticsAction));
+        item = new JMenuItem("Edit Database");
+        item.addActionListener((e) -> {
+            try {
+                DatabaseEditor de = new DatabaseEditor();
+                de.init();
+                de.setData(_project.getRecords());
+                de.addTableListener(new TableModelListener() {
+                    @Override
+                    public void tableChanged(TableModelEvent e) {
+                        int row = e.getFirstRow();
+                        try {
+                            _project.updateRecord(de.getData(row));
+                        } catch (RuntimeException rte) {
+                            // Throw this back to the TableModel to deal with
+                            throw rte;
+                        } catch (Exception ex) {
+                            // Throw this back to the TableModel to deal with
+                            throw new IllegalStateException("Table change veto");
+                        }
+                    }
+                });
+
+                SwingUtilities.invokeLater(() -> {
+                    de.setVisible(true);
+                });
+            } catch (Exception ex) {
+                showError(ex);
+            }
+        });
+        menu.add(item);
         menubar.add(menu);
 
 //        _projectMenuItem = new JMenuItem("Project");
@@ -1173,6 +1205,10 @@ public class Main {
     }
 
     private void showError(Throwable t) {
+        showError(t, _main);
+    }
+
+    static void showError(Throwable t, Component parent) {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
@@ -1191,7 +1227,7 @@ public class Main {
 
         JOptionPane op = new JOptionPane(panel, JOptionPane.ERROR_MESSAGE, JOptionPane.DEFAULT_OPTION);
 
-        JDialog dialog = op.createDialog(_main, "Error");
+        JDialog dialog = op.createDialog(parent, "Error");
 
         dialog.setResizable(true);
 
@@ -1394,7 +1430,7 @@ public class Main {
 
     // Notifies all listeners that the window is closing, then close
     // the window.
-    private static Action windowClosingAction = new StandardWindowClosingAction();
+    static Action windowClosingAction = new StandardWindowClosingAction();
 
     /**
      * A window to display the list of possible analytics.
@@ -1458,7 +1494,7 @@ public class Main {
         }
     }
 
-    private static void setupCloseBehavior(JRootPane rootPane, Action action) {
+    static void setupCloseBehavior(JRootPane rootPane, Action action) {
         InputMap inputMap = rootPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
         ActionMap actionMap = rootPane.getActionMap();
 

@@ -143,7 +143,7 @@ public class Project {
     private static String getSQLDataType(String fieldType) {
         if("boolean".equals(fieldType)) {
             return "CHAR(1)";
-        } else if("counter".equals(fieldType) || "number".equals(fieldType) || "range".equals(fieldType) ) {
+        } else if("counter".equals(fieldType) || "number".equals(fieldType) || "range".equals(fieldType)) {
             return "INTEGER";
         } else {
             return "VARCHAR(255)";
@@ -390,6 +390,127 @@ public class Project {
 
             ps.executeUpdate();
         }
+    }
+
+    public List<String[]> getRecords() throws SQLException {
+        try (Connection conn = DriverManager.getConnection(getDatabaseURL());
+             PreparedStatement ps = conn.prepareStatement(getSelectAllStatement());
+             ResultSet rs = ps.executeQuery()) {
+
+            ArrayList<String[]> rows = new ArrayList<String[]>();
+
+            ResultSetMetaData rsmd = rs.getMetaData();
+
+            final int columnCount = rsmd.getColumnCount();
+            String[] data = new String[columnCount];
+            for(int i=0; i < columnCount; ++i) {
+                String columnName = rsmd.getColumnName(i+1);
+                // The "id" field doesn't have a Field
+                if("id".equalsIgnoreCase(columnName)) {
+                    data[i] = "id";
+                } else {
+                    Field field = getFieldFromSQLColumn(config, columnName);
+
+                    data[i] = field.getTitle();
+                }
+            }
+            rows.add(data);
+
+            while(rs.next()) {
+                data = new String[columnCount];
+                for(int i=0; i < columnCount; ++i) {
+                    data[i] = rs.getString(i+1);
+                }
+
+                rows.add(data);
+            }
+
+            return rows;
+        }
+    }
+
+    private String getSelectAllStatement() {
+        StringBuilder select = new StringBuilder("SELECT id, ");
+
+        Collection<Field> fields = getGameConfig().getFields();
+
+        boolean first = true;
+        for(Field field : fields) {
+            if(first) { first = false; }
+            else { select.append(','); }
+
+            select.append('"').append(normalizeColumnName(field.getCode())).append('"');
+        }
+
+        select.append(" FROM stand_scouting ORDER BY id");
+
+        return select.toString();
+    }
+
+    public void updateRecord(String[] record) throws SQLException {
+        String updateStatement = getUpdateStatement();
+
+        System.out.println("Update statement: " + updateStatement);
+
+        try(Connection conn = DriverManager.getConnection(getDatabaseURL());
+            PreparedStatement ps = conn.prepareStatement(updateStatement)) {
+
+            Collection<Field> fields = getGameConfig().getFields();
+
+            int index = 0; // JDBC uses 1-based addressing; we start at 0 and pre-increment
+            int i = 1; // Skip the "id" field
+            for(Field field : fields) {
+                String datum;
+                if(null == record[i]) {
+                    datum = null;
+                } else {
+                    datum = String.valueOf(record[i]);
+                }
+
+                ++i;
+
+                if("counter".equals(field.getType()) || "number".equals(field.getType()) || "range".equals(field.getType())) {
+                    if(null == datum) {
+                        ps.setNull(++index, Types.INTEGER);
+                    } else {
+                        ps.setInt(++index, Integer.parseInt(datum));
+                    }
+                } else if("boolean".equals(field.getType())) {
+                        if(null == datum) {
+                            ps.setNull(++index, Types.BOOLEAN);
+                        } else {
+                            ps.setString(++index, "true".equals(datum) ? "Y" : "N");
+                        }
+                } else {
+                    if(null == datum) {
+                        ps.setString(++index, null);
+                    } else {
+                        ps.setString(++index, datum);
+                    }
+                }
+            }
+            ps.setInt(++index, Integer.parseInt(record[0]));
+
+            ps.executeUpdate();
+        }
+    }
+
+    private String getUpdateStatement() {
+        StringBuilder update = new StringBuilder("UPDATE stand_scouting SET ");
+
+        Collection<Field> fields = getGameConfig().getFields();
+
+        boolean first = true;
+        for(Field field : fields) {
+            if(first) { first = false; }
+            else { update.append(','); }
+
+            update.append('"').append(normalizeColumnName(field.getCode())).append("\"=?");
+        }
+
+        update.append(" WHERE id=?");
+
+        return update.toString();
     }
 
     /**
