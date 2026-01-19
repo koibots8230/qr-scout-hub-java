@@ -143,7 +143,7 @@ public class Project {
     private static String getSQLDataType(String fieldType) {
         if("boolean".equals(fieldType)) {
             return "CHAR(1)";
-        } else if("counter".equals(fieldType)) {
+        } else if("counter".equals(fieldType) || "number".equals(fieldType) || "range".equals(fieldType) ) {
             return "INTEGER";
         } else {
             return "VARCHAR(255)";
@@ -367,7 +367,7 @@ public class Project {
             for(Field field : fields) {
                 String datum = data.get(field);
 
-                if("counter".equals(field.getType())) {
+                if("counter".equals(field.getType()) || "number".equals(field.getType()) || "range".equals(field.getType())) {
                     if(null == datum) {
                         ps.setNull(++index, Types.INTEGER);
                     } else {
