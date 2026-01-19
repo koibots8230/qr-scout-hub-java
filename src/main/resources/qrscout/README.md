@@ -20,4 +20,4 @@ There are a few differences between the original QR Scout and ours:
 1. Simpler implementation (e.g. no build process required)
 1. Image fields can have a "value" property which will be encoded in
    the QR code instead of the full URL of the image
-1. Counter, range, and number are all currently handled exactly the same way
+1. Counter and range fields are currently handled exactly the same way
