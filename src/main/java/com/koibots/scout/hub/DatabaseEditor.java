@@ -43,7 +43,7 @@ public class DatabaseEditor
         setModal(true);
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        Main.setupCloseBehavior(getRootPane(), Main.windowClosingAction);
+        UIUtils.setupCloseBehavior(getRootPane(), UIUtils.windowClosingAction);
 
         JPanel contents = new JPanel(new BorderLayout());
 
@@ -144,7 +144,7 @@ System.out.println("Updating row " + row + " column " + column + " with value " 
             try {
                 fireTableRowsUpdated(row, row);
             } catch (Exception e) {
-                Main.showError(e, DatabaseEditor.this);
+                UIUtils.showError(e, DatabaseEditor.this);
 
                 data[column] = oldValue;
                 fireTableRowsUpdated(row, row);

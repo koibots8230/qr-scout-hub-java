@@ -4,12 +4,10 @@ import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Component;
 import java.awt.Desktop;
-import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Image;
 import java.awt.Taskbar;
 import java.awt.Toolkit;
-import java.awt.Window;
 import java.awt.desktop.AboutEvent;
 import java.awt.desktop.AboutHandler;
 import java.awt.desktop.OpenFilesEvent;
@@ -27,7 +25,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
 import java.net.URI;
@@ -68,7 +65,6 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JRootPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
@@ -1205,33 +1201,7 @@ public class Main {
     }
 
     private void showError(Throwable t) {
-        showError(t, _main);
-    }
-
-    static void showError(Throwable t, Component parent) {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-
-        panel.add(new JLabel(t.getMessage()));
-
-        StringWriter sw = new StringWriter();
-        t.printStackTrace(new PrintWriter(sw));
-
-        JTextArea message = new JTextArea(sw.toString());
-        message.setEditable(false);
-
-        JScrollPane js = new JScrollPane(message);
-        js.setPreferredSize(new Dimension(300,100));
-
-        panel.add(js);
-
-        JOptionPane op = new JOptionPane(panel, JOptionPane.ERROR_MESSAGE, JOptionPane.DEFAULT_OPTION);
-
-        JDialog dialog = op.createDialog(parent, "Error");
-
-        dialog.setResizable(true);
-
-        SwingUtilities.invokeLater(() -> dialog.setVisible(true));
+        UIUtils.showError(t, _main);
     }
 
     private SimpleHttpServer webServer;
@@ -1409,29 +1379,6 @@ public class Main {
     // doesn't represent the "best" way to implement all this from
     // an Object-Oriented perspective. But we'll get there ;)
 
-    private static class StandardWindowClosingAction
-        extends AbstractAction
-    {
-        private static final long serialVersionUID = -1629294416355233718L;
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            Window window = SwingUtilities.getWindowAncestor(
-                    (Component) e.getSource()
-                    );
-
-            if (window != null) {
-                window.dispatchEvent(
-                        new WindowEvent(window, WindowEvent.WINDOW_CLOSING)
-                        );
-            }
-        }
-    }
-
-    // Notifies all listeners that the window is closing, then close
-    // the window.
-    static Action windowClosingAction = new StandardWindowClosingAction();
-
     /**
      * A window to display the list of possible analytics.
      */
@@ -1444,7 +1391,7 @@ public class Main {
             setTitle("Analytics");
 
             setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-            setupCloseBehavior(getRootPane(), new StandardWindowClosingAction() {
+            UIUtils.setupCloseBehavior(getRootPane(), new UIUtils.StandardWindowClosingAction() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     _analyticWindows.remove(null);
@@ -1494,18 +1441,6 @@ public class Main {
         }
     }
 
-    static void setupCloseBehavior(JRootPane rootPane, Action action) {
-        InputMap inputMap = rootPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
-        ActionMap actionMap = rootPane.getActionMap();
-
-        inputMap.put(KeyStroke.getKeyStroke("ESCAPE"), "closeDialog");
-        int metaKey = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_W, metaKey), "closeDialog");
-        if(null != action) {
-            actionMap.put("closeDialog", action);
-        }
-    }
-
     /**
      * A list of Windows that are actually open.
      *
@@ -1536,7 +1471,7 @@ public class Main {
             setTitle(_analytic.getName());
 
             setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-            setupCloseBehavior(getRootPane(), windowClosingAction);
+            UIUtils.setupCloseBehavior(getRootPane(), UIUtils.windowClosingAction);
 
             JPanel contents = new JPanel(new BorderLayout());
 
