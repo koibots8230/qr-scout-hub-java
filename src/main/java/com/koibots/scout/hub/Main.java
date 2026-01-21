@@ -1405,8 +1405,30 @@ public class Main {
 
             if(null != _project.getAnalytics()) {
                 for(Analytic a : _project.getAnalytics()) {
-                    JButton ab = new JButton(a.getName());
-                    ab.addActionListener((e) -> {
+                    JPanel analyticPanel = new JPanel();
+                    JButton editButton = new JButton("Edit");
+                    JButton analyticButton = new JButton(a.getName());
+
+                    editButton.addActionListener((e) -> {
+                        AnalyticEditor editor = new AnalyticEditor();
+                        editor.setAnalyticName(a.getName());
+                        editor.setAnalyticQuery(a.getQuery());
+
+                        editor.init();
+
+                        // This call blocks the UI and waits here
+                        editor.setVisible(true);
+
+                        if(!editor.isCancelled()) {
+                            a.setName(editor.getAnalyticName());
+                            a.setQuery(editor.getAnalyticQuery());
+
+                            analyticButton.setText(a.getName());
+                        }
+                    });
+                    analyticPanel.add(editButton);
+
+                    analyticButton.addActionListener((e) -> {
                         // Check to see if a window for this Analytic is
                         // already open. If it is already open, just bring it
                         // to the foreground.
@@ -1429,7 +1451,8 @@ public class Main {
 
                         SwingUtilities.invokeLater(() -> aw.setVisible(true));
                     });
-                    contents.add(ab);
+                    analyticPanel.add(analyticButton);
+                    contents.add(analyticPanel);
                 }
             }
 
