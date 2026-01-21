@@ -1442,7 +1442,7 @@ public class Main {
                         // Remember that we opened this Window
                         _analyticWindows.add(aw);
 
-                        SwingUtilities.invokeLater(() -> aw.setVisible(true));
+                        aw.setVisible(true);
                     });
                     analyticPanel.add(analyticButton);
                     contents.add(analyticPanel);
@@ -1491,18 +1491,11 @@ public class Main {
             addWindowListener(new WindowAdapter() {
                 @Override
                 public void windowClosed(WindowEvent e) {
-                    closeWindow();
+                    _analyticWindows.remove(AnalyticWindow.this);
                 }
             });
 
-            UIUtils.setupCloseBehavior(getRootPane(), new UIUtils.StandardWindowClosingAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    closeWindow();
-
-                    super.actionPerformed(e);
-                }
-            });
+            UIUtils.setupCloseBehavior(getRootPane(), UIUtils.windowClosingAction);
 
             JPanel contents = new JPanel(new BorderLayout());
 
@@ -1524,10 +1517,6 @@ public class Main {
             setContentPane(contents);
 
             pack();
-        }
-
-        private void closeWindow() {
-            _analyticWindows.remove(AnalyticWindow.this);
         }
 
         private void runQuery() {
