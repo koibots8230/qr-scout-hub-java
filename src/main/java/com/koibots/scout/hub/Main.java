@@ -1391,14 +1391,7 @@ public class Main {
             setTitle("Analytics");
 
             setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-            UIUtils.setupCloseBehavior(getRootPane(), new UIUtils.StandardWindowClosingAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    _analyticWindows.remove(null);
-
-                    super.actionPerformed(e);
-                }
-            });
+            UIUtils.setupCloseBehavior(getRootPane(), UIUtils.windowClosingAction);
 
             JPanel contents = new JPanel();
             contents.setLayout(new BoxLayout(contents, BoxLayout.Y_AXIS));
@@ -1494,7 +1487,22 @@ public class Main {
             setTitle(_analytic.getName());
 
             setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-            UIUtils.setupCloseBehavior(getRootPane(), UIUtils.windowClosingAction);
+
+            addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosed(WindowEvent e) {
+                    closeWindow();
+                }
+            });
+
+            UIUtils.setupCloseBehavior(getRootPane(), new UIUtils.StandardWindowClosingAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    closeWindow();
+
+                    super.actionPerformed(e);
+                }
+            });
 
             JPanel contents = new JPanel(new BorderLayout());
 
@@ -1516,6 +1524,10 @@ public class Main {
             setContentPane(contents);
 
             pack();
+        }
+
+        private void closeWindow() {
+            _analyticWindows.remove(AnalyticWindow.this);
         }
 
         private void runQuery() {
