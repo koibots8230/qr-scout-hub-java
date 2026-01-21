@@ -23,7 +23,7 @@ public class AnalyticEditor
     private String _analyticName;
     private String _analyticQuery;
 
-    private boolean _cancelled = false;
+    private boolean _confirmed = false;
 
     private JTextField _name;
     private JTextArea _query;
@@ -51,7 +51,7 @@ public class AnalyticEditor
         UIUtils.setupCloseBehavior(getRootPane(), new UIUtils.StandardWindowClosingAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-               _cancelled = true;
+               _confirmed = true;
 
                super.actionPerformed(e);
             }
@@ -84,12 +84,12 @@ public class AnalyticEditor
         JPanel buttons = new JPanel();
         JButton save = new JButton("Save");
         save.addActionListener((e) -> {
-            saveEditor();
+            closeEditor(true);
         });
 
         JButton cancel = new JButton("Cancel");
         cancel.addActionListener((e) -> {
-            cancelEditor();
+            closeEditor(false);
         });
 
         buttons.add(save);
@@ -102,23 +102,19 @@ public class AnalyticEditor
         pack();
     }
 
-    private void saveEditor() {
-        _cancelled = false;
+    private void closeEditor(boolean confirmed) {
+        _confirmed = confirmed;
 
-        _analyticName = _name.getText();
-        _analyticQuery = _query.getText();
-
-        dispose();
-    }
-
-    private void cancelEditor() {
-        _cancelled = true;
+        if(confirmed) {
+            _analyticName = _name.getText();
+            _analyticQuery = _query.getText();
+        }
 
         dispose();
     }
 
-    public boolean isCancelled() {
-        return _cancelled;
+    public boolean isConfirmed() {
+        return _confirmed;
     }
 
     public static void main(String[] args) throws Exception {

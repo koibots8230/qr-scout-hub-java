@@ -1419,7 +1419,7 @@ public class Main {
                         // This call blocks the UI and waits here
                         editor.setVisible(true);
 
-                        if(!editor.isCancelled()) {
+                        if(editor.isConfirmed()) {
                             a.setName(editor.getAnalyticName());
                             a.setQuery(editor.getAnalyticQuery());
 
