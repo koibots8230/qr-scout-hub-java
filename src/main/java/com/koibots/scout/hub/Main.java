@@ -1428,10 +1428,8 @@ public class Main {
                         // to the foreground.
                         for(AnalyticWindow wnd : _analyticWindows) {
                             if(a.equals(wnd.getAnalytic())) {
-                                SwingUtilities.invokeLater(() -> {
-                                    wnd.toFront();
-                                    wnd.requestFocus();
-                                });
+                                wnd.toFront();
+                                wnd.requestFocus();
                                 return;
                             }
                         }
