@@ -6,7 +6,6 @@ import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.awt.event.WindowEvent;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
@@ -69,15 +68,12 @@ public class UIUtils
                     );
 
             if (window != null) {
-                window.dispatchEvent(
-                        new WindowEvent(window, WindowEvent.WINDOW_CLOSING)
-                        );
+                window.dispose();
             }
         }
     }
 
-    // Notifies all listeners that the window is closing, then close
-    // the window.
+    // Closes the window, including firing all appropriate event notifications
     static Action windowClosingAction = new StandardWindowClosingAction();
 
     static void setupCloseBehavior(JRootPane rootPane, Action action) {
