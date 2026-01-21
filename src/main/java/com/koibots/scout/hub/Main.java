@@ -1402,6 +1402,7 @@ public class Main {
                     JButton editButton = new JButton("Edit");
                     JButton analyticButton = new JButton(a.getName());
 
+                    final Analytic analytic = a;
                     editButton.addActionListener((e) -> {
                         AnalyticEditor editor = new AnalyticEditor();
                         editor.setAnalyticName(a.getName());
@@ -1413,10 +1414,10 @@ public class Main {
                         editor.setVisible(true);
 
                         if(editor.isConfirmed()) {
-                            a.setName(editor.getAnalyticName());
-                            a.setQuery(editor.getAnalyticQuery());
+                            analytic.setName(editor.getAnalyticName());
+                            analytic.setQuery(editor.getAnalyticQuery());
 
-                            analyticButton.setText(a.getName());
+                            analyticButton.setText(analytic.getName());
                         }
                     });
                     analyticPanel.add(editButton);
