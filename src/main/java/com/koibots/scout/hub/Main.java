@@ -1414,10 +1414,18 @@ public class Main {
                         editor.setVisible(true);
 
                         if(editor.isConfirmed()) {
-                            analytic.setName(editor.getAnalyticName());
-                            analytic.setQuery(editor.getAnalyticQuery());
+                            Analytic newAnalytic = new Analytic();
+                            newAnalytic.setName(editor.getAnalyticName());
+                            newAnalytic.setQuery(editor.getAnalyticQuery());
 
-                            analyticButton.setText(analytic.getName());
+                            try {
+                                _project.updateAnalytic(analytic, newAnalytic);
+                                analytic.setName(newAnalytic.getName());
+                                analytic.setQuery(newAnalytic.getQuery());
+                                analyticButton.setText(newAnalytic.getName());
+                            } catch (Throwable t) {
+                                showError(t);
+                            }
                         }
                     });
                     analyticPanel.add(editButton);

@@ -947,4 +947,14 @@ public class Project {
             return sql.toString();
         }
     }
+
+    public void updateAnalytic(Analytic oldAnalytic, Analytic newAnalytic) throws IOException {
+        // TODO: implement me
+
+        // Remove the old analytic file from the disk
+        // Add the new analytic file to the disk
+
+        // Remove the old analytic from the list
+        // Add the new analytic from the list
+    }
 }
