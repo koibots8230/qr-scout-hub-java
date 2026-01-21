@@ -5,6 +5,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.Objects;
 
 import com.google.gson.Gson;
 
@@ -32,6 +33,23 @@ public class Analytic {
     @Override
     public String toString() {
         return getName() + ":" + getQuery();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if(null == o || !o.getClass().equals(this.getClass())) {
+            return false;
+        }
+        Analytic a = (Analytic)o;
+
+        return Objects.equals(getName(), a.getName())
+                && Objects.equals(getQuery(), a.getQuery())
+                ;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getName(), getQuery());
     }
 
     public static Analytic loadAnalytic(File file) throws IOException {
