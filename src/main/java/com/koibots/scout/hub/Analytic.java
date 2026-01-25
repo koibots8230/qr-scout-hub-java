@@ -116,6 +116,7 @@ public class Analytic
         try (FileWriter out = new FileWriter(file, StandardCharsets.UTF_8)) {
             gson.toJson(this, out);
         }
+        setFilename(file.getName());
     }
 
     /**
