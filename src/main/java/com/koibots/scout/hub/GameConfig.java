@@ -95,6 +95,10 @@ public class GameConfig {
      * The scouting fields for the game.
      */
     private List<Field> fields;
+
+    /**
+     * The sections / phases of the game.
+     */
     private List<Section> sections;
 
     private GameConfig() {
@@ -125,7 +129,7 @@ public class GameConfig {
 
     @Override
     public String toString() {
-        return "GameConfig { fields=" + getFields() + " }, { sections=" + getSections() + " }";
+        return "GameConfig { fields=" + getFields() + " , sections=" + getSections() + " }";
     }
 
     /**
@@ -229,8 +233,8 @@ public class GameConfig {
                 }
 
                 Section s = new Section();
-                s.name = (String)data.get("name"); 
-                System.out.println(s.name);
+                s.name = sectionName;
+
                 sections.add(s);
             }
 
@@ -255,6 +259,9 @@ public class GameConfig {
         for(Field field : config.getFields()) {
             System.out.println("  " + field.getTitle());
         }
-        System.out.println("hello" + config.toString());
+        System.out.println("Scouting sections:");
+        for(Section section : config.getSections()) {
+            System.out.println("  " + section.getName());
+        }
     }
 }
