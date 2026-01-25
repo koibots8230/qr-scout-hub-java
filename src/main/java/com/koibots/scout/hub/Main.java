@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Component;
 import java.awt.Desktop;
+import java.awt.FileDialog;
 import java.awt.FlowLayout;
 import java.awt.Image;
 import java.awt.Taskbar;
@@ -23,6 +24,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -45,6 +47,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.jar.JarFile;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import javax.swing.Action;
 import javax.swing.ActionMap;
@@ -153,6 +157,7 @@ public class Main {
     private Action _scanAction;
     private Action _importAction;
     private Action _exportAction;
+    private Action _generateWebApplicationAction;
     private Action _analyticsAction;
 
     private Action _justScanNow;
@@ -327,6 +332,7 @@ public class Main {
                 _cardLayout.first(_cardPanel);
                 _closeAction.setEnabled(false);
                 _exportAction.setEnabled(false);
+                _generateWebApplicationAction.setEnabled(false);
                 _analyticsAction.setEnabled(false);
                 _main.setTitle(PROGRAM_NAME);
                 _statusLine.setText("Project closed.");
@@ -442,6 +448,41 @@ public class Main {
                         showError(t);
                     }
                 }).start();
+            }
+        };
+
+        _generateWebApplicationAction = new AbstractAction() {
+            {
+                putValue(Action.NAME, "Generate Web Application");
+                putValue(Action.SHORT_DESCRIPTION, "Exports the QR Scout App web application.");
+                putValue(Action.MNEMONIC_KEY, (int)'w');
+            }
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                FileDialog dialog = new FileDialog(_main, "Save As", FileDialog.SAVE);
+
+                // restrict to .zip files
+                dialog.setFilenameFilter((dir, name) ->
+                    name.toLowerCase().endsWith(".zip")
+                );
+
+                // Set default filename
+                dialog.setFile("qrscout.zip");
+                dialog.setVisible(true);
+
+                String file = dialog.getFile();
+                String dir = dialog.getDirectory();
+
+                if (file != null) {
+                    File targetFile = new File(dir, file);
+
+                    try {
+                        exportQRScout(targetFile);
+                    } catch (Throwable t) {
+                        showError(t);
+                    }
+                }
             }
         };
 
@@ -730,7 +771,8 @@ public class Main {
         _closeAction.setEnabled(false);
         _scanAction.setEnabled(false);
         _importAction.setEnabled(false);
-        _exportAction.setEnabled(true);
+        _exportAction.setEnabled(false);
+        _generateWebApplicationAction.setEnabled(false);
         _launchWebappAction.setEnabled(false);
         _analyticsAction.setEnabled(false);
 
@@ -755,6 +797,7 @@ public class Main {
         menu.add(new JMenuItem(_openAction));
         menu.add(new JMenuItem(_closeAction));
         menu.add(new JMenuItem(_exportAction));
+        menu.add(new JMenuItem(_generateWebApplicationAction));
 
         // MacOS has its own quit menu under the application menu
         if(!isMacOS) {
@@ -949,6 +992,107 @@ public class Main {
         _importImmediatelyOption.setSelected(getInsertImmediately());
     }
 
+    private void exportQRScout(File file)
+        throws IOException
+    {
+        try (ZipOutputStream zip = new ZipOutputStream(new FileOutputStream(file))) {
+
+            //
+            // First, copy all of the stock QR Scout files from the current JAR
+            // file into the ZIP file.
+            //
+
+            AtomicInteger copiedFiles = new AtomicInteger(0);
+
+            String sourceResourceName = "qrscout"; // Relative without leading /
+            try {
+                URL url = getClass().getClassLoader().getResource(sourceResourceName);
+                if (url != null && url.getProtocol().equals("file")) {
+                    // Exploded classpath
+                    Path srcDir = Paths.get(url.toURI());
+                    Files.walk(srcDir).forEach(p -> {
+                        try {
+                            ZipEntry zipEntry = new ZipEntry(srcDir.relativize(p).toString());
+                            zip.putNextEntry(zipEntry);
+
+                            Files.copy(p, zip);
+
+                            zip.closeEntry();
+
+                            copiedFiles.incrementAndGet();
+                        } catch (IOException e) {
+                            // Must wrap this in an unchecked exception because
+                            // Consumer.accept (which is what this lambda
+                            // actually is) doesn't allow any checked
+                            // exceptions.
+                            //
+                            // We will unwrap it later if it gets thrown,
+                            // and re-throw the original exception.
+
+                            throw new UncheckedIOException(e);
+                        }
+                    });
+                } else {
+                    // Running from JAR: enumerate current JAR
+                    String jarPath = getClass()
+                            .getProtectionDomain()
+                            .getCodeSource()
+                            .getLocation()
+                            .getPath();
+
+                    String pathPrefix = sourceResourceName + "/";
+                    try (JarFile jar = new JarFile(URLDecoder.decode(jarPath, "UTF-8"))) {
+                        jar.stream()
+                        .filter(e -> e.getName().startsWith(pathPrefix) && !e.isDirectory())
+                        .forEach(entry -> {
+                            try (InputStream in = jar.getInputStream(entry)) {
+                                ZipEntry zipEntry = new ZipEntry(entry.getName().substring(pathPrefix.length()));
+                                zip.putNextEntry(zipEntry);
+
+                                in.transferTo(zip);
+
+                                zip.closeEntry();
+                                copiedFiles.incrementAndGet();
+                            } catch (IOException ex) {
+                                // Must wrap this in an unchecked exception because
+                                // Consumer.accept (which is what this lambda
+                                // actually is) doesn't allow any checked
+                                // exceptions.
+                                //
+                                // We will unwrap it later if it gets thrown,
+                                // and re-throw the original exception.
+                                throw new UncheckedIOException(ex);
+                            }
+                        });
+                    }
+                }
+            } catch (UncheckedIOException uioe) {
+                // Unwrap this unchecked exception
+                throw uioe.getCause();
+            }
+
+            if(0 == copiedFiles.get()) {
+                throw new IOException("Could not find QR Scout web application source. Packaging error?");
+            }
+
+            ZipEntry zipEntry = new ZipEntry("config.json");
+            zip.putNextEntry(zipEntry);
+
+            // Finally, copy the config.json file from the project into the target
+            Files.copy(new File(_project.getDirectory(), "config.json").toPath(), zip);
+
+            zip.closeEntry();
+        } catch (URISyntaxException use) {
+            // Shouldn't happen, since these URIs are being generated by the JVM
+            throw new IOException(use.getMessage(), use);
+        }
+
+        JOptionPane.showMessageDialog(_main,
+                "QR Scout successfully saved to " + file.getAbsolutePath(),
+                "QR Scout Exported",
+                JOptionPane.INFORMATION_MESSAGE);
+    }
+
     private void savePreferences() {
         Preferences prefs = Preferences.userNodeForPackage(Main.class);
 
@@ -1114,6 +1258,7 @@ public class Main {
             _scanAction.setEnabled(true);
             _launchWebappAction.setEnabled(true);
             _exportAction.setEnabled(true);
+            _generateWebApplicationAction.setEnabled(true);
             _analyticsAction.setEnabled(true);
 
             _statusLine.setText("Record count: " + recordCount);
@@ -1127,6 +1272,7 @@ public class Main {
         _closeAction.setEnabled(false);
         _scanAction.setEnabled(false);
         _exportAction.setEnabled(false);
+        _generateWebApplicationAction.setEnabled(false);
         _launchWebappAction.setEnabled(false);
         _main.setTitle(PROGRAM_NAME);
         _statusLine.setText("Project closed.");
