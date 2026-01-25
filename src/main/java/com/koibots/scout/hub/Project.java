@@ -955,11 +955,14 @@ public class Project
     public void updateAnalytic(Analytic oldAnalytic, Analytic newAnalytic)
         throws IOException
     {
-        String filename = oldAnalytic.getFilename();
-        if(null == oldAnalytic.getFilename()) {
+        String filename;
+        if(null == oldAnalytic || null == oldAnalytic.getFilename()) {
             // Need a new filename for this analytic
             filename = newAnalytic.getName() + ".json";
+        } else {
+            filename = oldAnalytic.getFilename();
         }
+
         File file = new File(getDirectory(), ANALYTICS_SUBDIRECTORY);
         file = new File(file, filename);
 

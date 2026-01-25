@@ -1399,62 +1399,47 @@ public class Main {
             if(null != _project.getAnalytics()) {
                 for(Analytic a : _project.getAnalytics()) {
                     JPanel analyticPanel = new JPanel();
-                    JButton editButton = new JButton("Edit");
-                    JButton analyticButton = new JButton(a.getName());
-
-                    final Analytic analytic = a;
-                    editButton.addActionListener((e) -> {
-                        AnalyticEditor editor = new AnalyticEditor();
-                        editor.setAnalyticName(a.getName());
-                        editor.setAnalyticQuery(a.getQuery());
-
-                        editor.init();
-
-                        // This call blocks the UI and waits here
-                        editor.setVisible(true);
-
-                        if(editor.isConfirmed()) {
-                            Analytic newAnalytic = new Analytic();
-                            newAnalytic.setName(editor.getAnalyticName());
-                            newAnalytic.setQuery(editor.getAnalyticQuery());
-
-                            try {
-                                _project.updateAnalytic(analytic, newAnalytic);
-                                analytic.setName(newAnalytic.getName());
-                                analytic.setQuery(newAnalytic.getQuery());
-                                analyticButton.setText(newAnalytic.getName());
-                            } catch (Throwable t) {
-                                showError(t);
-                            }
-                        }
-                    });
-                    analyticPanel.add(editButton);
-
-                    analyticButton.addActionListener((e) -> {
-                        // Check to see if a window for this Analytic is
-                        // already open. If it is already open, just bring it
-                        // to the foreground.
-                        for(AnalyticWindow wnd : _analyticWindows) {
-                            if(a.equals(wnd.getAnalytic())) {
-                                wnd.toFront();
-                                wnd.requestFocus();
-                                return;
-                            }
-                        }
-
-                        // Nope? Okay, create a new window and register it.
-                        AnalyticWindow aw = new AnalyticWindow(a);
-                        aw.init();
-
-                        // Remember that we opened this Window
-                        _analyticWindows.add(aw);
-
-                        aw.setVisible(true);
-                    });
+                    JButton analyticButton = createAnalyticButton(a);
+                    analyticPanel.add(createAnalyticEditButton(a, analyticButton));
                     analyticPanel.add(analyticButton);
                     contents.add(analyticPanel);
                 }
             }
+
+            JPanel newPanel = new JPanel();
+            JButton newButton = new JButton("New...");
+            newButton.addActionListener((e) -> {
+                AnalyticEditor editor = new AnalyticEditor();
+
+                editor.init();
+
+                // This call blocks the UI and waits here
+                editor.setVisible(true);
+
+                if(editor.isConfirmed()) {
+                    Analytic newAnalytic = new Analytic();
+                    newAnalytic.setName(editor.getAnalyticName());
+                    newAnalytic.setQuery(editor.getAnalyticQuery());
+
+                    try {
+                        _project.updateAnalytic(null, newAnalytic);
+
+                        final Analytic a = newAnalytic;
+                        JPanel analyticPanel = new JPanel();
+                        JButton analyticButton = createAnalyticButton(a);
+                        analyticPanel.add(createAnalyticEditButton(a, analyticButton));
+                        analyticPanel.add(analyticButton);
+
+                        contents.add(analyticPanel, contents.getComponentCount() - 1); // Insert before "New..."
+
+                        pack(); // Re-lay-out the container
+                    } catch (Throwable t) {
+                        showError(t);
+                    }
+                }
+            });
+            newPanel.add(newButton);
+            contents.add(newPanel);
 
             setJMenuBar(createMenuBar());
 
@@ -1462,6 +1447,66 @@ public class Main {
 
             pack();
         }
+    }
+
+    private JButton createAnalyticButton(final Analytic analytic) {
+        JButton analyticButton = new JButton(analytic.getName());
+
+        analyticButton.addActionListener((e) -> {
+            // Check to see if a window for this Analytic is
+            // already open. If it is already open, just bring it
+            // to the foreground.
+            for(AnalyticWindow wnd : _analyticWindows) {
+                if(analytic.equals(wnd.getAnalytic())) {
+                    wnd.toFront();
+                    wnd.requestFocus();
+                    return;
+                }
+            }
+
+            // Nope? Okay, create a new window and register it.
+            AnalyticWindow aw = new AnalyticWindow(analytic);
+            aw.init();
+
+            // Remember that we opened this Window
+            _analyticWindows.add(aw);
+
+            aw.setVisible(true);
+        });
+
+        return analyticButton;
+    }
+
+    private JButton createAnalyticEditButton(Analytic analytic, JButton analyticButton) {
+        JButton editButton = new JButton("Edit");
+
+        editButton.addActionListener((e) -> {
+            AnalyticEditor editor = new AnalyticEditor();
+            editor.setAnalyticName(analytic.getName());
+            editor.setAnalyticQuery(analytic.getQuery());
+
+            editor.init();
+
+            // This call blocks the UI and waits here
+            editor.setVisible(true);
+
+            if(editor.isConfirmed()) {
+                Analytic newAnalytic = new Analytic();
+                newAnalytic.setName(editor.getAnalyticName());
+                newAnalytic.setQuery(editor.getAnalyticQuery());
+
+                try {
+                    _project.updateAnalytic(analytic, newAnalytic);
+                    analytic.setName(newAnalytic.getName());
+                    analytic.setQuery(newAnalytic.getQuery());
+                    analyticButton.setText(newAnalytic.getName());
+                } catch (Throwable t) {
+                    showError(t);
+                }
+            }
+        });
+
+        return editButton;
     }
 
     /**
