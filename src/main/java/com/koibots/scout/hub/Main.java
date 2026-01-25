@@ -8,6 +8,7 @@ import java.awt.FlowLayout;
 import java.awt.Image;
 import java.awt.Taskbar;
 import java.awt.Toolkit;
+import java.awt.Window;
 import java.awt.desktop.AboutEvent;
 import java.awt.desktop.AboutHandler;
 import java.awt.desktop.OpenFilesEvent;
@@ -1398,10 +1399,7 @@ public class Main {
 
             if(null != _project.getAnalytics()) {
                 for(Analytic a : _project.getAnalytics()) {
-                    JPanel analyticPanel = new JPanel();
-                    JButton analyticButton = createAnalyticButton(a);
-                    analyticPanel.add(createAnalyticEditButton(a, analyticButton));
-                    analyticPanel.add(analyticButton);
+                    JPanel analyticPanel = createAnalyticPanel(a, this);
                     contents.add(analyticPanel);
                 }
             }
@@ -1424,12 +1422,7 @@ public class Main {
                     try {
                         _project.updateAnalytic(null, newAnalytic);
 
-                        final Analytic a = newAnalytic;
-                        JPanel analyticPanel = new JPanel();
-                        JButton analyticButton = createAnalyticButton(a);
-                        analyticPanel.add(createAnalyticEditButton(a, analyticButton));
-                        analyticPanel.add(analyticButton);
-
+                        JPanel analyticPanel = createAnalyticPanel(newAnalytic, this);
                         contents.add(analyticPanel, contents.getComponentCount() - 1); // Insert before "New..."
 
                         pack(); // Re-lay-out the container
@@ -1447,6 +1440,21 @@ public class Main {
 
             pack();
         }
+    }
+
+    private JPanel createAnalyticPanel(final Analytic analytic, final Window parentWindow) {
+        JPanel analyticPanel = new JPanel();
+        JButton analyticButton = createAnalyticButton(analytic);
+        JButton editButton = createAnalyticEditButton(analytic, analyticButton);
+        editButton.addActionListener((ae) -> {
+            // Perform a re-layout if the analytic name changes
+            // and the button needs to change size, etc.
+            parentWindow.pack();
+        });
+        analyticPanel.add(editButton);
+        analyticPanel.add(analyticButton);
+
+        return analyticPanel;
     }
 
     private JButton createAnalyticButton(final Analytic analytic) {
