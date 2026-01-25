@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -27,7 +28,22 @@ public class GameConfig {
         private String type;
         private boolean required;
         private String code;
+        private String formResetBehavior;
         private String defaultValue;
+
+        // Field-type-specific properties
+
+        // For numerics: use Integer class instead of primitive
+        // because the value can be "none"
+        private Integer min;
+        private Integer max;
+        private Integer step;
+
+        // For timers
+        private String outputType;
+
+        // For selects
+        private Map<String,String> choices;
 
         public String getTitle() {
             return title;
@@ -49,8 +65,24 @@ public class GameConfig {
             return code;
         }
 
+        public String getFormResetBehavior() {
+            return formResetBehavior;
+        }
+
         public String getDefaultValue() {
             return defaultValue;
+        }
+
+        public Integer getMin() {
+            return min;
+        }
+
+        public Integer getMax() {
+            return max;
+        }
+
+        public Integer getStep() {
+            return step;
         }
 
         @Override
@@ -68,7 +100,7 @@ public class GameConfig {
 
         @Override
         public String toString() {
-            return "Field { title=" + getTitle() + ", code=" + getCode() + ", type=" + getType() + ", required=" + getRequired() + " }";
+            return "Field { title=" + getTitle() + ", code=" + getCode() + ", type=" + getType() + ", required=" + getRequired() + ", min=" + getMin() + ", max=" + getMax() + ", step=" + getStep() + " }";
         }
     }
 
@@ -203,7 +235,29 @@ public class GameConfig {
                     f.type = (String)data.get("type");
                     f.required = Boolean.TRUE.equals(data.get("required"));
                     f.code = (String)data.get("code");
+                    f.formResetBehavior = (String)data.get("formResetVehavior");
                     f.defaultValue = String.valueOf(data.get("defaultValue"));
+                    f.outputType = (String)data.get("outputType");
+                    o = data.get("min");
+                    if(null != o && o instanceof Number) {
+                        f.min = ((Number)o).intValue();
+                    }
+                    o = data.get("max");
+                    if(null != o && o instanceof Number) {
+                        f.max = ((Number)o).intValue();
+                    }
+                    o = data.get("step");
+                    if(null != o && o instanceof Number) {
+                        f.step = ((Number)o).intValue();
+                    }
+                    o = data.get("choices");
+                    if(null != o && o instanceof Map) {
+                        System.out.println("choices is of type " + o.getClass());
+                        // Use LinkedHashMap to keep these options IN ORDER
+                        @SuppressWarnings("unchecked")
+                        LinkedHashMap<String,String> choices = new LinkedHashMap<>((Map<String,String>)o);
+                        f.choices = choices;
+                    }
 
                     fields.add(f);
                 }
@@ -227,7 +281,7 @@ public class GameConfig {
         System.out.println("Game: " + config.getPageTitle());
         System.out.println("Scouting Fields:");
         for(Field field : config.getFields()) {
-            System.out.println("  " + field.getTitle());
+            System.out.println("  " + field);
         }
     }
 }
