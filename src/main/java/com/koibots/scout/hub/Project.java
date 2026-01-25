@@ -34,7 +34,11 @@ import com.opencsv.CSVWriter;
  * game configuration data and the scouting database containing any information
  * saved from the QR scout.
  */
-public class Project {
+public class Project
+{
+    private static final String ANALYTICS_SUBDIRECTORY = "analytics";
+    private static final String DB_SUBDIRECTORY = "db";
+
     /**
      * The directory in which the project lives.
      */
@@ -84,7 +88,7 @@ public class Project {
     }
 
     private void loadAnalytics() throws IOException {
-        File dir = new File(getDirectory(), "Analytics");
+        File dir = new File(getDirectory(), ANALYTICS_SUBDIRECTORY);
         if (dir.exists()) {
             File files[] = dir.listFiles((path) -> {
                 return path.getName().toLowerCase().endsWith(".json");
@@ -151,7 +155,7 @@ public class Project {
     }
 
     private void createDatabase() throws SQLException {
-        File dbDir = new File(getDirectory(), "db");
+        File dbDir = new File(getDirectory(), DB_SUBDIRECTORY);
 
         String url = "jdbc:derby:" + dbDir.getAbsolutePath() + ";create=true;";
 
@@ -712,7 +716,7 @@ public class Project {
         project.setDirectory(dir);
         project.readConfig();
         try {
-            project.loadDatabase("jdbc:derby:" + new File(dir, "db").getAbsolutePath());
+            project.loadDatabase("jdbc:derby:" + new File(dir, DB_SUBDIRECTORY).getAbsolutePath());
             project.verifyDatabase();
         } catch (SQLException sqle) {
             throw new IOException("Database error", sqle);
@@ -948,13 +952,17 @@ public class Project {
         }
     }
 
-    public void updateAnalytic(Analytic oldAnalytic, Analytic newAnalytic) throws IOException {
-        // TODO: implement me
+    public void updateAnalytic(Analytic oldAnalytic, Analytic newAnalytic)
+        throws IOException
+    {
+        String filename = oldAnalytic.getFilename();
+        if(null == oldAnalytic.getFilename()) {
+            // Need a new filename for this analytic
+            filename = newAnalytic.getName() + ".json";
+        }
+        File file = new File(getDirectory(), ANALYTICS_SUBDIRECTORY);
+        file = new File(file, filename);
 
-        // Remove the old analytic file from the disk
-        // Add the new analytic file to the disk
-
-        // Remove the old analytic from the list
-        // Add the new analytic from the list
+        newAnalytic.saveToFile(file);
     }
 }
