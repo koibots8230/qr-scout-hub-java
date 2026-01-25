@@ -1388,13 +1388,33 @@ public class Main {
     {
         private static final long serialVersionUID = 3889703546419862758L;
 
+        private JPanel contents;
+
+        public void removeAnalytic(Analytic analytic) {
+            int count = contents.getComponentCount();
+            for(int i=0; i<count; ++i) {
+                Component c = contents.getComponent(i);
+                if(c instanceof JComponent) {
+                    JComponent jc = (JComponent)c;
+
+                    if(analytic.equals(jc.getClientProperty(Analytic.class))) {
+                        contents.remove(i);
+
+                        pack();
+
+                        break;
+                    }
+                }
+            }
+        }
+
         public void init() {
             setTitle("Analytics");
 
             setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
             UIUtils.setupCloseBehavior(getRootPane(), UIUtils.windowClosingAction);
 
-            JPanel contents = new JPanel();
+            contents = new JPanel();
             contents.setLayout(new BoxLayout(contents, BoxLayout.Y_AXIS));
 
             if(null != _project.getAnalytics()) {
@@ -1444,6 +1464,8 @@ public class Main {
 
     private JPanel createAnalyticPanel(final Analytic analytic, final Window parentWindow) {
         JPanel analyticPanel = new JPanel();
+        // Set a custom property so we can identify this panel later
+        analyticPanel.putClientProperty(Analytic.class, analytic);
         JButton analyticButton = createAnalyticButton(analytic);
         JButton editButton = createAnalyticEditButton(analytic, analyticButton);
         editButton.addActionListener((ae) -> {
@@ -1451,6 +1473,32 @@ public class Main {
             // and the button needs to change size, etc.
             parentWindow.pack();
         });
+        JButton deleteButton = new JButton("Delete");
+        deleteButton.addActionListener((e) -> {
+            if(JOptionPane.OK_OPTION == JOptionPane.showConfirmDialog(parentWindow,
+                    "Are you sure you want to delete this analytic?",
+                    "Confirm Delete",
+                    JOptionPane.OK_CANCEL_OPTION,
+                    JOptionPane.QUESTION_MESSAGE)) {
+                try {
+                    _project.deleteAnalytic(analytic);
+
+                    // Close any open analytic window
+                    for(AnalyticWindow wnd : _analyticWindows) {
+                        if(analytic.equals(wnd.getAnalytic())) {
+                            wnd.dispose();
+                        }
+                    }
+                    // Remove the panel from the analytics window
+                    if(null != _analyticsWindow) {
+                        _analyticsWindow.removeAnalytic(analytic);
+                    }
+                } catch (Throwable err) {
+                    showError(err);
+                }
+            }
+        });
+        analyticPanel.add(deleteButton);
         analyticPanel.add(editButton);
         analyticPanel.add(analyticButton);
 

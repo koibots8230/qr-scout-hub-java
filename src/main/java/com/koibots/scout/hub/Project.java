@@ -968,4 +968,16 @@ public class Project
 
         newAnalytic.saveToFile(file);
     }
+
+    public void deleteAnalytic(Analytic analytic)
+        throws IOException
+    {
+        String filename = analytic.getFilename();
+        if(null != filename) {
+            File file = new File(getDirectory(), ANALYTICS_SUBDIRECTORY);
+            file = new File(file, filename);
+
+            Files.delete(file.toPath());
+        }
+    }
 }
