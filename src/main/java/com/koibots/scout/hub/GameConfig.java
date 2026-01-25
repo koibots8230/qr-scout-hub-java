@@ -73,28 +73,17 @@ public class GameConfig {
     }
 
     public static class Section {
-        private String phase;
-        private String timeframe;
-        private boolean hubActive;
+        private String name;
 
-        public String getMatchPhase() {
-            return phase;
+        public String getName() {
+            return name;
         }
 
-        public String getMatchTimeFrame() {
-            return timeframe;
+        @Override
+        public String toString() {
+            return "sections { name=" + getName() + " }";
         }
 
-        /**
-         * not sure about the hub active.The idea for adding it is the 
-         * active timeframe of the hub are determenent on scoring more
-         * in auto. As a result in order to get a accurate picture of
-         * of the game it is important to know the status of the hub.
-         */
-
-        public boolean HubActive() {
-            return hubActive; 
-        }
     }
 
     /**
@@ -106,6 +95,7 @@ public class GameConfig {
      * The scouting fields for the game.
      */
     private List<Field> fields;
+    private List<Section> sections;
 
     private GameConfig() {
         // Require clients to use Factory method
@@ -129,9 +119,13 @@ public class GameConfig {
         return Collections.unmodifiableList(fields);
     }
 
+    public List<Section> getSections() {
+        return Collections.unmodifiableList(sections);
+    }
+
     @Override
     public String toString() {
-        return "GameConfig { fields=" + getFields() + " }";
+        return "GameConfig { fields=" + getFields() + " }, { sections=" + getSections() + " }";
     }
 
     /**
@@ -164,9 +158,7 @@ public class GameConfig {
             // Config file structure
             //
             // sections : [
-            //   { "phase" : phaseName,
-            //     "timeframe" : timeframeName,
-            //     "hubActive" : hubActiveStatus,
+            //   { "name" : name,
             //     "fields" : [
             //       { "title", ...
             //     ]
@@ -194,28 +186,17 @@ public class GameConfig {
             }
 
             ArrayList<Field> fields = new ArrayList<Field>();
+            ArrayList<Section> sections = new ArrayList<Section>();
 
             for(Object section : (Collection<?>)o) {
                 if(!(section instanceof Map<?,?>)) {
                     throw new IOException("Config file contains suspicious 'section': expected Map, got type=" + section.getClass().getName());
                 }
 
-                o = ((Map<?,?>)section).get("phase");
+                o = ((Map<?,?>)section).get("name");
 
                 if(!(o instanceof String)) {
-                    throw new IOException("Config file contains section with no phase");
-                }
-
-                o = ((Map<?,?>)section).get("timeframe");
-
-                if(!(o instanceof String)) {
-                    throw new IOException("Config file contains section with no timeframe");
-                }
-
-                o = ((Map<?,?>)section).get("hubActive");
-
-                if(!(o instanceof String)) {
-                    throw new IOException("Config file contains section with no hubActive");
+                    throw new IOException("Config file contains section with no name");
                 }
 
                 String sectionName = (String)o;
@@ -246,9 +227,15 @@ public class GameConfig {
 
                     fields.add(f);
                 }
+
+                Section s = new Section();
+                s.name = (String)data.get("name"); 
+                System.out.println(s.name);
+                sections.add(s);
             }
 
             config.fields = fields;
+            config.sections = sections;
 
             return config;
         }
@@ -268,5 +255,6 @@ public class GameConfig {
         for(Field field : config.getFields()) {
             System.out.println("  " + field.getTitle());
         }
+        System.out.println("hello" + config.toString());
     }
 }
