@@ -72,6 +72,31 @@ public class GameConfig {
         }
     }
 
+    public static class Section {
+        private String phase;
+        private String timeframe;
+        private boolean hubActive;
+
+        public String getMatchPhase() {
+            return phase;
+        }
+
+        public String getMatchTimeFrame() {
+            return timeframe;
+        }
+
+        /**
+         * not sure about the hub active.The idea for adding it is the 
+         * active timeframe of the hub are determenent on scoring more
+         * in auto. As a result in order to get a accurate picture of
+         * of the game it is important to know the status of the hub.
+         */
+
+        public boolean HubActive() {
+            return hubActive; 
+        }
+    }
+
     /**
      * The "page title" for QR Scout. Usually the name of the game.
      */
@@ -139,7 +164,9 @@ public class GameConfig {
             // Config file structure
             //
             // sections : [
-            //   { "name" : sectionName,
+            //   { "phase" : phaseName,
+            //     "timeframe" : timeframeName,
+            //     "hubActive" : hubActiveStatus,
             //     "fields" : [
             //       { "title", ...
             //     ]
@@ -173,10 +200,22 @@ public class GameConfig {
                     throw new IOException("Config file contains suspicious 'section': expected Map, got type=" + section.getClass().getName());
                 }
 
-                o = ((Map<?,?>)section).get("name");
+                o = ((Map<?,?>)section).get("phase");
 
                 if(!(o instanceof String)) {
-                    throw new IOException("Config file contains section with no name");
+                    throw new IOException("Config file contains section with no phase");
+                }
+
+                o = ((Map<?,?>)section).get("timeframe");
+
+                if(!(o instanceof String)) {
+                    throw new IOException("Config file contains section with no timeframe");
+                }
+
+                o = ((Map<?,?>)section).get("hubActive");
+
+                if(!(o instanceof String)) {
+                    throw new IOException("Config file contains section with no hubActive");
                 }
 
                 String sectionName = (String)o;
