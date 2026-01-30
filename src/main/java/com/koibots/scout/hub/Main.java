@@ -87,6 +87,11 @@ import javax.swing.table.AbstractTableModel;
 
 import org.bytedeco.javacv.FrameGrabber;
 
+import com.koibots.scout.hub.GameConfigEditorDialog.DefaultGameConfigChangeListener;
+import com.koibots.scout.hub.GameConfigEditorDialog.GameConfigChangeListener;
+import com.koibots.scout.hub.GameConfigEditorDialog.MoveEvent;
+import com.koibots.scout.hub.GameConfigEditorDialog.SavingGameConfigChangeListener;
+
 //
 // Project directory structure:
 //
@@ -163,6 +168,7 @@ public class Main {
     private Action _justScanNow;
     private Action _chooseCameraAction;
     private Action _launchWebappAction;
+    private Action _editGameConfigAction;
 
     private ApplicationQuitHandler _quitHandler;
     JCheckBoxMenuItem _importImmediatelyOption = null;
@@ -334,6 +340,7 @@ public class Main {
                 _exportAction.setEnabled(false);
                 _generateWebApplicationAction.setEnabled(false);
                 _analyticsAction.setEnabled(false);
+                _editGameConfigAction.setEnabled(false);
                 _main.setTitle(PROGRAM_NAME);
                 _statusLine.setText("Project closed.");
             }
@@ -608,6 +615,38 @@ public class Main {
             }
         };
 
+        _editGameConfigAction = new AbstractAction() {
+            {
+                putValue(Action.NAME, "Edit Game");
+                putValue(Action.SHORT_DESCRIPTION, "Edit the game configuration.");
+                putValue(Action.MNEMONIC_KEY, (int)'c');
+            }
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                final GameConfig config = _project.getGameConfig();
+                GameConfigChangeListener pcl = new DefaultGameConfigChangeListener(config);
+                GameConfigEditorDialog gced = new GameConfigEditorDialog(null, config, pcl);
+
+                // Copy the existing file to a backup file
+                gced.addGameConfigChangeListener(new GameConfigChangeListener() {
+                    @Override
+                    public void beforeMove(MoveEvent event) throws Exception {
+                        new File(_project.getDirectory(), "config.json")
+                        .renameTo(new File(_project.getDirectory(), "config.bak"));
+                    }
+
+                    @Override
+                    public void afterMove(MoveEvent event) {
+                        // Do nothing after move
+                    }
+                });
+                gced.addGameConfigChangeListener(new SavingGameConfigChangeListener(config,
+                        new File(_project.getDirectory(), "config.json"),
+                        true));
+                gced.setVisible(true);
+            }
+        };
+
         if(isMacOS) {
             // On MacOS, this will cause MacOS to add a "search" bar to the 'help' menu.
         }
@@ -775,6 +814,7 @@ public class Main {
         _generateWebApplicationAction.setEnabled(false);
         _launchWebappAction.setEnabled(false);
         _analyticsAction.setEnabled(false);
+        _editGameConfigAction.setEnabled(false);
 
         _main.setSize(800, 600);
 
@@ -797,7 +837,6 @@ public class Main {
         menu.add(new JMenuItem(_openAction));
         menu.add(new JMenuItem(_closeAction));
         menu.add(new JMenuItem(_exportAction));
-        menu.add(new JMenuItem(_generateWebApplicationAction));
 
         // MacOS has its own quit menu under the application menu
         if(!isMacOS) {
@@ -817,6 +856,8 @@ public class Main {
         menu.add(new JMenuItem(_justScanNow));
         menu.add(new JMenuItem(_launchWebappAction));
         menu.add(new JMenuItem(_analyticsAction));
+        menu.add(new JMenuItem(_generateWebApplicationAction));
+        menu.add(new JMenuItem(_editGameConfigAction));
         item = new JMenuItem("Edit Database");
         item.addActionListener((e) -> {
             try {
@@ -1260,6 +1301,7 @@ public class Main {
             _exportAction.setEnabled(true);
             _generateWebApplicationAction.setEnabled(true);
             _analyticsAction.setEnabled(true);
+            _editGameConfigAction.setEnabled(true);
 
             _statusLine.setText("Record count: " + recordCount);
 
@@ -1274,6 +1316,7 @@ public class Main {
         _exportAction.setEnabled(false);
         _generateWebApplicationAction.setEnabled(false);
         _launchWebappAction.setEnabled(false);
+        _editGameConfigAction.setEnabled(true);
         _main.setTitle(PROGRAM_NAME);
         _statusLine.setText("Project closed.");
 
