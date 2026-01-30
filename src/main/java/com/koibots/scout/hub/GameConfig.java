@@ -1,6 +1,7 @@
 package com.koibots.scout.hub;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.Reader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -13,7 +14,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.google.gson.ExclusionStrategy;
+import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.annotations.SerializedName;
 
 /**
  * The game configuration for an FRC game.
@@ -136,6 +141,7 @@ public class GameConfig {
     /**
      * The "page title" for QR Scout. Usually the name of the game.
      */
+    @SerializedName("page_title")
     private String pageTitle;
 
     /**
@@ -198,6 +204,46 @@ public class GameConfig {
      */
     public static GameConfig readFile(File file) throws IOException {
         return readURL(file.toURI().toURL());
+    }
+
+    /**
+     * Writes the GameConfig to a file.
+     *
+     * @param file
+     *
+     * @throws IOException
+     */
+    public void saveToFile(File file, boolean prettyPrint)
+        throws IOException
+    {
+        GsonBuilder builder = new GsonBuilder()
+                .addSerializationExclusionStrategy(new ExclusionStrategy() {
+                    @Override
+                    public boolean shouldSkipField(FieldAttributes f) {
+System.out.println("Should I skip this field? " + f);
+                        return f.getDeclaringClass().equals(GameConfig.class)
+                               && (f.getName().equals("filename")
+                                   || f.getName().equals("fields"))
+                               ;
+                    }
+
+                    @Override
+                    public boolean shouldSkipClass(Class<?> clazz) {
+                        return false;
+                    }
+                })
+                .disableHtmlEscaping() // Don't escape = and ' characters
+                ;
+
+        if(prettyPrint) {
+            builder = builder.setPrettyPrinting(); // Write semi-human-readable JSON
+        }
+
+        Gson gson = builder.create();
+
+        try(FileWriter out = new FileWriter(file)) {
+            gson.toJson(this, out);
+        }
     }
 
     /**
