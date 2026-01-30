@@ -29,7 +29,7 @@ public class GameConfig {
         private boolean required;
         private String code;
         private String formResetBehavior;
-        private String defaultValue;
+        private Object defaultValue;
 
         // Field-type-specific properties
 
@@ -69,7 +69,7 @@ public class GameConfig {
             return formResetBehavior;
         }
 
-        public String getDefaultValue() {
+        public Object getDefaultValue() {
             return defaultValue;
         }
 
@@ -285,7 +285,20 @@ public class GameConfig {
                     f.required = Boolean.TRUE.equals(data.get("required"));
                     f.code = (String)data.get("code");
                     f.formResetBehavior = (String)data.get("formResetBehavior");
-                    f.defaultValue = String.valueOf(data.get("defaultValue"));
+                    Object defaultValue = data.get("defaultValue");
+                    if(null != defaultValue) {
+                        System.out.println("Default value for field '" + f.title + "' is " + defaultValue + " of type " + data.get("defaultValue").getClass());
+                        if(defaultValue instanceof Number) {
+                            String v = String.valueOf(defaultValue);
+                            if(v.endsWith(".0")) {
+                                System.out.println("Using Integer");
+                                // Let's use an Integer instead
+                                defaultValue = ((Number)defaultValue).intValue();
+                            }
+                        }
+                        f.defaultValue = defaultValue;
+                        System.out.println("Final default value type for field '" + f.title + "' is " + defaultValue.getClass());
+                    }
                     f.outputType = (String)data.get("outputType");
                     o = data.get("min");
                     if(null != o && o instanceof Number) {
