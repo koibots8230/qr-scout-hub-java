@@ -284,7 +284,7 @@ public class GameConfig {
                     f.type = (String)data.get("type");
                     f.required = Boolean.TRUE.equals(data.get("required"));
                     f.code = (String)data.get("code");
-                    f.formResetBehavior = (String)data.get("formResetVehavior");
+                    f.formResetBehavior = (String)data.get("formResetBehavior");
                     f.defaultValue = String.valueOf(data.get("defaultValue"));
                     f.outputType = (String)data.get("outputType");
                     o = data.get("min");
