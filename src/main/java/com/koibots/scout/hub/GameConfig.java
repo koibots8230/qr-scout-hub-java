@@ -260,9 +260,6 @@ public class GameConfig {
 
                 String sectionName = (String)o;
 
-                Section configSection = new Section();
-                configSection.setName(sectionName);
-
                 ArrayList<Field> fields = new ArrayList<>();
 
                 o = ((Map<?,?>)section).get("fields");
@@ -304,7 +301,7 @@ public class GameConfig {
                     }
                     o = data.get("choices");
                     if(null != o && o instanceof Map) {
-                        System.out.println("choices is of type " + o.getClass());
+//                        System.out.println("choices is of type " + o.getClass());
                         // Use LinkedHashMap to keep these options IN ORDER
                         @SuppressWarnings("unchecked")
                         LinkedHashMap<String,String> choices = new LinkedHashMap<>((Map<String,String>)o);
@@ -317,11 +314,9 @@ public class GameConfig {
 
                 Section s = new Section();
                 s.name = sectionName;
+                s.setFields(fields);
 
                 sections.add(s);
-
-                configSection.setFields(fields);
-                sections.add(configSection);
             }
             config.setSections(sections);
 
@@ -342,13 +337,9 @@ public class GameConfig {
         GameConfig config = GameConfig.readFile(new File(args[0]));
 
         System.out.println("Game: " + config.getPageTitle());
-        System.out.println("Scouting Fields:");
-        for(Field field : config.getFields()) {
-            System.out.println("  " + field);
-        }
         System.out.println("Scouting sections:");
         for(Section section : config.getSections()) {
-            System.out.println("  " + section.getName());
+            System.out.println("  " + section);
         }
     }
 }
