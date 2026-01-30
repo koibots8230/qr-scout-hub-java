@@ -106,16 +106,31 @@ public class GameConfig {
 
     public static class Section {
         private String name;
+        private ArrayList<Field> fields;
+
+        public void setName(String name) {
+            this.name = name;
+        }
 
         public String getName() {
             return name;
         }
 
-        @Override
-        public String toString() {
-            return "sections { name=" + getName() + " }";
+        public List<Field> getFields() {
+            return fields;
+        }
+        public void setFields(List<Field> fields) {
+            if(null == fields) {
+                this.fields = null;
+            } else {
+                this.fields = new ArrayList<>(fields);
+            }
         }
 
+        @Override
+        public String toString() {
+            return "Section { name=" + getName() + ", fields=" + getFields() + " }";
+        }
     }
 
     /**
@@ -157,6 +172,14 @@ public class GameConfig {
 
     public List<Section> getSections() {
         return Collections.unmodifiableList(sections);
+    }
+
+    public void setSections(List<Section> sections) {
+        if(null == sections) {
+            this.sections = null;
+        } else {
+            this.sections = new ArrayList<>(sections);
+        }
     }
 
     @Override
@@ -221,8 +244,8 @@ public class GameConfig {
                 throw new IOException("Config file contains suspicious 'sections' property: expected Collection, got type=" + o.getClass().getName());
             }
 
-            ArrayList<Field> fields = new ArrayList<Field>();
-            ArrayList<Section> sections = new ArrayList<Section>();
+            ArrayList<Section> sections = new ArrayList<>();
+            ArrayList<Field> allFields = new ArrayList<>();
 
             for(Object section : (Collection<?>)o) {
                 if(!(section instanceof Map<?,?>)) {
@@ -236,6 +259,11 @@ public class GameConfig {
                 }
 
                 String sectionName = (String)o;
+
+                Section configSection = new Section();
+                configSection.setName(sectionName);
+
+                ArrayList<Field> fields = new ArrayList<>();
 
                 o = ((Map<?,?>)section).get("fields");
 
@@ -283,6 +311,7 @@ public class GameConfig {
                         f.choices = choices;
                     }
 
+                    allFields.add(f);
                     fields.add(f);
                 }
 
@@ -290,9 +319,13 @@ public class GameConfig {
                 s.name = sectionName;
 
                 sections.add(s);
-            }
 
-            config.fields = fields;
+                configSection.setFields(fields);
+                sections.add(configSection);
+            }
+            config.setSections(sections);
+
+            config.fields = allFields;
             config.sections = sections;
 
             return config;
