@@ -3,8 +3,11 @@ package com.koibots.scout.hub;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Frame;
+import java.awt.Window;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -18,10 +21,12 @@ import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
+import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
 
 import com.koibots.scout.hub.GameConfig.Field;
 import com.koibots.scout.hub.GameConfig.Section;
@@ -73,6 +78,16 @@ public class GameConfigEditorDialog
                 return this;
             }
         });
+        tree.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                // Double-click -> edit the selected tree node
+                if (e.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(e)) {
+                    editSelectedNode(tree);
+                }
+            }
+        });
+
 
         add(new JScrollPane(tree), BorderLayout.CENTER);
 
@@ -399,6 +414,44 @@ System.out.println("Moving field " + event.moved + " to new section: " + newSect
         /** Called after the move has been applied */
         public void afterMove(MoveEvent event) {
             // Do nothing
+        }
+    }
+
+    private void editSelectedNode(JTree tree) {
+        TreePath path = tree.getSelectionPath();
+        if (path == null) {
+            return;
+        }
+
+        Object last = path.getLastPathComponent();
+        if (!(last instanceof DefaultMutableTreeNode)) {
+            return;
+        }
+
+        DefaultMutableTreeNode node = (DefaultMutableTreeNode) last;
+
+        Object userObject = node.getUserObject();
+
+        if(userObject instanceof Section) {
+            final Section existingSection = (Section)userObject;
+            final Section newSection = new Section();
+            newSection.setName(existingSection.getName());
+
+            Window owner = SwingUtilities.getWindowAncestor(tree);
+            SectionEditorDialog dialog = new SectionEditorDialog(owner, newSection);
+            dialog.setVisible(true);
+
+            if (dialog.getConfirmed()) {
+                // Notify the tree that the node changed
+                DefaultTreeModel model = (DefaultTreeModel) tree.getModel();
+
+                existingSection.setName(newSection.getName());
+                model.nodeChanged(node);
+
+                // TODO: save the game config?
+            }
+        } else if(userObject instanceof Field) {
+            // Do nothing for now
         }
     }
 
