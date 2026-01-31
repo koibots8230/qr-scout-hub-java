@@ -18,6 +18,8 @@ public class SectionEditorDialog
     public SectionEditorDialog(Window owner, Section section) {
         super(owner, "Edit Section", section);
 
+        setLayout(new BorderLayout(10, 10));
+
         // Text field
         nameField = new JTextField(20);
         nameField.setText(getUserObject().getName());
