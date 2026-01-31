@@ -15,6 +15,7 @@ import java.util.Objects;
 import javax.swing.DropMode;
 import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
@@ -96,6 +97,11 @@ public class GameConfigEditorDialog
             addSection(tree);
         });
         buttons.add(addSection, null, 0);
+        JButton addField= new JButton("New Field...");
+        addField.addActionListener((e) -> {
+            addField(tree);
+        });
+        buttons.add(addField, null, 1);
         add(buttons, BorderLayout.SOUTH);
 
         setSize(400, 500);
@@ -133,6 +139,59 @@ public class GameConfigEditorDialog
         TreePath path = new TreePath(sectionNode.getPath());
         tree.setSelectionPath(path);
         tree.scrollPathToVisible(path);
+    }
+
+    private void addField(JTree tree) {
+        TreePath path = tree.getSelectionPath();
+        if (path == null) {
+            JOptionPane.showMessageDialog(tree, "You must select a Section to add a field", getTitle(), JOptionPane.ERROR_MESSAGE);
+
+            return;
+        }
+
+        DefaultMutableTreeNode selected =
+                (DefaultMutableTreeNode) path.getLastPathComponent();
+
+        DefaultMutableTreeNode sectionNode;
+
+        if (selected.getUserObject() instanceof Section) {
+            sectionNode = selected;
+        } else if (selected.getUserObject() instanceof Field) {
+            sectionNode = (DefaultMutableTreeNode) selected.getParent();
+        } else {
+            JOptionPane.showMessageDialog(tree, "You must select a Section to add a field", getTitle(), JOptionPane.ERROR_MESSAGE);
+
+            return;
+        }
+
+        // Create + edit new field
+        Field newField = new Field();
+        FieldEditorDialog dialog =
+                new FieldEditorDialog(this, newField);
+        dialog.setVisible(true);
+
+        if (!dialog.isConfirmed()) {
+            return;
+        }
+
+        GameConfigTreeModel model =
+                (GameConfigTreeModel) tree.getModel();
+
+        DefaultMutableTreeNode fieldNode =
+                new DefaultMutableTreeNode(newField);
+
+        // Append to end of section
+        model.insertNodeInto(
+                fieldNode,
+                sectionNode,
+                sectionNode.getChildCount()
+        );
+
+        // Expand + select
+        TreePath fieldPath = new TreePath(fieldNode.getPath());
+        tree.expandPath(new TreePath(sectionNode.getPath()));
+        tree.setSelectionPath(fieldPath);
+        tree.scrollPathToVisible(fieldPath);
     }
 
     @Override
