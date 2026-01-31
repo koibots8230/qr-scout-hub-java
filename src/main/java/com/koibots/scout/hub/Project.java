@@ -632,31 +632,36 @@ public class Project
      * @throws IOException If there was a problem creating the Project.
      */
     public static Project createProject(File directory, File configFile) throws IOException {
+        GameConfig config;
+        if(null == configFile) {
+            // Use an empty config
+            config = new GameConfig();
+        } else {
+            config = GameConfig.readFile(configFile);
+        }
+
+        return createProject(directory, config);
+    }
+
+    public static Project createProject(File directory, GameConfig config) throws IOException {
         if(directory.exists()) {
             throw new IllegalArgumentException("Directory " + directory.getAbsolutePath() + " already exists");
         }
 
         Project project = new Project();
         project.setDirectory(directory);
+        project.setGameConfig(config);
+
+        System.out.println("Creating project directory " + directory.getAbsolutePath() + " with config " + config);
+
+        File projectConfig = new File(directory, "config.json");
 
         try {
-            GameConfig config;
-            if(null == configFile) {
-                // Use an empty config
-                config = new GameConfig();
-            } else {
-                config = GameConfig.readFile(configFile);
-            }
-
-            project.setGameConfig(config);
-
-            System.out.println("Creating project directory " + directory.getAbsolutePath() + " with config " + config);
-            // Create project directory
             if(!directory.mkdir()) {
                 throw new IOException("Failed to create file " + directory.getAbsolutePath());
             }
-            File projectConfig = new File(directory, "config.json");
 
+            // Create project directory
             config.saveToFile(projectConfig, true);
 
             // Create database
