@@ -3,7 +3,6 @@ package com.koibots.scout.hub;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Frame;
-import java.awt.Window;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.MouseAdapter;
@@ -21,6 +20,7 @@ import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
+import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -95,6 +95,12 @@ public class GameConfigEditorDialog
         close.addActionListener(e -> dispose());
 
         add(close, BorderLayout.SOUTH);
+
+        getRootPane().registerKeyboardAction(
+                e -> dispose(),
+                KeyStroke.getKeyStroke("ESCAPE"),
+                JComponent.WHEN_IN_FOCUSED_WINDOW
+        );
 
         setSize(400, 500);
         setLocationRelativeTo(owner);
@@ -437,8 +443,7 @@ System.out.println("Moving field " + event.moved + " to new section: " + newSect
             final Section newSection = new Section();
             newSection.setName(existingSection.getName());
 
-            Window owner = SwingUtilities.getWindowAncestor(tree);
-            SectionEditorDialog dialog = new SectionEditorDialog(owner, newSection);
+            SectionEditorDialog dialog = new SectionEditorDialog(this, newSection);
             dialog.setVisible(true);
 
             if (dialog.isConfirmed()) {
@@ -451,7 +456,24 @@ System.out.println("Moving field " + event.moved + " to new section: " + newSect
                 // TODO: save the game config?
             }
         } else if(userObject instanceof Field) {
-            // Do nothing for now
+            final Field existingField = (Field)userObject;
+            final Field newField = new Field();
+
+            existingField.copyTo(newField);
+
+            FieldEditorDialog dialog = new FieldEditorDialog(this, newField);
+            dialog.setVisible(true);
+
+            if (dialog.isConfirmed()) {
+                // Notify the tree that the node changed
+                DefaultTreeModel model = (DefaultTreeModel) tree.getModel();
+
+                newField.copyTo(existingField);
+
+                model.nodeChanged(node);
+
+                // TODO: save the game config?
+            }
         }
     }
 
