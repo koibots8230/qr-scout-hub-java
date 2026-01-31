@@ -12,7 +12,6 @@ import java.io.PrintStream;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -641,21 +640,24 @@ public class Project
         project.setDirectory(directory);
 
         try {
-            GameConfig config = GameConfig.readFile(configFile);
+            GameConfig config;
+            if(null == configFile) {
+                // Use an empty config
+                config = new GameConfig();
+            } else {
+                config = GameConfig.readFile(configFile);
+            }
 
             project.setGameConfig(config);
 
-            System.out.println("Creating project with config: " + config);
-
+            System.out.println("Creating project directory " + directory.getAbsolutePath() + " with config " + config);
             // Create project directory
             if(!directory.mkdir()) {
                 throw new IOException("Failed to create file " + directory.getAbsolutePath());
             }
-
             File projectConfig = new File(directory, "config.json");
 
-            // Copy config file in to project
-            Files.copy(configFile.toPath(), projectConfig.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            config.saveToFile(projectConfig, true);
 
             // Create database
             project.createDatabase();
