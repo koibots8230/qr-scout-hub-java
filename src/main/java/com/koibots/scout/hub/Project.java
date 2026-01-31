@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.koibots.scout.hub.GameConfig.Field;
+import com.koibots.scout.hub.GameConfig.Section;
 import com.opencsv.CSVWriter;
 
 /**
@@ -979,5 +980,61 @@ public class Project
 
             Files.delete(file.toPath());
         }
+    }
+
+    /**
+     * Applies changes between the current game config and the one
+     * passed-in.
+     */
+    public void applyChanges(GameConfig config) throws SQLException {
+        // We may need to make database changes based upon the fields
+        // found in the new config.
+        //
+        // Note that the order of the Sections and Fields is not relevant
+        // to the database, nor is the inclusion of a Field in one particular
+        // section or the other. We can basically ignore the Sections and
+        // only look at the Fields.
+        //
+        // Some fields may be new and some fields may have been removed.
+        // New fields aren't much different than updated ones, but removed
+        // fields require a little bit of nuance because they are still in
+        // the database but not in the config object any more.
+        //
+
+        String databaseURL = getDatabaseURL();
+
+        try(Connection conn = DriverManager.getConnection(databaseURL)) {
+            List<Section> sections = config.getSections();
+            if(null != sections && !sections.isEmpty()) {
+                // First, let's update everything we still have.
+                ArrayList<Field> allFields = new ArrayList<>();
+
+                for(Section section : sections) {
+                    List<Field> fields = section.getFields();
+                    if(null != fields && !fields.isEmpty()) {
+                        for(Field field : fields) {
+                            updateField(field, conn);
+
+                            allFields.add(field);
+                        }
+                    }
+                }
+
+                // Then, remove everything we haven't updated
+                removeExcessFields(allFields, conn);
+            } else {
+                removeAllFields(conn);
+            }
+        }
+    }
+
+    private void updateField(Field field, Connection conn) throws SQLException {
+        // TODO
+    }
+    private void removeAllFields(Connection conn) throws SQLException {
+        // TODO
+    }
+    private void removeExcessFields(Collection<Field> retaindFields, Connection conn) throws SQLException {
+        // TODO
     }
 }

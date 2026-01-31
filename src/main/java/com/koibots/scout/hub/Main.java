@@ -623,8 +623,11 @@ public class Main {
                 gced.setVisible(true);
 
                 if(gced.isConfirmed()) {
-                    // Make a backup copy of the original config
                     try {
+                        // Update the database structure
+                        processDatabaseAlterations(config);
+
+                        // Make a backup copy of the original config
                         File configFile = new File(_project.getDirectory(), "config.json");
                         configFile.renameTo(new File(_project.getDirectory(), "config.bak"));
 
@@ -1506,7 +1509,11 @@ public class Main {
         }
     }
 
-    private String getFileContents(URL url) {
+    private void processDatabaseAlterations(GameConfig config) throws Exception {
+        _project.applyChanges(config);
+    }
+
+    private static String getFileContents(URL url) {
         try (BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream(), "UTF-8"))) {
             StringBuilder sb = new StringBuilder();
             String line;
