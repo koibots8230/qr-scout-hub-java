@@ -52,6 +52,7 @@ public class UIUtils
         JDialog dialog = op.createDialog(parent, "Error");
 
         dialog.setResizable(true);
+        dialog.setLocationRelativeTo(parent);
 
         SwingUtilities.invokeLater(() -> dialog.setVisible(true));
     }
