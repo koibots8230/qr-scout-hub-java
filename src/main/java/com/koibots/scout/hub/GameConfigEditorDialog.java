@@ -27,6 +27,12 @@ import javax.swing.tree.TreePath;
 import com.koibots.scout.hub.GameConfig.Field;
 import com.koibots.scout.hub.GameConfig.Section;
 
+/**
+ * A dialog for editing the game configuration.
+ *
+ * All edits happen on copies of the original objects. If the user chooses
+ * "Save", then those edits are copied back onto the originals.
+ */
 public class GameConfigEditorDialog
     extends EditorDialog<GameConfig>
 {
@@ -138,6 +144,13 @@ public class GameConfigEditorDialog
         config.setSections(sections);
     }
 
+    /**
+     * A class to model the game configuration tree.
+     *
+     * Exactly mirrors the config -> section -> field structure
+     * with DefaultMutableTreeNodes which are Swing helper objects
+     * which wrap user-defined objects.
+     */
     private class GameConfigTreeModel extends DefaultTreeModel {
 
         private static final long serialVersionUID = 7909699472552723977L;
@@ -195,6 +208,9 @@ System.out.println("moveNode(" + node + ", " + newParent + ", " + index + ")");
         }
     }
 
+    /**
+     * A class to manage drag-and-drop operations for the JTree UI element.
+     */
     private class GameConfigTransferHandler extends TransferHandler {
 
         private static final long serialVersionUID = -3254733554183635522L;
@@ -253,7 +269,7 @@ System.out.println("moveNode(" + node + ", " + newParent + ", " + index + ")");
             Object targetObj = target.getUserObject();
 
             if (dragged instanceof Field) {
-                // We can only drag-and-drop Fields onto sections
+                // We can only drag-and-drop Fields onto Sections
                 return targetObj instanceof Section;
             } else if(dragged instanceof Section) {
                 // We can only drop Sections onto the root
@@ -300,7 +316,14 @@ System.out.println("moveNode(" + node + ", " + newParent + ", " + index + ")");
         }
     }
 
-
+    /**
+     * Performs an "edit" operation on a JTree item.
+     *
+     * This will be either a Section or a Field, and will be determined
+     * by looking at the currently-selected item.
+     *
+     * @param tree The tree receiving the "edit" operation
+     */
     private void editSelectedNode(JTree tree) {
         TreePath path = tree.getSelectionPath();
         if (path == null) {
