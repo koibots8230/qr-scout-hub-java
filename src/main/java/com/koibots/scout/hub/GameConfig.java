@@ -90,6 +90,14 @@ public class GameConfig {
             return step;
         }
 
+        public String getOutputType() {
+            return outputType;
+        }
+
+        public Map<String,String> getChoices() {
+            return Collections.unmodifiableMap(choices);
+        }
+
         @Override
         public boolean equals(Object o) {
             return null != o
