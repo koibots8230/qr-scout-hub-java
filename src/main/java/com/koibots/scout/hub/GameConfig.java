@@ -10,7 +10,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -143,7 +142,8 @@ public class GameConfig {
             if(null == choices) {
                 choices = null;
             } else {
-                this.choices = new HashMap<>(choices);
+                // Use LinkedHashMap to keep choices in order
+                this.choices = new LinkedHashMap<>(choices);
             }
         }
 
