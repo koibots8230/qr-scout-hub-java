@@ -14,17 +14,23 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.koibots.scout.hub.GameConfig.Field;
 import com.koibots.scout.hub.GameConfig.Section;
@@ -1029,12 +1035,89 @@ public class Project
     }
 
     private void updateField(Field field, Connection conn) throws SQLException {
-        // TODO
+        // Figure out if we have to ADD or MODIFY a column
+        DatabaseMetaData dbmd = conn.getMetaData();
+
+        String columnName = normalizeColumnName(field.getCode());
+        String desiredColumnType = getSQLDataType(field.getType());
+        try (ResultSet rs = dbmd.getColumns(null, "APP", "STAND_SCOUTING", columnName);
+             Statement stmt = conn.createStatement()) {
+            if(rs.next()) {
+                // Column exists; check that the type is the desired type
+                String columnType = rs.getString("TYPE_NAME");
+                if(columnType.contains("CHAR")) {
+                    columnType += "(" + rs.getInt("COLUMN_SIZE") + ")";
+                }
+                if(!columnType.equals(desiredColumnType)) {
+                    System.out.println("Column " + columnName + " needs to be updated from " + columnType + " to " + desiredColumnType);
+                    // Apache Derby doesn't do ALTER TABLE MODIFY COLUMN
+                    // We have to ADD COLUMN temp
+                    // Copy old -> new
+                    // DROP column
+                    // RENAME temp -> column
+                    stmt.execute("ALTER TABLE stand_scouting ADD COLUMN temp " + desiredColumnType);
+
+                    // Copy from columnName -> temp
+                    try {
+                        stmt.execute("UPDATE stand_scouting SET temp=" + columnName);
+                    } catch (SQLException sqle) {
+                        // Ignore this and keep going
+                        System.out.println("WARNING: Failed to copy temp->" + columnName + ": " + sqle.getMessage() + "; continuing");
+                    }
+
+                    stmt.execute("ALTER TABLE stand_scouting DROP COLUMN " + columnName);
+
+                    stmt.execute("RENAME COLUMN stand_scouting.temp TO " + columnName);
+                } else {
+                    System.out.println("Column " + columnName + " is already the right type: " + columnType);
+                }
+            } else {
+                // Column needs to be added
+                stmt.execute("ALTER TABLE stand_scouting ADD COLUMN " + columnName + " " + desiredColumnType);
+            }
+        }
     }
+
     private void removeAllFields(Connection conn) throws SQLException {
-        // TODO
+        removeExcessFields(Collections.emptySet(), conn);
     }
-    private void removeExcessFields(Collection<Field> retaindFields, Connection conn) throws SQLException {
-        // TODO
+
+    private void removeExcessFields(Collection<Field> retainedFields, Connection conn) throws SQLException {
+        if(null == retainedFields) {
+            retainedFields = Collections.emptySet();
+        }
+
+        Set<String> dbFieldNames = getColumnNames("stand_scouting", conn);
+        Set<String> retainedFieldNames = retainedFields.stream()
+                .map(Field::getCode) // NOTE: *code* is used for the column name
+                .map(String::toUpperCase) // Make sure we can String-match
+                .collect(Collectors.toSet())
+                ;
+
+        // Remove all still-used field names (codes)
+        dbFieldNames.removeAll(retainedFieldNames);
+        dbFieldNames.remove("ID");
+
+        if(!dbFieldNames.isEmpty()) {
+            try(Statement stmt = conn.createStatement()) {
+                for(String dbField : dbFieldNames) {
+                    stmt.execute("ALTER TABLE stand_scouting DROP COLUMN " + dbField);
+                }
+            }
+        }
+    }
+
+    private Set<String> getColumnNames(String table, Connection conn) throws SQLException {
+        DatabaseMetaData dbmd = conn.getMetaData();
+
+        HashSet<String> columnNames = new HashSet<>();
+        try (ResultSet rs = dbmd.getColumns(null, "APP", "STAND_SCOUTING", null);
+            Statement stmt = conn.createStatement()) {
+            while(rs.next()) {
+                columnNames.add(rs.getString("COLUMN_NAME"));
+            }
+        }
+
+        return columnNames;
     }
 }
