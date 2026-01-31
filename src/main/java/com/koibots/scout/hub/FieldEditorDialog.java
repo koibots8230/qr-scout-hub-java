@@ -132,6 +132,7 @@ public class FieldEditorDialog
     private JPanel createLabeledPanel(String labelText, Component component) {
         JPanel panel = new JPanel(new BorderLayout(5, 0));
         JLabel label = new JLabel(labelText);
+        label.setVerticalAlignment(SwingConstants.TOP);
         panel.add(label, BorderLayout.WEST);
         panel.add(component, BorderLayout.CENTER);
         return panel;
@@ -150,11 +151,15 @@ public class FieldEditorDialog
                         String label, Component comp) {
         gbc.gridx = 0;
         gbc.gridy = row;
+        gbc.anchor = GridBagConstraints.NORTHWEST;
         gbc.weightx = 0;
-        panel.add(new JLabel(label), gbc);
+        JLabel jLabel = new JLabel(label);
+        jLabel.setVerticalAlignment(SwingConstants.TOP);
+        panel.add(jLabel, gbc);
 
         gbc.gridx = 1;
         gbc.weightx = 1.0;
+        gbc.anchor = GridBagConstraints.NORTHEAST;
         panel.add(comp, gbc);
     }
 
