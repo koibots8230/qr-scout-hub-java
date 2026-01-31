@@ -288,14 +288,14 @@ public class Main {
                 File projectDirectory = getNewFilename();
 
                 if(null != projectDirectory) {
-                    File configFile = getConfigFilename();
+                    try {
+                        System.out.println("Creating project in " + projectDirectory.getAbsolutePath());
 
-                    if(null != configFile) {
-                        try {
-                            createProject(projectDirectory, configFile);
-                        } catch (IOException ioe) {
-                            showError(ioe);
-                        }
+                        GameConfig emptyConfig = new GameConfig();
+                        emptyConfig.setPageTitle("New Project");
+                        loadProject(Project.createProject(projectDirectory, emptyConfig));
+                    } catch (Exception ex) {
+                        showError(ex);
                     }
                 }
             }
@@ -326,18 +326,7 @@ public class Main {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                closeProject();
-
-                _project = null;
-
-                _cardLayout.first(_cardPanel);
-                _closeAction.setEnabled(false);
-                _exportAction.setEnabled(false);
-                _generateWebApplicationAction.setEnabled(false);
-                _analyticsAction.setEnabled(false);
-                _editGameConfigAction.setEnabled(false);
-                _main.setTitle(PROGRAM_NAME);
-                _statusLine.setText("Project closed.");
+                 closeProject();
             }
         };
 
@@ -495,8 +484,6 @@ public class Main {
 //                putValue(Action.LARGE_ICON_KEY, getIcon("/images/export.png"));
                 putValue(Action.MNEMONIC_KEY, (int)'y');
                 putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_Y, metaKey));
-
-                setEnabled(false);
             }
 
             @Override
@@ -800,15 +787,6 @@ public class Main {
         _main.setContentPane(mainPanel);
 
         // Set up default action states
-        _closeAction.setEnabled(false);
-        _scanAction.setEnabled(false);
-        _importAction.setEnabled(false);
-        _exportAction.setEnabled(false);
-        _generateWebApplicationAction.setEnabled(false);
-        _launchWebappAction.setEnabled(false);
-        _analyticsAction.setEnabled(false);
-        _editGameConfigAction.setEnabled(false);
-
         _main.setSize(800, 600);
 
         _scanner = new CodeScanner();
@@ -1247,14 +1225,6 @@ public class Main {
         }
     }
 
-    private void createProject(File projectDirectory, File configFile) throws IOException {
-        try {
-            _project = Project.createProject(projectDirectory, configFile);
-        } catch (Throwable t) {
-            showError(t);
-        }
-    }
-
     private void openProject(File project) {
         if(project.isDirectory()) {
             File dbFile = new File(project, "db");
@@ -1277,39 +1247,43 @@ public class Main {
         }
     }
 
-    private void loadProject(File projectDir) throws IOException, SQLException {
-        _project = Project.loadProject(projectDir);
+    private void setProjectLoaded(boolean loaded) {
+        _closeAction.setEnabled(loaded);
+        _scanAction.setEnabled(loaded);
+        _launchWebappAction.setEnabled(loaded);
+        _exportAction.setEnabled(loaded);
+        _generateWebApplicationAction.setEnabled(loaded);
+        _analyticsAction.setEnabled(loaded);
+        _editGameConfigAction.setEnabled(loaded);
+    }
 
-        String projectName = _project.getGameConfig().getPageTitle();
-        int recordCount = _project.getRecordCount();
+    private void loadProject(Project project) throws SQLException {
+        String projectName = project.getGameConfig().getPageTitle();
+        int recordCount = project.getRecordCount();
+
+        _project = project;
 
         SwingUtilities.invokeLater(() -> {
             _main.setTitle(PROGRAM_NAME + ": " + projectName);
 
             _cardLayout.next(_cardPanel);
 
-            _closeAction.setEnabled(true);
-            _scanAction.setEnabled(true);
-            _launchWebappAction.setEnabled(true);
-            _exportAction.setEnabled(true);
-            _generateWebApplicationAction.setEnabled(true);
-            _analyticsAction.setEnabled(true);
-            _editGameConfigAction.setEnabled(true);
+            setProjectLoaded(true);
 
             _statusLine.setText("Record count: " + recordCount);
 
             JOptionPane.showMessageDialog(_main, "Successfully loaded project \"" + projectName + "\"", "Project Loaded", JOptionPane.INFORMATION_MESSAGE);
         });
     }
+    private void loadProject(File projectDir) throws IOException, SQLException {
+        loadProject(Project.loadProject(projectDir));
+    }
 
     private void closeProject() {
         _cardLayout.first(_cardPanel);
-        _closeAction.setEnabled(false);
-        _scanAction.setEnabled(false);
-        _exportAction.setEnabled(false);
-        _generateWebApplicationAction.setEnabled(false);
-        _launchWebappAction.setEnabled(false);
-        _editGameConfigAction.setEnabled(true);
+
+        setProjectLoaded(false);
+
         _main.setTitle(PROGRAM_NAME);
         _statusLine.setText("Project closed.");
 
