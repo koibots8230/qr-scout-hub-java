@@ -15,6 +15,7 @@ import java.util.Objects;
 import javax.swing.DropMode;
 import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
 import javax.swing.SwingUtilities;
@@ -89,10 +90,49 @@ public class GameConfigEditorDialog
 
         add(new JScrollPane(tree), BorderLayout.CENTER);
 
-        add(createButtonPanel(new JButton("Save")), BorderLayout.SOUTH);
+        JPanel buttons = createButtonPanel(new JButton("Save"));
+        JButton addSection = new JButton("New Section...");
+        addSection.addActionListener((e) -> {
+            addSection(tree);
+        });
+        buttons.add(addSection, null, 0);
+        add(buttons, BorderLayout.SOUTH);
 
         setSize(400, 500);
         setLocationRelativeTo(owner);
+    }
+
+    private void addSection(JTree tree) {
+        Section newSection = new Section();
+
+        SectionEditorDialog dialog =
+                new SectionEditorDialog(this, newSection);
+        dialog.setVisible(true);
+
+        if (!dialog.isConfirmed()) {
+            return;
+        }
+
+        GameConfigTreeModel model =
+                (GameConfigTreeModel) tree.getModel();
+
+        DefaultMutableTreeNode root =
+                (DefaultMutableTreeNode) model.getRoot();
+
+        DefaultMutableTreeNode sectionNode =
+                new DefaultMutableTreeNode(newSection);
+
+        // Append to end
+        model.insertNodeInto(
+                sectionNode,
+                root,
+                root.getChildCount()
+        );
+
+        // Optional: auto-select the new section
+        TreePath path = new TreePath(sectionNode.getPath());
+        tree.setSelectionPath(path);
+        tree.scrollPathToVisible(path);
     }
 
     @Override
