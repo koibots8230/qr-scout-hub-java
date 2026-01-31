@@ -3,6 +3,7 @@ package com.koibots.scout.hub;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.Reader;
+import java.io.Writer;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
@@ -296,11 +297,18 @@ public class GameConfig {
     public void saveToFile(File file, boolean prettyPrint)
         throws IOException
     {
+        try(FileWriter out = new FileWriter(file)) {
+            saveTo(out, prettyPrint);
+        }
+    }
+
+    public void saveTo(Writer out, boolean prettyPrint)
+        throws IOException
+    {
         GsonBuilder builder = new GsonBuilder()
                 .addSerializationExclusionStrategy(new ExclusionStrategy() {
                     @Override
                     public boolean shouldSkipField(FieldAttributes f) {
-System.out.println("Should I skip this field? " + f);
                         return f.getDeclaringClass().equals(GameConfig.class)
                                && (f.getName().equals("filename")
                                    || f.getName().equals("fields"))
@@ -321,9 +329,7 @@ System.out.println("Should I skip this field? " + f);
 
         Gson gson = builder.create();
 
-        try(FileWriter out = new FileWriter(file)) {
-            gson.toJson(this, out);
-        }
+        gson.toJson(this, out);
     }
 
     /**
