@@ -148,12 +148,16 @@ public class GameConfigEditorDialog
 
         private static DefaultMutableTreeNode buildRoot(GameConfig config) {
             DefaultMutableTreeNode root = new DefaultMutableTreeNode("ROOT");
-            for (Section p : config.getSections()) {
-                DefaultMutableTreeNode phaseNode = new DefaultMutableTreeNode(p);
-                for (Field f : p.getFields()) {
-                    phaseNode.add(new DefaultMutableTreeNode(f));
+            for (Section section : config.getSections()) {
+                Section modelSection = new Section();
+                modelSection.setName(section.getName());
+                DefaultMutableTreeNode sectionNode = new DefaultMutableTreeNode(modelSection);
+                for (Field field : section.getFields()) {
+                    Field modelField = new Field();
+                    field.copyTo(modelField);
+                    sectionNode.add(new DefaultMutableTreeNode(modelField));
                 }
-                root.add(phaseNode);
+                root.add(sectionNode);
             }
             return root;
         }
