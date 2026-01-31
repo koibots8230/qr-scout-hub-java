@@ -441,7 +441,7 @@ System.out.println("Moving field " + event.moved + " to new section: " + newSect
             SectionEditorDialog dialog = new SectionEditorDialog(owner, newSection);
             dialog.setVisible(true);
 
-            if (dialog.getConfirmed()) {
+            if (dialog.isConfirmed()) {
                 // Notify the tree that the node changed
                 DefaultTreeModel model = (DefaultTreeModel) tree.getModel();
 
