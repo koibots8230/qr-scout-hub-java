@@ -5,6 +5,8 @@ import java.awt.Component;
 import java.awt.Frame;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
@@ -12,13 +14,19 @@ import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Objects;
+
+import javax.swing.AbstractAction;
 import javax.swing.DropMode;
+import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
+import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -87,7 +95,8 @@ public class GameConfigEditorDialog
                 }
             }
         });
-
+        installPopupMenu(tree);
+        installKeyHandlers(tree);
 
         add(new JScrollPane(tree), BorderLayout.CENTER);
 
@@ -192,6 +201,114 @@ public class GameConfigEditorDialog
         tree.expandPath(new TreePath(sectionNode.getPath()));
         tree.setSelectionPath(fieldPath);
         tree.scrollPathToVisible(fieldPath);
+    }
+
+    private void installPopupMenu(JTree tree) {
+        JPopupMenu menu = new JPopupMenu();
+
+        JMenuItem deleteItem = new JMenuItem("Delete");
+        deleteItem.addActionListener(e -> deleteSelectedNode(tree));
+        menu.add(deleteItem);
+
+        tree.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                maybeShowPopup(e);
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                maybeShowPopup(e);
+            }
+
+            private void maybeShowPopup(MouseEvent e) {
+                if (!e.isPopupTrigger()) {
+                    return;
+                }
+
+                TreePath path =
+                        tree.getPathForLocation(e.getX(), e.getY());
+
+                if (path == null) {
+                    return;
+                }
+
+                tree.setSelectionPath(path);
+
+                DefaultMutableTreeNode node =
+                        (DefaultMutableTreeNode) path.getLastPathComponent();
+
+                Object obj = node.getUserObject();
+                if (obj instanceof Section || obj instanceof Field) {
+                    menu.show(tree, e.getX(), e.getY());
+                }
+            }
+        });
+    }
+
+    private void installKeyHandlers(JTree tree) {
+        InputMap inputMap = tree.getInputMap(JComponent.WHEN_FOCUSED);
+        inputMap.put(
+                KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0),
+                "deleteNode"
+        );
+
+        inputMap.put(
+                KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0),
+                "deleteNode"
+        );
+
+        tree.getActionMap().put("deleteNode", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                deleteSelectedNode(tree);
+            }
+        });
+    }
+
+    private void deleteSelectedNode(JTree tree) {
+        System.out.println("Deleting selected node");
+        TreePath path = tree.getSelectionPath();
+        if (path == null) {
+            return;
+        }
+
+        DefaultMutableTreeNode node =
+                (DefaultMutableTreeNode) path.getLastPathComponent();
+
+        Object userObject = node.getUserObject();
+
+        if (!(userObject instanceof Section) &&
+            !(userObject instanceof Field)) {
+            return;
+        }
+
+        String type =
+                (userObject instanceof Section) ? "section" : "field";
+
+        String name;
+        if (userObject instanceof Section) {
+            name = ((Section) userObject).getName();
+        } else {
+            name = ((Field) userObject).getTitle();
+        }
+
+        int result = JOptionPane.showConfirmDialog(
+                this,
+                "Delete " + type + " \"" + name + "\"?",
+                "Confirm Delete",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE
+        );
+
+        if (result != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        DefaultTreeModel model =
+                (DefaultTreeModel) tree.getModel();
+
+        model.removeNodeFromParent(node);
     }
 
     @Override
