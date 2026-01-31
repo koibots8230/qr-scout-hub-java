@@ -17,10 +17,8 @@ import java.util.stream.Collectors;
 import javax.swing.DropMode;
 import javax.swing.JButton;
 import javax.swing.JComponent;
-import javax.swing.JDialog;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
-import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -32,7 +30,7 @@ import com.koibots.scout.hub.GameConfig.Field;
 import com.koibots.scout.hub.GameConfig.Section;
 
 public class GameConfigEditorDialog
-    extends JDialog
+    extends EditorDialog<GameConfig>
 {
     private static final long serialVersionUID = -716394164351569605L;
 
@@ -42,7 +40,7 @@ public class GameConfigEditorDialog
                                   GameConfig config,
                                   GameConfigChangeListener listener)
     {
-        super(owner, "Game Config Editor", true);
+        super(owner, "Edit Game", config);
 
         model = new GameConfigTreeModel(config);
         if(null != listener) {
@@ -91,19 +89,15 @@ public class GameConfigEditorDialog
 
         add(new JScrollPane(tree), BorderLayout.CENTER);
 
-        JButton close = new JButton("Close");
-        close.addActionListener(e -> dispose());
-
-        add(close, BorderLayout.SOUTH);
-
-        getRootPane().registerKeyboardAction(
-                e -> dispose(),
-                KeyStroke.getKeyStroke("ESCAPE"),
-                JComponent.WHEN_IN_FOCUSED_WINDOW
-        );
+        add(createButtonPanel(new JButton("Save")), BorderLayout.SOUTH);
 
         setSize(400, 500);
         setLocationRelativeTo(owner);
+    }
+
+    @Override
+    protected void applyChanges(GameConfig config) {
+        // Do nothing for now; the changes have already been applied
     }
 
     public void addGameConfigChangeListener(GameConfigChangeListener listener) {
