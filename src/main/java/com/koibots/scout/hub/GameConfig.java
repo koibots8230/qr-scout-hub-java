@@ -203,8 +203,13 @@ public class GameConfig {
         }
 
         public List<Field> getFields() {
-            return fields;
+            if(null == fields) {
+                return null;
+            } else {
+                return Collections.unmodifiableList(fields);
+            }
         }
+
         public void setFields(List<Field> fields) {
             if(null == fields) {
                 this.fields = null;
@@ -226,17 +231,11 @@ public class GameConfig {
     private String pageTitle;
 
     /**
-     * The scouting fields for the game.
-     */
-    private List<Field> fields;
-
-    /**
      * The sections / phases of the game.
      */
     private List<Section> sections;
 
-    private GameConfig() {
-        // Require clients to use Factory method
+    public GameConfig() {
     }
 
     /**
@@ -249,16 +248,30 @@ public class GameConfig {
     }
 
     /**
-     * Gets the scouting fields.
+     * Gets all the scouting fields from all Sections.
      *
-     * @return The List of scouting Fields.
+     * @return The List of all scouting Fields.
      */
     public List<Field> getFields() {
-        return Collections.unmodifiableList(fields);
+        ArrayList<Field> fields = new ArrayList<>();
+        List<Section> sections = getSections();
+        if(null != sections && !sections.isEmpty()) {
+            for(Section section : sections) {
+                List<Field> secFields = section.getFields();
+                if(null != secFields && !secFields.isEmpty()) {
+                    fields.addAll(secFields);
+                }
+            }
+        }
+        return fields;
     }
 
     public List<Section> getSections() {
-        return Collections.unmodifiableList(sections);
+        if(null == sections) {
+            return null;
+        } else {
+            return Collections.unmodifiableList(sections);
+        }
     }
 
     public void setSections(List<Section> sections) {
@@ -465,7 +478,6 @@ public class GameConfig {
             }
             config.setSections(sections);
 
-            config.fields = allFields;
             config.sections = sections;
 
             return config;
