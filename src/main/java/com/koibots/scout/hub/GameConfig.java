@@ -247,6 +247,10 @@ public class GameConfig {
         return pageTitle;
     }
 
+    public void setPageTitle(String pageTitle) {
+        this.pageTitle = pageTitle;
+    }
+
     /**
      * Gets all the scouting fields from all Sections.
      *
