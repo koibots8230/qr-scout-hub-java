@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,48 +55,119 @@ public class GameConfig {
             return title;
         }
 
+        public void setTitle(String title) {
+            this.title = title;
+        }
+
         public String getDescription() {
             return description;
+        }
+
+        public void setDescription(String description) {
+            this.description = description;
         }
 
         public String getType() {
             return type;
         }
 
+        public void setType(String type) {
+            this.type = type;
+        }
+
         public boolean getRequired() {
             return required;
+        }
+
+        public void setRequired(boolean required) {
+            this.required = required;
         }
 
         public String getCode() {
             return code;
         }
 
+        public void setCode(String code) {
+            this.code = code;
+        }
+
         public String getFormResetBehavior() {
             return formResetBehavior;
+        }
+
+        public void setFormResetBehavior(String formResetBehavior) {
+            this.formResetBehavior = formResetBehavior;
         }
 
         public Object getDefaultValue() {
             return defaultValue;
         }
 
+        public void setDefaultValue(Object defaultValue) {
+            this.defaultValue = defaultValue;
+        }
+
         public Integer getMin() {
             return min;
+        }
+
+        public void setMin(Integer min) {
+            this.min = min;
         }
 
         public Integer getMax() {
             return max;
         }
 
+        public void setMax(Integer max) {
+            this.max = max;
+        }
+
         public Integer getStep() {
             return step;
+        }
+
+        public void setStep(Integer step) {
+            this.step = step;
         }
 
         public String getOutputType() {
             return outputType;
         }
 
+        public void setOutputType(String outputType) {
+            this.outputType = outputType;
+        }
+
+        public void setChoices(Map<String, String> choices) {
+            if(null == choices) {
+                choices = null;
+            } else {
+                this.choices = new HashMap<>(choices);
+            }
+        }
+
         public Map<String,String> getChoices() {
-            return Collections.unmodifiableMap(choices);
+            if(null == choices) {
+                return null;
+            } else {
+                return Collections.unmodifiableMap(choices);
+            }
+        }
+
+        public void copyTo(Field field) {
+            field.setTitle(getTitle());
+            field.setType(getType());
+            field.setDescription(getDescription());
+            field.setRequired(getRequired());
+            field.setCode(getCode());
+            field.setFormResetBehavior(getFormResetBehavior());
+            field.setDefaultValue(getDefaultValue());
+            field.setMin(getMin());
+            field.setMax(getMax());
+            field.setStep(getStep());
+            field.setOutputType(getOutputType());
+            field.setChoices(getChoices());
         }
 
         @Override
