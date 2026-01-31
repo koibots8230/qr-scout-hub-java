@@ -13,6 +13,7 @@ import java.io.File;
 import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import javax.swing.AbstractAction;
@@ -377,16 +378,22 @@ public class GameConfigEditorDialog
 
         private static DefaultMutableTreeNode buildRoot(GameConfig config) {
             DefaultMutableTreeNode root = new DefaultMutableTreeNode("ROOT");
-            for (Section section : config.getSections()) {
-                Section modelSection = new Section();
-                modelSection.setName(section.getName());
-                DefaultMutableTreeNode sectionNode = new DefaultMutableTreeNode(modelSection);
-                for (Field field : section.getFields()) {
-                    Field modelField = new Field();
-                    field.copyTo(modelField);
-                    sectionNode.add(new DefaultMutableTreeNode(modelField));
+            List<Section> sections = config.getSections();
+            if(null != sections && !sections.isEmpty()) {
+                for (Section section : sections) {
+                    Section modelSection = new Section();
+                    modelSection.setName(section.getName());
+                    DefaultMutableTreeNode sectionNode = new DefaultMutableTreeNode(modelSection);
+                    List<Field> fields = section.getFields();
+                    if(null != fields && !fields.isEmpty()) {
+                        for (Field field : section.getFields()) {
+                            Field modelField = new Field();
+                            field.copyTo(modelField);
+                            sectionNode.add(new DefaultMutableTreeNode(modelField));
+                        }
+                    }
+                    root.add(sectionNode);
                 }
-                root.add(sectionNode);
             }
             return root;
         }
