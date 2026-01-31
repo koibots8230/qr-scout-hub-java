@@ -8,12 +8,10 @@ import java.awt.datatransfer.Transferable;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
-
 import javax.swing.DropMode;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -37,15 +35,11 @@ public class GameConfigEditorDialog
     private GameConfigTreeModel model;
 
     public GameConfigEditorDialog(Frame owner,
-                                  GameConfig config,
-                                  GameConfigChangeListener listener)
+                                  GameConfig config)
     {
         super(owner, "Edit Game", config);
 
         model = new GameConfigTreeModel(config);
-        if(null != listener) {
-            model.addChangeListener(listener);
-        }
 
         JTree tree = new JTree(model);
         tree.setRootVisible(false);
@@ -97,53 +91,59 @@ public class GameConfigEditorDialog
 
     @Override
     protected void applyChanges(GameConfig config) {
-        // Do nothing for now; the changes have already been applied
-    }
+        //
+        // Copy mutated GameConfig from the table model
+        // back into the GameConfig
+        //
+        final DefaultMutableTreeNode root = (DefaultMutableTreeNode)model.getRoot();
 
-    public void addGameConfigChangeListener(GameConfigChangeListener listener) {
-        model.addChangeListener(listener);
-    }
+        final int sectionCount = root.getChildCount();
 
-    public interface GameConfigChangeListener {
+        ArrayList<Section> sections = new ArrayList<>(sectionCount);
 
-        /**
-         * Called before the move happens.
-         * Throw an exception to veto the change.
-         */
-        void beforeMove(MoveEvent event) throws Exception;
+        // Copy each section
+        for(int i=0; i<sectionCount; ++i) {
+            final DefaultMutableTreeNode node = (DefaultMutableTreeNode)root.getChildAt(i);
+            Object userObject = node.getUserObject();
+            if(!(userObject instanceof Section)) {
+                throw new IllegalStateException("Expected Section, got " + (null == userObject ? "null" : userObject.getClass()) + " instead");
+            }
 
-        /** Called after the move has been applied */
-        void afterMove(MoveEvent event);
-    }
+            Section modelSection = (Section)userObject;
 
-    public class MoveEvent {
-        public final Object moved;
-        public final Object oldParent;
-        public final Object newParent;
-        public final int oldIndex;
-        public final int newIndex;
+            // Copy each section's fields
+            final int fieldCount = node.getChildCount();
 
-        public MoveEvent(Object moved, Object oldParent, Object newParent,
-                         int oldIndex, int newIndex) {
-            this.moved = moved;
-            this.oldParent = oldParent;
-            this.newParent = newParent;
-            this.oldIndex = oldIndex;
-            this.newIndex = newIndex;
+            ArrayList<Field> fields = new ArrayList<>(fieldCount);
+            for(int j=0; j<fieldCount; ++j) {
+                final DefaultMutableTreeNode fieldNode = (DefaultMutableTreeNode)node.getChildAt(j);
+                userObject = fieldNode.getUserObject();
+
+                if(!(userObject instanceof Field)) {
+                    throw new IllegalStateException("Expected Field, got " + (null == userObject ? "null" : userObject.getClass()) + " instead");
+                }
+                Field modelField = (Field)userObject;
+
+                Field field = new Field();
+                modelField.copyTo(field);
+                fields.add(field);
+            }
+
+            Section section = new Section();
+            section.setName(modelSection.getName());
+            section.setFields(fields);
+            sections.add(section);
         }
+
+        config.setSections(sections);
     }
 
-    public class GameConfigTreeModel extends DefaultTreeModel {
+    private class GameConfigTreeModel extends DefaultTreeModel {
 
         private static final long serialVersionUID = 7909699472552723977L;
-        private final List<GameConfigChangeListener> listeners = new ArrayList<>();
 
         public GameConfigTreeModel(GameConfig config) {
             super(buildRoot(config));
-        }
-
-        public void addChangeListener(GameConfigChangeListener l) {
-            listeners.add(l);
         }
 
         private static DefaultMutableTreeNode buildRoot(GameConfig config) {
@@ -179,15 +179,6 @@ System.out.println("moveNode(" + node + ", " + newParent + ", " + index + ")");
                 return;
             }
 
-            MoveEvent evt = new MoveEvent(
-                    moved, oldParentObj, newParentObj, oldIndex, index
-            );
-
-            // veto point
-            for (GameConfigChangeListener l : listeners) {
-                l.beforeMove(evt);
-            }
-
             // apply to tree
             System.out.println("Inserting node " + node + " into " + newParent + " at index " + index);
             removeNodeFromParent(node);
@@ -197,14 +188,10 @@ System.out.println("moveNode(" + node + ", " + newParent + ", " + index + ")");
             }
 
             insertNodeInto(node, newParent, index);
-
-            for (GameConfigChangeListener l : listeners) {
-                l.afterMove(evt);
-            }
         }
     }
 
-    public class GameConfigTransferHandler extends TransferHandler {
+    private class GameConfigTransferHandler extends TransferHandler {
 
         private static final long serialVersionUID = -3254733554183635522L;
         private final DataFlavor nodeFlavor;
@@ -309,113 +296,6 @@ System.out.println("moveNode(" + node + ", " + newParent + ", " + index + ")");
         }
     }
 
-    public static class DefaultGameConfigChangeListener
-        implements GameConfigChangeListener
-    {
-        private final GameConfig config;
-
-        public DefaultGameConfigChangeListener(GameConfig config) {
-            this.config = config;
-        }
-
-        /**
-         * Called before the move happens.
-         * Throw an exception to veto the change.
-         */
-        public void beforeMove(MoveEvent event)
-            throws Exception
-        {
-            System.out.println("Moving " + event.moved + " with parent " + event.oldParent + " from index " + event.oldIndex + " to new parent " + event.newParent + " with index " + event.newIndex);
-
-            // Figure out what we are moving.
-            //
-            // Moving Sections is easy: we are always re-ordering the
-            // list of sections within the entire GameConfig.
-            // So this is just an exercise in re-ordering the Sections
-            // List.
-
-            if(event.moved instanceof Section) {
-                // Make a copy of the sections to mutate
-                ArrayList<Section> sections = new ArrayList<>(config.getSections());
-
-System.out.println("Current section order (from config): " + sections.stream().map(Section::getName).collect(Collectors.toList()));
-                Section movingSection = sections.get(event.oldIndex);
-                // Verify we are moving the thing we think we are moving
-                if(!movingSection.equals(event.moved)) {
-                    throw new IllegalStateException("Expected section " + ((Section)event.moved).getName() + " at position " + event.oldIndex + ", but got " + movingSection.getName() + " instead");
-                }
-
-                int index = event.newIndex;
-                // If we are moving the section DOWN, then we need to
-                // decrease the index to account for the section being
-                // removed before adding it back.
-                if(index > event.oldIndex) {
-                    index -= 1;
-                }
-                sections.remove(movingSection);
-                sections.add(index, movingSection);
-
-                config.setSections(sections);
-System.out.println("New section order: " + sections.stream().map(Section::getName).collect(Collectors.toList()));
-            } else if(event.moved instanceof Field) {
-                // Fields can be moved within their own sections, or
-                // between sections.
-                //
-                // Figure out which we are dealing with.
-                //
-                if(Objects.equals(event.oldParent, event.newParent)) {
-                    // We are moving a field within the same section.
-                    // Just re-order.
-                    List<Field> fields = ((Section)event.oldParent).getFields();
-
-                    Field movingField = fields.get(event.oldIndex);
-
-                    // Verify we are moving the thing we think we are moving
-                    if(!movingField.equals(event.moved)) {
-                        throw new IllegalStateException("Expected field " + ((Field)event.moved).getTitle() + " at position " + event.oldIndex + ", but got " + movingField.getTitle() + " instead");
-                    }
-
-                    int index = event.newIndex;
-                    // If we are moving the section DOWN, then we need to
-                    // decrease the index to account for the section being
-                    // removed before adding it back.
-                    if(index > event.oldIndex) {
-                        index -= 1;
-                    }
-                    fields.remove(movingField);
-                    fields.add(index, movingField);
-
-                    System.out.println("New field order: " + fields.stream().map(Field::getTitle).collect(Collectors.toList()));
-                } else {
-                    Section oldSection = (Section)event.oldParent;
-                    Section newSection = (Section)event.newParent;
-
-System.out.println("Moving field " + event.moved + " to new section: " + newSection);
-
-                    // Verify we are moving what we think we are moving
-                    List<Field> fields = oldSection.getFields();
-                    Field movingField = fields.get(event.oldIndex);
-                    if(!movingField.equals(event.moved)) {
-                        throw new IllegalStateException("Expected field " + ((Field)event.moved).getTitle() + " at position " + event.oldIndex + ", but got " + movingField.getTitle() + " instead");
-                    }
-
-                    fields.remove(movingField);
-                    oldSection.setFields(fields);
-
-                    fields = newSection.getFields();
-                    fields.add(event.newIndex, movingField);
-                    newSection.setFields(fields);
-                }
-            } else {
-                System.out.println("*** IGNORING DROP EVENT ");
-            }
-        }
-
-        /** Called after the move has been applied */
-        public void afterMove(MoveEvent event) {
-            // Do nothing
-        }
-    }
 
     private void editSelectedNode(JTree tree) {
         TreePath path = tree.getSelectionPath();
@@ -446,8 +326,6 @@ System.out.println("Moving field " + event.moved + " to new section: " + newSect
 
                 existingSection.setName(newSection.getName());
                 model.nodeChanged(node);
-
-                // TODO: save the game config?
             }
         } else if(userObject instanceof Field) {
             final Field existingField = (Field)userObject;
@@ -465,47 +343,7 @@ System.out.println("Moving field " + event.moved + " to new section: " + newSect
                 newField.copyTo(existingField);
 
                 model.nodeChanged(node);
-
-                // TODO: save the game config?
             }
-        }
-    }
-
-    public static class SavingGameConfigChangeListener
-        implements GameConfigChangeListener
-    {
-        private final GameConfig config;
-        private final File file;
-        private final boolean prettyPrint;
-
-        public SavingGameConfigChangeListener(GameConfig config,
-                                              File file,
-                                              boolean prettyPrint) {
-            this.config = config;
-            this.file = file;
-            this.prettyPrint = prettyPrint;
-        }
-
-        /**
-         * Called before the move happens.
-         * Throw an exception to veto the change.
-         */
-        public void beforeMove(MoveEvent event)
-            throws Exception
-        {
-            config.saveToFile(getFile(), getPrettyPrint());
-        }
-
-        @Override
-        public void afterMove(MoveEvent event) {
-        }
-
-        public File getFile() {
-            return file;
-        }
-
-        public boolean getPrettyPrint() {
-            return prettyPrint;
         }
     }
 
@@ -529,12 +367,22 @@ System.out.println("Moving field " + event.moved + " to new section: " + newSect
         if(args.length > 1) {
             outputFile = new File(args[1]);
         }
-        GameConfigChangeListener pcl = new DefaultGameConfigChangeListener(config);
 
-        GameConfigEditorDialog gced = new GameConfigEditorDialog(null, config, pcl);
-        if(null != outputFile) {
-            gced.addGameConfigChangeListener(new SavingGameConfigChangeListener(config, outputFile, true));
-        }
+        GameConfigEditorDialog gced = new GameConfigEditorDialog(null, config);
+
         gced.setVisible(true);
+
+        if(gced.isConfirmed()) {
+            if(null != outputFile) {
+                gced.getUserObject().saveToFile(outputFile, true);
+            } else {
+                System.out.println("Configuration saved:");
+                OutputStreamWriter out = new OutputStreamWriter(System.out);
+                gced.getUserObject().saveTo(out, true);
+                out.flush();
+            }
+        } else {
+            System.out.println("Cancelled");
+        }
     }
 }

@@ -87,11 +87,6 @@ import javax.swing.table.AbstractTableModel;
 
 import org.bytedeco.javacv.FrameGrabber;
 
-import com.koibots.scout.hub.GameConfigEditorDialog.DefaultGameConfigChangeListener;
-import com.koibots.scout.hub.GameConfigEditorDialog.GameConfigChangeListener;
-import com.koibots.scout.hub.GameConfigEditorDialog.MoveEvent;
-import com.koibots.scout.hub.GameConfigEditorDialog.SavingGameConfigChangeListener;
-
 //
 // Project directory structure:
 //
@@ -624,26 +619,21 @@ public class Main {
             @Override
             public void actionPerformed(ActionEvent e) {
                 final GameConfig config = _project.getGameConfig();
-                GameConfigChangeListener pcl = new DefaultGameConfigChangeListener(config);
-                GameConfigEditorDialog gced = new GameConfigEditorDialog(null, config, pcl);
-
-                // Copy the existing file to a backup file
-                gced.addGameConfigChangeListener(new GameConfigChangeListener() {
-                    @Override
-                    public void beforeMove(MoveEvent event) throws Exception {
-                        new File(_project.getDirectory(), "config.json")
-                        .renameTo(new File(_project.getDirectory(), "config.bak"));
-                    }
-
-                    @Override
-                    public void afterMove(MoveEvent event) {
-                        // Do nothing after move
-                    }
-                });
-                gced.addGameConfigChangeListener(new SavingGameConfigChangeListener(config,
-                        new File(_project.getDirectory(), "config.json"),
-                        true));
+                GameConfigEditorDialog gced = new GameConfigEditorDialog(null, config);
                 gced.setVisible(true);
+
+                if(gced.isConfirmed()) {
+                    // Make a backup copy of the original config
+                    try {
+                        File configFile = new File(_project.getDirectory(), "config.json");
+                        configFile.renameTo(new File(_project.getDirectory(), "config.bak"));
+
+                        // Save the new config
+                        config.saveToFile(configFile, true);
+                    } catch (Exception ex) {
+                        UIUtils.showError(ex, _main);
+                    }
+                }
             }
         };
 
