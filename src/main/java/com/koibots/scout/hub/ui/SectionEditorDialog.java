@@ -52,6 +52,19 @@ public class SectionEditorDialog
     }
 
     @Override
+    protected boolean validateInput() {
+        // Title
+        if (nameField.getText() == null || nameField.getText().isBlank()) {
+            showValidationError("Name is required.");
+            nameField.requestFocusInWindow();
+
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
     protected void applyChanges(Section section) {
         section.setName(nameField.getText());
     }

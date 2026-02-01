@@ -221,14 +221,45 @@ public class FieldEditorDialog
     }
 
     @Override
+    protected boolean validateInput() {
+        // Title
+        if (titleField.getText() == null || titleField.getText().isBlank()) {
+            showValidationError("Title is required.");
+            titleField.requestFocusInWindow();
+            return false;
+        }
+
+        // Code
+        if (codeField.getText() == null || codeField.getText().isBlank()) {
+            showValidationError("Code is required.");
+            codeField.requestFocusInWindow();
+            return false;
+        }
+
+        // Choices for select / multi-select
+        String type = (String) typeCombo.getSelectedItem();
+        if ("select".equals(type) || "multi-select".equals(type)) {
+            if (choicesModel.getChoices().isEmpty()) {
+                showValidationError(
+                        "At least one choice is required for type \"" + type + "\"."
+                );
+                choicesTable.requestFocusInWindow();
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    @Override
     protected void applyChanges(Field field) {
-        field.setTitle(titleField.getText());
-        field.setDescription(descriptionArea.getText());
-        field.setType((String) typeCombo.getSelectedItem());
+        field.setTitle(titleField.getText().trim());
+        field.setDescription(descriptionArea.getText().trim());
+        field.setType((String)typeCombo.getSelectedItem());
         field.setRequired(requiredCheck.isSelected());
-        field.setCode(codeField.getText());
+        field.setCode(codeField.getText().trim());
         field.setFormResetBehavior((String) formResetCombo.getSelectedItem());
-        field.setDefaultValue(defaultValueField.getText());
+        field.setDefaultValue(defaultValueField.getText().trim());
         field.setMin(parseInt(minField.getText()));
         field.setMax(parseInt(maxField.getText()));
         field.setStep(parseInt(stepField.getText()));

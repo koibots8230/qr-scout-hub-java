@@ -350,6 +350,19 @@ public class GameConfigEditorDialog
     }
 
     @Override
+    protected boolean validateInput() {
+        // Title
+        if (pageTitle.getText() == null || pageTitle.getText().isBlank()) {
+            showValidationError("Name is required.");
+            pageTitle.requestFocusInWindow();
+
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
     protected void applyChanges(GameConfig config) {
         //
         // Copy mutated GameConfig from the table model

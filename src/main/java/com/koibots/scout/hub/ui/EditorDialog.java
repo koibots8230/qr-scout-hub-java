@@ -8,6 +8,7 @@ import java.awt.event.WindowEvent;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 
@@ -60,9 +61,11 @@ public abstract class EditorDialog<T>
     }
 
     protected final void save() {
-        applyChanges(userObject);
-        confirmed = true;
-        dispose();
+        if(validateInput()) {
+            applyChanges(userObject);
+            confirmed = true;
+            dispose();
+        }
     }
 
     protected final void cancel() {
@@ -80,4 +83,18 @@ public abstract class EditorDialog<T>
 
     /** Subclass mutates model here */
     protected abstract void applyChanges(T userObject);
+
+    protected boolean validateInput() {
+        return true;
+    }
+
+    protected void showValidationError(String message) {
+        JOptionPane.showMessageDialog(
+                this,
+                message,
+                "Invalid Field",
+                JOptionPane.ERROR_MESSAGE
+        );
+    }
+
 }
