@@ -438,16 +438,16 @@ public class Project
     }
 
     private String getSelectAllStatement() {
-        StringBuilder select = new StringBuilder("SELECT id, ");
+        StringBuilder select = new StringBuilder("SELECT id");
 
         Collection<Field> fields = getGameConfig().getFields();
 
-        boolean first = true;
         for(Field field : fields) {
-            if(first) { first = false; }
-            else { select.append(','); }
-
-            select.append('"').append(normalizeColumnName(field.getCode())).append('"');
+            select
+            .append(',')
+            .append('"')
+            .append(normalizeColumnName(field.getCode()))
+            .append('"');
         }
 
         select.append(" FROM stand_scouting ORDER BY id");
