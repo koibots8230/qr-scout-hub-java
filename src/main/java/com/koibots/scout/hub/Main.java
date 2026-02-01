@@ -465,8 +465,7 @@ public class Main {
                 // When the window closes, null-out the reference
                 // so we can re-create it the next time it's requested.
                 if(null == _analyticsWindow) {
-                    _analyticsWindow = new AnalyticsWindow();
-                    _analyticsWindow.init();
+                    _analyticsWindow = new AnalyticsWindow(_main);
 /*
                     JMenuItem item = new JMenuItem("Analytics");
                     item.addActionListener((ev) -> {
@@ -1556,25 +1555,7 @@ public class Main {
 
         private JPanel contents;
 
-        public void removeAnalytic(Analytic analytic) {
-            int count = contents.getComponentCount();
-            for(int i=0; i<count; ++i) {
-                Component c = contents.getComponent(i);
-                if(c instanceof JComponent) {
-                    JComponent jc = (JComponent)c;
-
-                    if(analytic.equals(jc.getClientProperty(Analytic.class))) {
-                        contents.remove(i);
-
-                        pack();
-
-                        break;
-                    }
-                }
-            }
-        }
-
-        public void init() {
+        public AnalyticsWindow(Window owner) {
             setTitle("Analytics");
 
             setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -1593,9 +1574,7 @@ public class Main {
             JPanel newPanel = new JPanel();
             JButton newButton = new JButton("New...");
             newButton.addActionListener((e) -> {
-                AnalyticEditor editor = new AnalyticEditor();
-
-                editor.init();
+                AnalyticEditor editor = new AnalyticEditor(this);
 
                 // This call blocks the UI and waits here
                 editor.setVisible(true);
@@ -1625,110 +1604,128 @@ public class Main {
             setContentPane(contents);
 
             pack();
+
+            setLocationRelativeTo(owner);
         }
-    }
 
-    private JPanel createAnalyticPanel(final Analytic analytic, final Window parentWindow) {
-        JPanel analyticPanel = new JPanel();
-        // Set a custom property so we can identify this panel later
-        analyticPanel.putClientProperty(Analytic.class, analytic);
-        JButton analyticButton = createAnalyticButton(analytic);
-        JButton editButton = createAnalyticEditButton(analytic, analyticButton);
-        editButton.addActionListener((ae) -> {
-            // Perform a re-layout if the analytic name changes
-            // and the button needs to change size, etc.
-            parentWindow.pack();
-        });
-        JButton deleteButton = new JButton("Delete");
-        deleteButton.addActionListener((e) -> {
-            if(JOptionPane.OK_OPTION == JOptionPane.showConfirmDialog(parentWindow,
-                    "Are you sure you want to delete this analytic?",
-                    "Confirm Delete",
-                    JOptionPane.OK_CANCEL_OPTION,
-                    JOptionPane.QUESTION_MESSAGE)) {
-                try {
-                    _project.deleteAnalytic(analytic);
+        private void removeAnalytic(Analytic analytic) {
+            int count = contents.getComponentCount();
+            for(int i=0; i<count; ++i) {
+                Component c = contents.getComponent(i);
+                if(c instanceof JComponent) {
+                    JComponent jc = (JComponent)c;
 
-                    // Close any open analytic window
-                    for(AnalyticWindow wnd : _analyticWindows) {
-                        if(analytic.equals(wnd.getAnalytic())) {
-                            wnd.dispose();
+                    if(analytic.equals(jc.getClientProperty(Analytic.class))) {
+                        contents.remove(i);
+
+                        pack();
+
+                        break;
+                    }
+                }
+            }
+        }
+
+        private JPanel createAnalyticPanel(final Analytic analytic, final Window parentWindow) {
+            JPanel analyticPanel = new JPanel();
+            // Set a custom property so we can identify this panel later
+            analyticPanel.putClientProperty(Analytic.class, analytic);
+            JButton analyticButton = createAnalyticButton(analytic);
+            JButton editButton = createAnalyticEditButton(analytic, analyticButton);
+            editButton.addActionListener((ae) -> {
+                // Perform a re-layout if the analytic name changes
+                // and the button needs to change size, etc.
+                parentWindow.pack();
+            });
+            JButton deleteButton = new JButton("Delete");
+            deleteButton.addActionListener((e) -> {
+                if(JOptionPane.OK_OPTION == JOptionPane.showConfirmDialog(parentWindow,
+                        "Are you sure you want to delete this analytic?",
+                        "Confirm Delete",
+                        JOptionPane.OK_CANCEL_OPTION,
+                        JOptionPane.QUESTION_MESSAGE)) {
+                    try {
+                        _project.deleteAnalytic(analytic);
+
+                        // Close any open analytic window
+                        for(AnalyticWindow wnd : _analyticWindows) {
+                            if(analytic.equals(wnd.getAnalytic())) {
+                                wnd.dispose();
+                            }
                         }
+                        // Remove the panel from the analytics window
+                        if(null != _analyticsWindow) {
+                            _analyticsWindow.removeAnalytic(analytic);
+                        }
+                    } catch (Throwable err) {
+                        showError(err);
                     }
-                    // Remove the panel from the analytics window
-                    if(null != _analyticsWindow) {
-                        _analyticsWindow.removeAnalytic(analytic);
+                }
+            });
+            analyticPanel.add(deleteButton);
+            analyticPanel.add(editButton);
+            analyticPanel.add(analyticButton);
+
+            return analyticPanel;
+        }
+
+        private JButton createAnalyticButton(final Analytic analytic) {
+            JButton analyticButton = new JButton(analytic.getName());
+
+            analyticButton.addActionListener((e) -> {
+                // Check to see if a window for this Analytic is
+                // already open. If it is already open, just bring it
+                // to the foreground.
+                for(AnalyticWindow wnd : _analyticWindows) {
+                    if(analytic.equals(wnd.getAnalytic())) {
+                        wnd.toFront();
+                        wnd.requestFocus();
+                        return;
                     }
-                } catch (Throwable err) {
-                    showError(err);
                 }
-            }
-        });
-        analyticPanel.add(deleteButton);
-        analyticPanel.add(editButton);
-        analyticPanel.add(analyticButton);
 
-        return analyticPanel;
-    }
+                // Nope? Okay, create a new window and register it.
+                AnalyticWindow aw = new AnalyticWindow(this, analytic);
+                aw.init();
 
-    private JButton createAnalyticButton(final Analytic analytic) {
-        JButton analyticButton = new JButton(analytic.getName());
+                // Remember that we opened this Window
+                _analyticWindows.add(aw);
 
-        analyticButton.addActionListener((e) -> {
-            // Check to see if a window for this Analytic is
-            // already open. If it is already open, just bring it
-            // to the foreground.
-            for(AnalyticWindow wnd : _analyticWindows) {
-                if(analytic.equals(wnd.getAnalytic())) {
-                    wnd.toFront();
-                    wnd.requestFocus();
-                    return;
+                aw.setVisible(true);
+            });
+
+            return analyticButton;
+        }
+
+        private JButton createAnalyticEditButton(Analytic analytic, JButton analyticButton) {
+            JButton editButton = new JButton("Edit");
+
+            editButton.addActionListener((e) -> {
+                AnalyticEditor editor = new AnalyticEditor(this);
+                editor.setAnalyticName(analytic.getName());
+                editor.setAnalyticQuery(analytic.getQuery());
+
+                // This call blocks the UI and waits here
+                editor.setVisible(true);
+
+                if(editor.isConfirmed()) {
+                    Analytic newAnalytic = new Analytic();
+                    newAnalytic.setName(editor.getAnalyticName());
+                    newAnalytic.setQuery(editor.getAnalyticQuery());
+
+                    try {
+                        _project.updateAnalytic(analytic, newAnalytic);
+                        analytic.setName(newAnalytic.getName());
+                        analytic.setQuery(newAnalytic.getQuery());
+                        analyticButton.setText(newAnalytic.getName());
+                    } catch (Throwable t) {
+                        showError(t);
+                    }
                 }
-            }
+            });
 
-            // Nope? Okay, create a new window and register it.
-            AnalyticWindow aw = new AnalyticWindow(analytic);
-            aw.init();
-
-            // Remember that we opened this Window
-            _analyticWindows.add(aw);
-
-            aw.setVisible(true);
-        });
-
-        return analyticButton;
-    }
-
-    private JButton createAnalyticEditButton(Analytic analytic, JButton analyticButton) {
-        JButton editButton = new JButton("Edit");
-
-        editButton.addActionListener((e) -> {
-            AnalyticEditor editor = new AnalyticEditor();
-            editor.setAnalyticName(analytic.getName());
-            editor.setAnalyticQuery(analytic.getQuery());
-
-            editor.init();
-
-            // This call blocks the UI and waits here
-            editor.setVisible(true);
-
-            if(editor.isConfirmed()) {
-                Analytic newAnalytic = new Analytic();
-                newAnalytic.setName(editor.getAnalyticName());
-                newAnalytic.setQuery(editor.getAnalyticQuery());
-
-                try {
-                    _project.updateAnalytic(analytic, newAnalytic);
-                    analytic.setName(newAnalytic.getName());
-                    analytic.setQuery(newAnalytic.getQuery());
-                    analyticButton.setText(newAnalytic.getName());
-                } catch (Throwable t) {
-                    showError(t);
-                }
-            }
-        });
-
-        return editButton;
+            return editButton;
+        }
     }
 
     /**
@@ -1749,8 +1746,10 @@ public class Main {
         private Analytic _analytic;
         private AnalyticTableModel _tableModel = new AnalyticTableModel();
 
-        public AnalyticWindow(Analytic analytic) {
+        public AnalyticWindow(Window owner, Analytic analytic) {
             _analytic = analytic;
+
+            setLocationRelativeTo(owner);
         }
 
         public Analytic getAnalytic() {

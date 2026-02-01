@@ -1,6 +1,7 @@
 package com.koibots.scout.hub.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -20,31 +21,9 @@ public class AnalyticEditor
 {
     private static final long serialVersionUID = -3120450351246782177L;
 
-    private String _analyticName;
-    private String _analyticQuery;
+    public AnalyticEditor(Window owner) {
+        super(owner);
 
-    private boolean _confirmed = false;
-
-    private JTextField _name;
-    private JTextArea _query;
-
-    public String getAnalyticName() {
-        return _analyticName;
-    }
-
-    public void setAnalyticName(String name) {
-        _analyticName = name;
-    }
-
-    public String getAnalyticQuery() {
-        return _analyticQuery;
-    }
-
-    public void setAnalyticQuery(String query) {
-        _analyticQuery = query;
-    }
-
-    public void init() {
         setTitle("Editing Analytic");
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -100,6 +79,32 @@ public class AnalyticEditor
         add(panel, BorderLayout.CENTER);
 
         pack();
+
+        setLocationRelativeTo(owner);
+    }
+
+    private String _analyticName;
+    private String _analyticQuery;
+
+    private boolean _confirmed = false;
+
+    private JTextField _name;
+    private JTextArea _query;
+
+    public String getAnalyticName() {
+        return _analyticName;
+    }
+
+    public void setAnalyticName(String name) {
+        _analyticName = name;
+    }
+
+    public String getAnalyticQuery() {
+        return _analyticQuery;
+    }
+
+    public void setAnalyticQuery(String query) {
+        _analyticQuery = query;
     }
 
     private void closeEditor(boolean confirmed) {
@@ -118,9 +123,8 @@ public class AnalyticEditor
     }
 
     public static void main(String[] args) throws Exception {
-        AnalyticEditor editor = new AnalyticEditor();
+        AnalyticEditor editor = new AnalyticEditor(null);
         editor.setAnalyticName("Foo");
-        editor.init();
 
         editor.setVisible(true);
     }
