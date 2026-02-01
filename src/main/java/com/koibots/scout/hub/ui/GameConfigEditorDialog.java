@@ -42,9 +42,9 @@ import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 
+import com.koibots.scout.hub.Field;
 import com.koibots.scout.hub.GameConfig;
-import com.koibots.scout.hub.GameConfig.Field;
-import com.koibots.scout.hub.GameConfig.Section;
+import com.koibots.scout.hub.Section;
 
 /**
  * A dialog for editing the game configuration.

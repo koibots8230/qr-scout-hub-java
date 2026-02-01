@@ -9,7 +9,7 @@ import java.awt.Window;
 import javax.swing.*;
 
 import com.koibots.scout.hub.GameConfig;
-import com.koibots.scout.hub.GameConfig.Section;
+import com.koibots.scout.hub.Section;
 
 public class SectionEditorDialog
     extends EditorDialog<Section>

@@ -31,8 +31,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.koibots.scout.hub.GameConfig.Field;
-import com.koibots.scout.hub.GameConfig.Section;
 import com.opencsv.CSVWriter;
 
 /**
@@ -178,7 +176,7 @@ public class Project
     private static void createTables(GameConfig config, Connection conn) throws SQLException {
         StringBuilder sql = new StringBuilder("CREATE TABLE stand_scouting (id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1)");
 
-        for(GameConfig.Field field : config.getFields()) {
+        for(Field field : config.getFields()) {
             sql.append(", \"") // NOTE: Using explicit " surrounding the column name to protect keywords, etc.
             .append(normalizeColumnName(field.getCode()))
             .append("\" ")
