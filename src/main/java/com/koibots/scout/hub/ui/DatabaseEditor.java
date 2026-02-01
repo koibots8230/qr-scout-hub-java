@@ -1,4 +1,4 @@
-package com.koibots.scout.hub;
+package com.koibots.scout.hub.ui;
 
 import java.awt.BorderLayout;
 import java.sql.SQLException;

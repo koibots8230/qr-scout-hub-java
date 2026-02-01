@@ -1,4 +1,4 @@
-package com.koibots.scout.hub;
+package com.koibots.scout.hub.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -42,6 +42,8 @@ import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 
+import com.koibots.scout.hub.GameConfig;
+import com.koibots.scout.hub.SectionEditorDialog;
 import com.koibots.scout.hub.GameConfig.Field;
 import com.koibots.scout.hub.GameConfig.Section;
 

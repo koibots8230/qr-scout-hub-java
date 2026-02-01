@@ -1,4 +1,4 @@
-package com.koibots.scout.hub;
+package com.koibots.scout.hub.ui;
 
 import java.awt.Component;
 import java.awt.Dimension;
@@ -30,7 +30,7 @@ import javax.swing.SwingUtilities;
  */
 public class UIUtils
 {
-    static void showError(Throwable t, Component parent) {
+    public static void showError(Throwable t, Component parent) {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
@@ -75,9 +75,9 @@ public class UIUtils
     }
 
     // Closes the window, including firing all appropriate event notifications
-    static Action windowClosingAction = new StandardWindowClosingAction();
+    public static Action windowClosingAction = new StandardWindowClosingAction();
 
-    static void setupCloseBehavior(JRootPane rootPane, Action action) {
+    public static void setupCloseBehavior(JRootPane rootPane, Action action) {
         InputMap inputMap = rootPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
         ActionMap actionMap = rootPane.getActionMap();
 

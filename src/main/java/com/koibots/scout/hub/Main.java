@@ -87,6 +87,11 @@ import javax.swing.table.AbstractTableModel;
 
 import org.bytedeco.javacv.FrameGrabber;
 
+import com.koibots.scout.hub.ui.AnalyticEditor;
+import com.koibots.scout.hub.ui.DatabaseEditor;
+import com.koibots.scout.hub.ui.GameConfigEditorDialog;
+import com.koibots.scout.hub.ui.UIUtils;
+
 //
 // Project directory structure:
 //

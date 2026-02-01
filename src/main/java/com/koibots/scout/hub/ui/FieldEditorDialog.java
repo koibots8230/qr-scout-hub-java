@@ -1,8 +1,9 @@
-package com.koibots.scout.hub;
+package com.koibots.scout.hub.ui;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 
+import com.koibots.scout.hub.GameConfig;
 import com.koibots.scout.hub.GameConfig.Field;
 
 import java.awt.*;
