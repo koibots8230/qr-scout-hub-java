@@ -465,7 +465,23 @@ public class Main {
                 // When the window closes, null-out the reference
                 // so we can re-create it the next time it's requested.
                 if(null == _analyticsWindow) {
-                    _analyticsWindow = new AnalyticsWindow(_main);
+                    _analyticsWindow = new AnalyticsWindow(_main,
+                            _project.getAnalytics(),
+                            _analyticWindows,
+                            (s) -> _project.queryDatabase(s),
+                            new AnalyticUpdater() {
+
+                                @Override
+                                public void updateAnalytic(Analytic oldAnalytic, Analytic newAnalytic)
+                                        throws IOException {
+                                    _project.updateAnalytic(oldAnalytic, newAnalytic);
+                                }
+
+                                @Override
+                                public void deleteAnalytic(Analytic analytic) throws IOException {
+                                    _project.deleteAnalytic(analytic);
+                                }
+                            });
 /*
                     JMenuItem item = new JMenuItem("Analytics");
                     item.addActionListener((ev) -> {
@@ -1545,17 +1561,33 @@ public class Main {
     // doesn't represent the "best" way to implement all this from
     // an Object-Oriented perspective. But we'll get there ;)
 
+    public interface AnalyticUpdater {
+        public void updateAnalytic(Analytic oldAnalytic, Analytic newAnalytic) throws IOException;
+        public void deleteAnalytic(Analytic analytic) throws IOException;
+    }
+
     /**
      * A window to display the list of possible analytics.
      */
-    private class AnalyticsWindow
+    private static class AnalyticsWindow
         extends JFrame
     {
         private static final long serialVersionUID = 3889703546419862758L;
 
         private JPanel contents;
+        private List<AnalyticWindow> _analyticWindows;
+        private AnalyticUpdater _analyticUpdater;
+        private Queryable _queryable;
 
-        public AnalyticsWindow(Window owner) {
+        public AnalyticsWindow(Window owner,
+                List<Analytic> analytics,
+                List<AnalyticWindow> analyticWindows,
+                Queryable queryable,
+                AnalyticUpdater analyticUpdater) {
+            _analyticWindows = analyticWindows;
+            _analyticUpdater = analyticUpdater;
+            _queryable = queryable;
+
             setTitle("Analytics");
 
             setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -1564,8 +1596,8 @@ public class Main {
             contents = new JPanel();
             contents.setLayout(new BoxLayout(contents, BoxLayout.Y_AXIS));
 
-            if(null != _project.getAnalytics()) {
-                for(Analytic a : _project.getAnalytics()) {
+            if(null != analytics) {
+                for(Analytic a : analytics) {
                     JPanel analyticPanel = createAnalyticPanel(a, this);
                     contents.add(analyticPanel);
                 }
@@ -1585,21 +1617,19 @@ public class Main {
                     newAnalytic.setQuery(editor.getAnalyticQuery());
 
                     try {
-                        _project.updateAnalytic(null, newAnalytic);
+                        _analyticUpdater.updateAnalytic(null, newAnalytic);
 
                         JPanel analyticPanel = createAnalyticPanel(newAnalytic, this);
                         contents.add(analyticPanel, contents.getComponentCount() - 1); // Insert before "New..."
 
                         pack(); // Re-lay-out the container
                     } catch (Throwable t) {
-                        showError(t);
+                        UIUtils.showError(t, this);
                     }
                 }
             });
             newPanel.add(newButton);
             contents.add(newPanel);
-
-            setJMenuBar(createMenuBar());
 
             setContentPane(contents);
 
@@ -1645,7 +1675,7 @@ public class Main {
                         JOptionPane.OK_CANCEL_OPTION,
                         JOptionPane.QUESTION_MESSAGE)) {
                     try {
-                        _project.deleteAnalytic(analytic);
+                        _analyticUpdater.deleteAnalytic(analytic);
 
                         // Close any open analytic window
                         for(AnalyticWindow wnd : _analyticWindows) {
@@ -1654,11 +1684,9 @@ public class Main {
                             }
                         }
                         // Remove the panel from the analytics window
-                        if(null != _analyticsWindow) {
-                            _analyticsWindow.removeAnalytic(analytic);
-                        }
+                        removeAnalytic(analytic);
                     } catch (Throwable err) {
-                        showError(err);
+                        UIUtils.showError(err, this);
                     }
                 }
             });
@@ -1685,9 +1713,7 @@ public class Main {
                 }
 
                 // Nope? Okay, create a new window and register it.
-                AnalyticWindow aw = new AnalyticWindow(this, analytic, (s) ->
-                    _project.queryDatabase(s)
-                );
+                AnalyticWindow aw = new AnalyticWindow(this, analytic, _queryable);
                 aw.init();
 
                 // Remember that we opened this Window
@@ -1716,12 +1742,12 @@ public class Main {
                     newAnalytic.setQuery(editor.getAnalyticQuery());
 
                     try {
-                        _project.updateAnalytic(analytic, newAnalytic);
+                        _analyticUpdater.updateAnalytic(analytic, newAnalytic);
                         analytic.setName(newAnalytic.getName());
                         analytic.setQuery(newAnalytic.getQuery());
                         analyticButton.setText(newAnalytic.getName());
                     } catch (Throwable t) {
-                        showError(t);
+                        UIUtils.showError(t, this);
                     }
                 }
             });
