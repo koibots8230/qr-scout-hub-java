@@ -976,6 +976,11 @@ public class Project
         }
 
         File file = new File(getDirectory(), ANALYTICS_SUBDIRECTORY);
+        if(!file.isDirectory()) {
+           if(!file.mkdirs()) {
+               throw new IOException("Failed to create directrory " + file);
+           }
+        }
         file = new File(file, filename);
 
         newAnalytic.saveToFile(file);
