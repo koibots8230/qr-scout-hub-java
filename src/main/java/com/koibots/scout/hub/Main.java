@@ -1685,7 +1685,9 @@ public class Main {
                 }
 
                 // Nope? Okay, create a new window and register it.
-                AnalyticWindow aw = new AnalyticWindow(this, analytic);
+                AnalyticWindow aw = new AnalyticWindow(this, analytic, (s) ->
+                    _project.queryDatabase(s)
+                );
                 aw.init();
 
                 // Remember that we opened this Window
@@ -1735,20 +1737,25 @@ public class Main {
      */
     private ArrayList<AnalyticWindow> _analyticWindows = new ArrayList<AnalyticWindow>();
 
+    public interface Queryable {
+        public List<Object[]> query(String query) throws IOException, SQLException;
+    }
+
     /**
      * A window to show a single analytic and its results.
      */
-    private class AnalyticWindow
+    private static class AnalyticWindow
         extends JFrame
     {
         private static final long serialVersionUID = 6695278361287847426L;
 
         private Analytic _analytic;
         private AnalyticTableModel _tableModel = new AnalyticTableModel();
+        private Queryable _dataSource;
 
-        public AnalyticWindow(Window owner, Analytic analytic) {
+        public AnalyticWindow(Window owner, Analytic analytic, Queryable dataSource) {
             _analytic = analytic;
-
+            _dataSource = dataSource;
             setLocationRelativeTo(owner);
         }
 
@@ -1764,7 +1771,7 @@ public class Main {
             addWindowListener(new WindowAdapter() {
                 @Override
                 public void windowClosed(WindowEvent e) {
-                    _analyticWindows.remove(AnalyticWindow.this);
+//                    _analyticWindows.remove(AnalyticWindow.this);
                 }
             });
 
@@ -1795,12 +1802,12 @@ public class Main {
         private void runQuery() {
             System.out.println("Running query: " + _analytic.getQuery());
             try {
-                _tableModel.setData(_project.queryDatabase(_analytic.getQuery()));
+                _tableModel.setData(_dataSource.query(_analytic.getQuery()));
             } catch (SQLException sqle) {
-                showError(sqle);
+                UIUtils.showError(sqle, this);
                 return;
             } catch (IOException ioe) {
-                showError(ioe);
+                UIUtils.showError(ioe, this);
                 return;
             }
         }
