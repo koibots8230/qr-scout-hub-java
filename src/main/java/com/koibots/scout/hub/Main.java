@@ -620,6 +620,8 @@ public class Main {
 
                         // Save the new config
                         config.saveToFile(configFile, true);
+
+                        _main.setTitle(PROGRAM_NAME + ": " + config.getPageTitle());
                     } catch (Exception ex) {
                         UIUtils.showError(ex, _main);
                     }
