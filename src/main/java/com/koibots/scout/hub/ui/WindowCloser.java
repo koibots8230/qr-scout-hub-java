@@ -1,4 +1,4 @@
-package com.koibots.scout.hub;
+package com.koibots.scout.hub.ui;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;

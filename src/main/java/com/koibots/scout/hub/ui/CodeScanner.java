@@ -1,8 +1,9 @@
-package com.koibots.scout.hub;
+package com.koibots.scout.hub.ui;
 
 import com.google.zxing.*;
 import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
 import com.google.zxing.common.HybridBinarizer;
+
 import org.bytedeco.javacv.*;
 import org.bytedeco.javacv.Frame;
 import javax.swing.*;
