@@ -589,8 +589,7 @@ public class Main {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
-                    DatabaseEditor de = new DatabaseEditor();
-                    de.init();
+                    DatabaseEditor de = new DatabaseEditor(_main);
                     de.setData(_project.getRecords());
                     de.addTableListener(new TableModelListener() {
                         @Override

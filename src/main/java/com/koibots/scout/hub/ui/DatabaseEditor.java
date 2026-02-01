@@ -1,7 +1,7 @@
 package com.koibots.scout.hub.ui;
 
 import java.awt.BorderLayout;
-import java.sql.SQLException;
+import java.awt.Window;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -25,19 +25,9 @@ public class DatabaseEditor
 
     private DatabaseEditorTableModel tableModel;
 
-    public void setData(List<String[]> data) {
-        tableModel.setData(data);
-    }
+    public DatabaseEditor(Window owner) {
+        super(owner);
 
-    public String[] getData(int row) {
-        return tableModel.getData(row);
-    }
-
-    public void addTableListener(TableModelListener listener) {
-        tableModel.addTableModelListener(listener);
-    }
-
-    public void init() throws SQLException {
         setTitle("Database Editor");
 
         setModal(true);
@@ -47,7 +37,7 @@ public class DatabaseEditor
 
         JPanel contents = new JPanel(new BorderLayout());
 
-        JTable table = new JTable(tableModel = createTableModel());
+        JTable table = new JTable(tableModel = new DatabaseEditorTableModel());
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         contents.add(new JScrollPane(table), BorderLayout.CENTER);
 
@@ -58,12 +48,20 @@ public class DatabaseEditor
         setContentPane(contents);
 
         pack();
+
+        setLocationRelativeTo(owner);
     }
 
-    private DatabaseEditorTableModel createTableModel() throws SQLException {
-        DatabaseEditorTableModel pdtm = new DatabaseEditorTableModel();
+    public void setData(List<String[]> data) {
+        tableModel.setData(data);
+    }
 
-        return pdtm;
+    public String[] getData(int row) {
+        return tableModel.getData(row);
+    }
+
+    public void addTableListener(TableModelListener listener) {
+        tableModel.addTableModelListener(listener);
     }
 
     private class DatabaseEditorTableModel
