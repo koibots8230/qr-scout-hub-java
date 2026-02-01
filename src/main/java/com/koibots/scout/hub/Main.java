@@ -863,13 +863,13 @@ public class Main {
 
         // MacOS has its own quit menu under the application menu
         if(!isMacOS) {
-            int metaKey = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
-
-            item = new JMenuItem(getString("menu.file.quit.name"));
-            item.setMnemonic('q');
-            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, metaKey));
-            item.addActionListener(_quitHandler);
-            menu.add(item);
+            Action quitAction = new ActionBase("action.quit") {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    _quitHandler.actionPerformed(e);
+                }
+            };
+            menu.add(new JMenuItem(quitAction));
         }
 
         menubar.add(menu);
