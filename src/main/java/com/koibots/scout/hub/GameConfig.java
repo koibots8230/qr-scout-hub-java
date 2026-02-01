@@ -178,7 +178,7 @@ public class GameConfig {
             Object o = data.get("page_title");
 
             if(null == o || !(o instanceof String)) {
-                throw new IOException("Config has no 'page_title' property");
+                o = "Untitled Project";
             }
 
             GameConfig config = new GameConfig();
@@ -186,12 +186,8 @@ public class GameConfig {
             config.pageTitle = (String)o;
 
             o = data.get("sections");
-            if(null == o) {
-                throw new IOException("Config file has no 'sections' property");
-            }
-
-            if(!(o instanceof Collection<?>)) {
-                throw new IOException("Config file contains suspicious 'sections' property: expected Collection, got type=" + o.getClass().getName());
+            if(null == o || !(o instanceof Collection<?>)) {
+                o  = Collections.emptySet(); // Start with no sections or fields
             }
 
             ArrayList<Section> sections = new ArrayList<>();
@@ -205,7 +201,7 @@ public class GameConfig {
                 o = ((Map<?,?>)section).get("name");
 
                 if(!(o instanceof String)) {
-                    throw new IOException("Config file contains section with no name");
+                    o = "Untitled Section";
                 }
 
                 String sectionName = (String)o;
@@ -214,65 +210,60 @@ public class GameConfig {
 
                 o = ((Map<?,?>)section).get("fields");
 
-                if(null == o) {
-                    throw new IOException("Section " + sectionName + " contains no fields");
-                }
-                if(!(o instanceof Collection<?>)) {
-                    throw new IOException("Config file section " + sectionName + " contains suspicious 'fields': expected Collection, got type=" + o.getClass().getName());
-                }
-
-                for(Object field : (Collection<?>)o) {
-                    if(!(field instanceof Map<?,?>)) {
-                        throw new IOException("Config file section " + sectionName + " contains suspicious field: expected Map, got type=" + field.getClass().getName());
-                    }
-
-                    data = (Map<?,?>)field;
-
-                    Field f = new Field();
-                    f.setTitle((String)data.get("title"));
-                    f.setDescription((String)data.get("description"));
-                    f.setType((String)data.get("type"));
-                    f.setRequired(Boolean.TRUE.equals(data.get("required")));
-                    f.setCode((String)data.get("code"));
-                    f.setFormResetBehavior((String)data.get("formResetBehavior"));
-                    Object defaultValue = data.get("defaultValue");
-                    if(null != defaultValue) {
-                        System.out.println("Default value for field '" + f.getTitle() + "' is " + defaultValue + " of type " + data.get("defaultValue").getClass());
-                        if(defaultValue instanceof Number) {
-                            String v = String.valueOf(defaultValue);
-                            if(v.endsWith(".0")) {
-                                System.out.println("Using Integer");
-                                // Let's use an Integer instead
-                                defaultValue = ((Number)defaultValue).intValue();
-                            }
+                if(o instanceof Collection<?>) {
+                    for(Object field : (Collection<?>)o) {
+                        if(!(field instanceof Map<?,?>)) {
+                            throw new IOException("Config file section " + sectionName + " contains suspicious field: expected Map, got type=" + field.getClass().getName());
                         }
-                        f.setDefaultValue(defaultValue);
-                        System.out.println("Final default value type for field '" + f.getTitle() + "' is " + defaultValue.getClass());
-                    }
-                    f.setOutputType((String)data.get("outputType"));
-                    o = data.get("min");
-                    if(null != o && o instanceof Number) {
-                        f.setMin(((Number)o).intValue());
-                    }
-                    o = data.get("max");
-                    if(null != o && o instanceof Number) {
-                        f.setMax(((Number)o).intValue());
-                    }
-                    o = data.get("step");
-                    if(null != o && o instanceof Number) {
-                        f.setStep(((Number)o).intValue());
-                    }
-                    o = data.get("choices");
-                    if(null != o && o instanceof Map) {
-//                        System.out.println("choices is of type " + o.getClass());
-                        // Use LinkedHashMap to keep these options IN ORDER
-                        @SuppressWarnings("unchecked")
-                        LinkedHashMap<String,String> choices = new LinkedHashMap<>((Map<String,String>)o);
-                        f.setChoices(choices);
-                    }
 
-                    allFields.add(f);
-                    fields.add(f);
+                        data = (Map<?,?>)field;
+
+                        Field f = new Field();
+                        f.setTitle((String)data.get("title"));
+                        f.setDescription((String)data.get("description"));
+                        f.setType((String)data.get("type"));
+                        f.setRequired(Boolean.TRUE.equals(data.get("required")));
+                        f.setCode((String)data.get("code"));
+                        f.setFormResetBehavior((String)data.get("formResetBehavior"));
+                        Object defaultValue = data.get("defaultValue");
+                        if(null != defaultValue) {
+                            System.out.println("Default value for field '" + f.getTitle() + "' is " + defaultValue + " of type " + data.get("defaultValue").getClass());
+                            if(defaultValue instanceof Number) {
+                                String v = String.valueOf(defaultValue);
+                                if(v.endsWith(".0")) {
+                                    System.out.println("Using Integer");
+                                    // Let's use an Integer instead
+                                    defaultValue = ((Number)defaultValue).intValue();
+                                }
+                            }
+                            f.setDefaultValue(defaultValue);
+                            System.out.println("Final default value type for field '" + f.getTitle() + "' is " + defaultValue.getClass());
+                        }
+                        f.setOutputType((String)data.get("outputType"));
+                        o = data.get("min");
+                        if(null != o && o instanceof Number) {
+                            f.setMin(((Number)o).intValue());
+                        }
+                        o = data.get("max");
+                        if(null != o && o instanceof Number) {
+                            f.setMax(((Number)o).intValue());
+                        }
+                        o = data.get("step");
+                        if(null != o && o instanceof Number) {
+                            f.setStep(((Number)o).intValue());
+                        }
+                        o = data.get("choices");
+                        if(null != o && o instanceof Map) {
+                            //                        System.out.println("choices is of type " + o.getClass());
+                            // Use LinkedHashMap to keep these options IN ORDER
+                            @SuppressWarnings("unchecked")
+                            LinkedHashMap<String,String> choices = new LinkedHashMap<>((Map<String,String>)o);
+                            f.setChoices(choices);
+                        }
+
+                        allFields.add(f);
+                        fields.add(f);
+                    }
                 }
 
                 Section s = new Section();
