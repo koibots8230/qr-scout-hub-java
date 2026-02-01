@@ -1,4 +1,4 @@
-package com.koibots.scout.hub;
+package com.koibots.scout.hub.ui;
 
 import java.awt.BorderLayout;
 import java.awt.GridBagConstraints;
@@ -8,8 +8,8 @@ import java.awt.Window;
 
 import javax.swing.*;
 
+import com.koibots.scout.hub.GameConfig;
 import com.koibots.scout.hub.GameConfig.Section;
-import com.koibots.scout.hub.ui.EditorDialog;
 
 public class SectionEditorDialog
     extends EditorDialog<Section>
