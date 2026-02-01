@@ -506,14 +506,19 @@ function generateQRCode() {
   const qrSize = Math.min(window.innerWidth, window.innerHeight) * maxSize;
 
   console.log('Generating QR code of width ' + qrSize);
-  const qr = new QRious({
-    element: document.createElement('canvas'),
-    value: data,
-    size: qrSize,
+
+  let qr = document.createElement('div');
+
+  // generate
+  new QRCode(qr, {
+    text: data,
+    width: qrSize,
+    height: qrSize,
+	correctLevel: QRCode.CorrectLevel.L
   });
 
   let qrContainer = document.getElementById('qr-container');
-  qrContainer.replaceChildren(qr.element);
+  qrContainer.replaceChildren(qr);
   let qrPopup = document.getElementById('qr-popup');
   qrPopup.style.display = 'block';
   document.getElementById('qr-close').onclick = function () {

@@ -18,6 +18,35 @@ body {
   margin-top:2rem;
 }
 
+#qr-container {
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+#qr-container canvas, #qr-container img {
+  background:white; /* explicitly use white for quiet zone */
+  padding:.5rem; /* quiet zone */
+  box-sizing:content-box;
+}
+
+#qr-wrapper {
+  position: relative;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#qr-logo {
+  position: absolute;
+  width:3.5rem;
+  height:auto;
+  background:white; /* explicitly use white for quiet zone */
+  padding:.1rem;
+  border-radius:1rem;
+  pointer-events:none;
+}
+
 h1 {
   text-align:center;
   font-variant-caps:small-caps;

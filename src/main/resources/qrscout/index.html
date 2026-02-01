@@ -7,7 +7,7 @@
   <link rel="icon" type="image/png" href="koibots-logo.png">
   <script src="qrscout.js"></script>
   <script src="timer.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrious/dist/qrious.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
   <form id="form">
@@ -35,7 +35,10 @@
     <div class="modal-content">
       <span id="qr-close" class="close">&times;</span>
       <h1 id="qr-title"></h1>
-      <div id="qr-container"></div>
+      <div id="qr-wrapper">
+        <div id="qr-container"></div>
+        <img id="qr-logo" src="koibots-logo.png" alt="Logo">
+      </div>
     </div>
   </div>
   <!-- A hidden pop-up for showing images -->
