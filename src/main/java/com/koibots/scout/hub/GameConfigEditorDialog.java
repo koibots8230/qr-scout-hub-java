@@ -2,7 +2,11 @@ package com.koibots.scout.hub;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.FlowLayout;
 import java.awt.Frame;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
@@ -17,15 +21,18 @@ import java.util.List;
 import java.util.Objects;
 
 import javax.swing.AbstractAction;
+import javax.swing.BoxLayout;
 import javax.swing.DropMode;
 import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
+import javax.swing.JTextField;
 import javax.swing.JTree;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
@@ -49,6 +56,7 @@ public class GameConfigEditorDialog
 {
     private static final long serialVersionUID = -716394164351569605L;
 
+    private JTextField pageTitle;
     private GameConfigTreeModel model;
 
     public GameConfigEditorDialog(Frame owner,
@@ -99,20 +107,48 @@ public class GameConfigEditorDialog
         installPopupMenu(tree);
         installKeyHandlers(tree);
 
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(4, 4, 4, 4);
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+
+        JPanel top = new JPanel(new GridBagLayout());
+        pageTitle = new JTextField();
+        if(null != config.getPageTitle()) {
+            pageTitle.setText(config.getPageTitle().trim());
+        }
+        gbc.gridx = 0;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        top.add(new JLabel("Page Title:"), gbc);
+        gbc.gridx = 1;
+        gbc.weightx = 1.0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        top.add(pageTitle, gbc);
+        add(top, BorderLayout.NORTH);
         add(new JScrollPane(tree), BorderLayout.CENTER);
 
-        JPanel buttons = createButtonPanel(new JButton("Save"));
+        JPanel addButtons = new JPanel(new FlowLayout(FlowLayout.LEFT));
+
         JButton addSection = new JButton("New Section...");
-        addSection.addActionListener((e) -> {
-            addSection(tree);
-        });
-        buttons.add(addSection, null, 0);
-        JButton addField= new JButton("New Field...");
-        addField.addActionListener((e) -> {
-            addField(tree);
-        });
-        buttons.add(addField, null, 1);
-        add(buttons, BorderLayout.SOUTH);
+        addSection.addActionListener(e -> addSection(tree));
+        addButtons.add(addSection);
+
+        JButton addField = new JButton("New Field...");
+        addField.addActionListener(e -> addField(tree));
+        addButtons.add(addField);
+
+        // --- Bottom row: Save / Cancel (existing behavior) ---
+        JPanel saveButtons = createButtonPanel(new JButton("Save"));
+
+        // --- Wrapper panel ---
+        JPanel south = new JPanel();
+        south.setLayout(new BoxLayout(south, BoxLayout.Y_AXIS));
+
+        south.add(addButtons);
+        south.add(saveButtons);
+
+        add(south, BorderLayout.SOUTH);
 
         setSize(400, 500);
         setLocationRelativeTo(owner);
@@ -320,6 +356,7 @@ public class GameConfigEditorDialog
         //
         final DefaultMutableTreeNode root = (DefaultMutableTreeNode)model.getRoot();
 
+        config.setPageTitle(pageTitle.getText().trim());
         final int sectionCount = root.getChildCount();
 
         ArrayList<Section> sections = new ArrayList<>(sectionCount);
