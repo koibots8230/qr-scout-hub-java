@@ -1072,25 +1072,46 @@ public class Project
                     // Copy old -> new
                     // DROP column
                     // RENAME temp -> column
-                    stmt.execute("ALTER TABLE stand_scouting ADD COLUMN temp " + desiredColumnType);
-
-                    // Copy from columnName -> temp
+                    conn.setAutoCommit(false); // BEGIN TRANSACTION
                     try {
-                        stmt.execute("UPDATE stand_scouting SET temp=" + columnName);
-                    } catch (SQLException sqle) {
-                        // Ignore this and keep going
-                        System.out.println("WARNING: Failed to copy temp->" + columnName + ": " + sqle.getMessage() + "; continuing");
+                        String s = "ALTER TABLE stand_scouting ADD COLUMN temp " + desiredColumnType;
+                        System.out.println("Executing statement: " + s);
+                        stmt.execute(s);
+
+                        // Copy from columnName -> temp
+                        try {
+                            s = "UPDATE stand_scouting SET temp=\"" + columnName + "\"";
+                            System.out.println("Executing statement: " + s);
+                            stmt.execute(s);
+                        } catch (SQLException sqle) {
+                            // Ignore this and keep going
+                            System.out.println("WARNING: Failed to copy temp->" + columnName + ": " + sqle.getMessage() + "; continuing");
+                        }
+
+                        s = "ALTER TABLE stand_scouting DROP COLUMN \"" + columnName + "\"";
+                        System.out.println("Executing statement: " + s);
+                        stmt.execute(s);
+
+                        s = "RENAME COLUMN stand_scouting.temp TO \"" + columnName + "\"";
+                        System.out.println("Executing statement: " + s);
+                        stmt.execute(s);
+                    } catch (SQLException | RuntimeException | Error e) {
+                        // Something went wrong and we want to undo everything
+                        try { conn.rollback(); } catch (SQLException sqle) {
+                            sqle.printStackTrace();
+                        }
+                        throw e;
+                    } finally {
+                        conn.setAutoCommit(true);
                     }
-
-                    stmt.execute("ALTER TABLE stand_scouting DROP COLUMN " + columnName);
-
-                    stmt.execute("RENAME COLUMN stand_scouting.temp TO " + columnName);
                 } else {
                     System.out.println("Column " + columnName + " is already the right type: " + columnType);
                 }
             } else {
                 // Column needs to be added
-                stmt.execute("ALTER TABLE stand_scouting ADD COLUMN " + columnName + " " + desiredColumnType);
+                String s = "ALTER TABLE stand_scouting ADD COLUMN \"" + columnName + "\" " + desiredColumnType;
+                System.out.println("Executing statement: " + s);
+                stmt.execute(s);
             }
         }
     }
@@ -1107,7 +1128,7 @@ public class Project
         Set<String> dbFieldNames = getColumnNames("stand_scouting", conn);
         Set<String> retainedFieldNames = retainedFields.stream()
                 .map(Field::getCode) // NOTE: *code* is used for the column name
-                .map(String::toUpperCase) // Make sure we can String-match
+                .map((s) -> normalizeColumnName(s)) // and we have to normalize it
                 .collect(Collectors.toSet())
                 ;
 
@@ -1118,7 +1139,9 @@ public class Project
         if(!dbFieldNames.isEmpty()) {
             try(Statement stmt = conn.createStatement()) {
                 for(String dbField : dbFieldNames) {
-                    stmt.execute("ALTER TABLE stand_scouting DROP COLUMN " + dbField);
+                    String s = "ALTER TABLE stand_scouting DROP COLUMN \"" + dbField + "\"";
+                    System.out.println("Executing statement: " + s);
+                    stmt.execute(s);
                 }
             }
         }
