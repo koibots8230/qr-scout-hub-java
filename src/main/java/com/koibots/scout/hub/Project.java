@@ -535,12 +535,16 @@ public class Project
         GameConfig config = getGameConfig();
         Collection<Field> fields = config.getFields();
 
-        boolean first = true;
-        for(Field field : fields) {
-            if(first) { first = false; }
-            else { sql.append(','); }
+        if(null == fields || fields.isEmpty()) {
+            sql.append("*"); // Got any better ideas?
+        } else {
+            boolean first = true;
+            for(Field field : fields) {
+                if(first) { first = false; }
+                else { sql.append(','); }
 
-            sql.append('"').append(normalizeColumnName(field.getCode())).append('"');
+                sql.append('"').append(normalizeColumnName(field.getCode())).append('"');
+            }
         }
         sql.append(" FROM stand_scouting");
 
@@ -552,16 +556,19 @@ public class Project
 
             try (CSVWriter csv = new CSVWriter(out)) {
                 String[] data = new String[rsmd.getColumnCount()];
-                first = true;
                 for(int i=0; i < rsmd.getColumnCount(); ++i) {
-                    Field field = getFieldFromSQLColumn(config, rsmd.getColumnName(i+1));
+                    String columnName = rsmd.getColumnName(i+1);
+                    Field field = getFieldFromSQLColumn(config, columnName);
 
-                    data[i] = field.getTitle();
+                    if(null != field) {
+                        data[i] = field.getTitle();
+                    } else {
+                        data[i] = columnName;
+                    }
                 }
                 csv.writeNext(data);
 
                 while(rs.next()) {
-                    first = true;
                     for(int i=0; i < rsmd.getColumnCount(); ++i) {
                         data[i] = rs.getString(i+1);
                     }
