@@ -4,7 +4,6 @@ import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 
 import com.koibots.scout.hub.Field;
-import com.koibots.scout.hub.GameConfig;
 
 import java.awt.*;
 import java.util.ArrayList;

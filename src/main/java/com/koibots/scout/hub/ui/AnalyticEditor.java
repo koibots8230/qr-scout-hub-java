@@ -12,8 +12,6 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.WindowConstants;
 
-import com.koibots.scout.hub.ui.UIUtils.StandardWindowClosingAction;
-
 /**
  * An editor dialog for an Analytic.
  */
