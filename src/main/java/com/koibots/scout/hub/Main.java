@@ -9,7 +9,6 @@ import java.awt.FlowLayout;
 import java.awt.Image;
 import java.awt.Taskbar;
 import java.awt.Toolkit;
-import java.awt.Window;
 import java.awt.desktop.AboutEvent;
 import java.awt.desktop.AboutHandler;
 import java.awt.desktop.OpenFilesEvent;
@@ -42,7 +41,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -73,7 +71,6 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextPane;
 import javax.swing.KeyStroke;
@@ -85,16 +82,17 @@ import javax.swing.WindowConstants;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.filechooser.FileFilter;
-import javax.swing.table.AbstractTableModel;
 
 import org.bytedeco.javacv.FrameGrabber;
 
-import com.koibots.scout.hub.ui.AnalyticEditor;
+import com.koibots.scout.hub.ui.AnalyticWindow;
+import com.koibots.scout.hub.ui.AnalyticsWindow;
 import com.koibots.scout.hub.ui.CodeScanner;
 import com.koibots.scout.hub.ui.DatabaseEditor;
 import com.koibots.scout.hub.ui.GameConfigEditorDialog;
 import com.koibots.scout.hub.ui.UIUtils;
 import com.koibots.scout.hub.ui.WindowCloser;
+import com.koibots.scout.hub.utils.AnalyticUpdater;
 
 //
 // Project directory structure:
@@ -1557,329 +1555,10 @@ public class Main {
         }
     }
 
-    // NOTE: The stuff below was written VERY quickly and probably
-    // doesn't represent the "best" way to implement all this from
-    // an Object-Oriented perspective. But we'll get there ;)
-
-    public interface AnalyticUpdater {
-        public void updateAnalytic(Analytic oldAnalytic, Analytic newAnalytic) throws IOException;
-        public void deleteAnalytic(Analytic analytic) throws IOException;
-    }
-
-    /**
-     * A window to display the list of possible analytics.
-     */
-    private static class AnalyticsWindow
-        extends JFrame
-    {
-        private static final long serialVersionUID = 3889703546419862758L;
-
-        private JPanel contents;
-        private List<AnalyticWindow> _analyticWindows;
-        private AnalyticUpdater _analyticUpdater;
-        private Queryable _queryable;
-
-        public AnalyticsWindow(Window owner,
-                List<Analytic> analytics,
-                List<AnalyticWindow> analyticWindows,
-                Queryable queryable,
-                AnalyticUpdater analyticUpdater) {
-            _analyticWindows = analyticWindows;
-            _analyticUpdater = analyticUpdater;
-            _queryable = queryable;
-
-            setTitle("Analytics");
-
-            setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-            UIUtils.setupCloseBehavior(getRootPane(), UIUtils.windowClosingAction);
-
-            contents = new JPanel();
-            contents.setLayout(new BoxLayout(contents, BoxLayout.Y_AXIS));
-
-            if(null != analytics) {
-                for(Analytic a : analytics) {
-                    JPanel analyticPanel = createAnalyticPanel(a, this);
-                    contents.add(analyticPanel);
-                }
-            }
-
-            JPanel newPanel = new JPanel();
-            JButton newButton = new JButton("New...");
-            newButton.addActionListener((e) -> {
-                AnalyticEditor editor = new AnalyticEditor(this);
-
-                // This call blocks the UI and waits here
-                editor.setVisible(true);
-
-                if(editor.isConfirmed()) {
-                    Analytic newAnalytic = new Analytic();
-                    newAnalytic.setName(editor.getAnalyticName());
-                    newAnalytic.setQuery(editor.getAnalyticQuery());
-
-                    try {
-                        _analyticUpdater.updateAnalytic(null, newAnalytic);
-
-                        JPanel analyticPanel = createAnalyticPanel(newAnalytic, this);
-                        contents.add(analyticPanel, contents.getComponentCount() - 1); // Insert before "New..."
-
-                        pack(); // Re-lay-out the container
-                    } catch (Throwable t) {
-                        UIUtils.showError(t, this);
-                    }
-                }
-            });
-            newPanel.add(newButton);
-            contents.add(newPanel);
-
-            setContentPane(contents);
-
-            pack();
-
-            setLocationRelativeTo(owner);
-        }
-
-        private void removeAnalytic(Analytic analytic) {
-            int count = contents.getComponentCount();
-            for(int i=0; i<count; ++i) {
-                Component c = contents.getComponent(i);
-                if(c instanceof JComponent) {
-                    JComponent jc = (JComponent)c;
-
-                    if(analytic.equals(jc.getClientProperty(Analytic.class))) {
-                        contents.remove(i);
-
-                        pack();
-
-                        break;
-                    }
-                }
-            }
-        }
-
-        private JPanel createAnalyticPanel(final Analytic analytic, final Window parentWindow) {
-            JPanel analyticPanel = new JPanel();
-            // Set a custom property so we can identify this panel later
-            analyticPanel.putClientProperty(Analytic.class, analytic);
-            JButton analyticButton = createAnalyticButton(analytic);
-            JButton editButton = createAnalyticEditButton(analytic, analyticButton);
-            editButton.addActionListener((ae) -> {
-                // Perform a re-layout if the analytic name changes
-                // and the button needs to change size, etc.
-                parentWindow.pack();
-            });
-            JButton deleteButton = new JButton("Delete");
-            deleteButton.addActionListener((e) -> {
-                if(JOptionPane.OK_OPTION == JOptionPane.showConfirmDialog(parentWindow,
-                        "Are you sure you want to delete this analytic?",
-                        "Confirm Delete",
-                        JOptionPane.OK_CANCEL_OPTION,
-                        JOptionPane.QUESTION_MESSAGE)) {
-                    try {
-                        _analyticUpdater.deleteAnalytic(analytic);
-
-                        // Close any open analytic window
-                        for(AnalyticWindow wnd : _analyticWindows) {
-                            if(analytic.equals(wnd.getAnalytic())) {
-                                wnd.dispose();
-                            }
-                        }
-                        // Remove the panel from the analytics window
-                        removeAnalytic(analytic);
-                    } catch (Throwable err) {
-                        UIUtils.showError(err, this);
-                    }
-                }
-            });
-            analyticPanel.add(deleteButton);
-            analyticPanel.add(editButton);
-            analyticPanel.add(analyticButton);
-
-            return analyticPanel;
-        }
-
-        private JButton createAnalyticButton(final Analytic analytic) {
-            JButton analyticButton = new JButton(analytic.getName());
-
-            analyticButton.addActionListener((e) -> {
-                // Check to see if a window for this Analytic is
-                // already open. If it is already open, just bring it
-                // to the foreground.
-                for(AnalyticWindow wnd : _analyticWindows) {
-                    if(analytic.equals(wnd.getAnalytic())) {
-                        wnd.toFront();
-                        wnd.requestFocus();
-                        return;
-                    }
-                }
-
-                // Nope? Okay, create a new window and register it.
-                AnalyticWindow aw = new AnalyticWindow(this, analytic, _queryable);
-                aw.init();
-
-                // Remember that we opened this Window
-                _analyticWindows.add(aw);
-
-                aw.setVisible(true);
-            });
-
-            return analyticButton;
-        }
-
-        private JButton createAnalyticEditButton(Analytic analytic, JButton analyticButton) {
-            JButton editButton = new JButton("Edit");
-
-            editButton.addActionListener((e) -> {
-                AnalyticEditor editor = new AnalyticEditor(this);
-                editor.setAnalyticName(analytic.getName());
-                editor.setAnalyticQuery(analytic.getQuery());
-
-                // This call blocks the UI and waits here
-                editor.setVisible(true);
-
-                if(editor.isConfirmed()) {
-                    Analytic newAnalytic = new Analytic();
-                    newAnalytic.setName(editor.getAnalyticName());
-                    newAnalytic.setQuery(editor.getAnalyticQuery());
-
-                    try {
-                        _analyticUpdater.updateAnalytic(analytic, newAnalytic);
-                        analytic.setName(newAnalytic.getName());
-                        analytic.setQuery(newAnalytic.getQuery());
-                        analyticButton.setText(newAnalytic.getName());
-                    } catch (Throwable t) {
-                        UIUtils.showError(t, this);
-                    }
-                }
-            });
-
-            return editButton;
-        }
-    }
-
     /**
      * A list of Windows that are actually open.
      *
      * We use this to avoid opening the same window multiple times.
      */
     private ArrayList<AnalyticWindow> _analyticWindows = new ArrayList<AnalyticWindow>();
-
-    public interface Queryable {
-        public List<Object[]> query(String query) throws IOException, SQLException;
-    }
-
-    /**
-     * A window to show a single analytic and its results.
-     */
-    private static class AnalyticWindow
-        extends JFrame
-    {
-        private static final long serialVersionUID = 6695278361287847426L;
-
-        private Analytic _analytic;
-        private AnalyticTableModel _tableModel = new AnalyticTableModel();
-        private Queryable _dataSource;
-
-        public AnalyticWindow(Window owner, Analytic analytic, Queryable dataSource) {
-            _analytic = analytic;
-            _dataSource = dataSource;
-            setLocationRelativeTo(owner);
-        }
-
-        public Analytic getAnalytic() {
-            return _analytic;
-        }
-
-        public void init() {
-            setTitle(_analytic.getName());
-
-            setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-
-            addWindowListener(new WindowAdapter() {
-                @Override
-                public void windowClosed(WindowEvent e) {
-//                    _analyticWindows.remove(AnalyticWindow.this);
-                }
-            });
-
-            UIUtils.setupCloseBehavior(getRootPane(), UIUtils.windowClosingAction);
-
-            JPanel contents = new JPanel(new BorderLayout());
-
-            runQuery();
-
-            JTable table = new JTable(_tableModel);
-            table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-            contents.add(new JScrollPane(table), BorderLayout.CENTER);
-
-            JPanel buttons = new JPanel();
-            JButton run = new JButton("Run");
-            run.addActionListener((e) -> {
-                runQuery();
-
-            });
-            buttons.add(run);
-            contents.add(buttons, BorderLayout.SOUTH);
-
-            setContentPane(contents);
-
-            pack();
-        }
-
-        private void runQuery() {
-            System.out.println("Running query: " + _analytic.getQuery());
-            try {
-                _tableModel.setData(_dataSource.query(_analytic.getQuery()));
-            } catch (SQLException sqle) {
-                UIUtils.showError(sqle, this);
-                return;
-            } catch (IOException ioe) {
-                UIUtils.showError(ioe, this);
-                return;
-            }
-        }
-
-        private static class AnalyticTableModel
-            extends AbstractTableModel
-        {
-            private static final long serialVersionUID = 3348828243019993524L;
-
-            private List<Object[]> _data;
-            public void setData(List<Object[]> data) {
-                _data = data;
-
-                // Let listeners like JTable know that the structure of the
-                // table including headings, column and row count, and
-                // cell data types have changed.
-                fireTableStructureChanged();
-            }
-
-            @Override
-            public int getRowCount() {
-                // _data[0] contains the headers, so the row count is one less
-                return _data.size() - 1;
-            }
-
-            @Override
-            public int getColumnCount() {
-                return _data.get(0).length;
-            }
-
-            @Override
-            public String getColumnName(int columnIndex) {
-                return String.valueOf(_data.get(0)[columnIndex]);
-            }
-
-            @Override
-            public Class<?> getColumnClass(int columnIndex) {
-                // Always use String for now
-                return String.class;
-            }
-
-            @Override
-            public Object getValueAt(int rowIndex, int columnIndex) {
-                // Always use String for now
-                return String.valueOf(_data.get(rowIndex + 1)[columnIndex]);
-            }
-        }
-    }
 }
