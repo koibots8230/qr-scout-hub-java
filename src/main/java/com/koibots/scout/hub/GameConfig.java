@@ -195,14 +195,12 @@ public class GameConfig {
 
             for(Object section : (Collection<?>)o) {
                 if(!(section instanceof Map<?,?>)) {
-                    throw new IOException("Config file contains suspicious 'section': expected Map, got type=" + section.getClass().getName());
+                    System.err.println("Config file contains suspicious 'section': expected Map, got type=" + (null == section ? "<null>" : section.getClass().getName()) + "; skipping");
+
+                    continue; // Skip invalid-looking sections
                 }
 
-                o = ((Map<?,?>)section).get("name");
-
-                if(!(o instanceof String)) {
-                    o = "Untitled Section";
-                }
+                o = getString((Map<?,?>)section, "name", "Untitled Section");
 
                 String sectionName = (String)o;
 
@@ -213,18 +211,20 @@ public class GameConfig {
                 if(o instanceof Collection<?>) {
                     for(Object field : (Collection<?>)o) {
                         if(!(field instanceof Map<?,?>)) {
-                            throw new IOException("Config file section " + sectionName + " contains suspicious field: expected Map, got type=" + field.getClass().getName());
+                            System.err.println("Config file contains suspicious 'field': expected Map, got type=" + (null == field ? "<null>" : field.getClass().getName()) + "; skipping");
+
+                            continue; // Skip invalid-looking fields
                         }
 
                         data = (Map<?,?>)field;
 
                         Field f = new Field();
-                        f.setTitle((String)data.get("title"));
-                        f.setDescription((String)data.get("description"));
-                        f.setType((String)data.get("type"));
+                        f.setTitle(getString(data, "title", "Untitled Field"));
+                        f.setDescription(getString(data, "description"));
+                        f.setType(getString(data, "type"));
                         f.setRequired(Boolean.TRUE.equals(data.get("required")));
-                        f.setCode((String)data.get("code"));
-                        f.setFormResetBehavior((String)data.get("formResetBehavior"));
+                        f.setCode(getString(data, "code"));
+                        f.setFormResetBehavior(getString(data, "formResetBehavior"));
                         Object defaultValue = data.get("defaultValue");
                         if(null != defaultValue) {
                             System.out.println("Default value for field '" + f.getTitle() + "' is " + defaultValue + " of type " + data.get("defaultValue").getClass());
@@ -239,21 +239,12 @@ public class GameConfig {
                             f.setDefaultValue(defaultValue);
                             System.out.println("Final default value type for field '" + f.getTitle() + "' is " + defaultValue.getClass());
                         }
-                        f.setOutputType((String)data.get("outputType"));
-                        o = data.get("min");
-                        if(null != o && o instanceof Number) {
-                            f.setMin(((Number)o).intValue());
-                        }
-                        o = data.get("max");
-                        if(null != o && o instanceof Number) {
-                            f.setMax(((Number)o).intValue());
-                        }
-                        o = data.get("step");
-                        if(null != o && o instanceof Number) {
-                            f.setStep(((Number)o).intValue());
-                        }
+                        f.setOutputType(getString(data, "outputType"));
+                        f.setMin(getInteger(data, "min"));
+                        f.setMax(getInteger(data, "max"));
+                        f.setStep(getInteger(data, "step"));
                         o = data.get("choices");
-                        if(null != o && o instanceof Map) {
+                        if(o instanceof Map<?,?>) {
                             //                        System.out.println("choices is of type " + o.getClass());
                             // Use LinkedHashMap to keep these options IN ORDER
                             @SuppressWarnings("unchecked")
@@ -277,6 +268,46 @@ public class GameConfig {
             config.sections = sections;
 
             return config;
+        }
+    }
+
+    private static String getString(Map<?,?> map, String key) {
+        return getString(map, key, null);
+    }
+
+    private static String getString(Map<?,?> map, String key, String defaultValue) {
+        Object o = map.get(key);
+
+        if(null == o) {
+            return defaultValue;
+        } else if(o instanceof String) {
+            return (String)o;
+        } else {
+            return String.valueOf(o);
+        }
+    }
+
+    private static Integer getInteger(Map<?,?> map, String key) {
+        return getInteger(map, key, null);
+    }
+
+    private static Integer getInteger(Map<?,?> map, String key, Integer defaultValue) {
+        Object o = map.get(key);
+
+        if(null == o) {
+            return defaultValue;
+        } else if(o instanceof Integer) {
+            return (Integer)o;
+        } else if(o instanceof Number) {
+            return ((Number)o).intValue();
+        } else if(o instanceof String) {
+            try {
+                return Integer.valueOf((String)o);
+            } catch (NumberFormatException nfe) {
+                return defaultValue;
+            }
+        } else {
+            return defaultValue;
         }
     }
 
