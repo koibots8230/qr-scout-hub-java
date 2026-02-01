@@ -670,7 +670,7 @@ public class Main {
                         // Backup plan if no file found
                         StringBuilder sb = new StringBuilder("<html><style>body {font-family:sans; text-align:center;} p { margin-bottom:0;}</style>");
 
-                        sb.append("<body><p>Copyright © 2025 KoiBots FRC 8230, Inc.</p>");
+                        sb.append("<body><p>Copyright © 2025 - 2026 FRC Team 8230, KoiBots</p>");
                         sb.append("<p>All Rights Reserved.</p><br/>");
                         sb.append("<p>v1.0</p>");
                         sb.append("<p>Java ");

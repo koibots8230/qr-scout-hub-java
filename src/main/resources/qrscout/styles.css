@@ -13,6 +13,11 @@ body {
   font-family:sans-serif;
 }
 
+#copyright {
+  text-align:center;
+  margin-top:2rem;
+}
+
 h1 {
   text-align:center;
   font-variant-caps:small-caps;
