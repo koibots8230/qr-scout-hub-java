@@ -41,6 +41,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -150,6 +151,13 @@ public class Main {
     private JLabel _statusLine;
 
     private AnalyticsWindow _analyticsWindow;
+
+    /**
+     * A list of Windows that are actually open.
+     *
+     * We use this to avoid opening the same window multiple times.
+     */
+    private ArrayList<AnalyticWindow> _analyticWindows = new ArrayList<AnalyticWindow>();
 
     /**
      * The currently open project.
@@ -1306,6 +1314,17 @@ public class Main {
         _main.setTitle(PROGRAM_NAME);
         _statusLine.setText("Project closed.");
 
+        // Close any analytic windows
+        for(Iterator<AnalyticWindow> i=_analyticWindows.iterator(); i.hasNext(); ) {
+            i.next().dispose();
+            i.remove();
+        }
+
+        if(null != _analyticsWindow) {
+            // Close the analytics window which is only appropriate for a specific project
+            _analyticsWindow.dispose();
+        }
+
         _project = null;
     }
 
@@ -1554,11 +1573,4 @@ public class Main {
             response.performQuit();
         }
     }
-
-    /**
-     * A list of Windows that are actually open.
-     *
-     * We use this to avoid opening the same window multiple times.
-     */
-    private ArrayList<AnalyticWindow> _analyticWindows = new ArrayList<AnalyticWindow>();
 }
