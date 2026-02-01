@@ -173,6 +173,7 @@ public class Main {
     private Action _chooseCameraAction;
     private Action _launchWebappAction;
     private Action _editGameConfigAction;
+    private Action _editDatabaseAction;
 
     private ApplicationQuitHandler _quitHandler;
     JCheckBoxMenuItem _importImmediatelyOption = null;
@@ -311,8 +312,6 @@ public class Main {
         }
 
         System.out.println(System.currentTimeMillis() + ", " + (System.currentTimeMillis() - elapsed) + " :  Building menus...");
-
-        int metaKey = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
 
         _newAction = new ActionBase("action.new") {
             @Override
@@ -586,6 +585,38 @@ public class Main {
             }
         };
 
+        _editDatabaseAction = new ActionBase("action.editDatabase") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    DatabaseEditor de = new DatabaseEditor();
+                    de.init();
+                    de.setData(_project.getRecords());
+                    de.addTableListener(new TableModelListener() {
+                        @Override
+                        public void tableChanged(TableModelEvent e) {
+                            int row = e.getFirstRow();
+                            try {
+                                _project.updateRecord(de.getData(row));
+                            } catch (RuntimeException rte) {
+                                // Throw this back to the TableModel to deal with
+                                throw rte;
+                            } catch (Exception ex) {
+                                // Throw this back to the TableModel to deal with
+                                throw new IllegalStateException("Table change veto");
+                            }
+                        }
+                    });
+
+                    SwingUtilities.invokeLater(() -> {
+                        de.setVisible(true);
+                    });
+                } catch (Exception ex) {
+                    showError(ex);
+                }
+            }
+        };
+
         if(isMacOS) {
             // On MacOS, this will cause MacOS to add a "search" bar to the 'help' menu.
         }
@@ -751,6 +782,8 @@ public class Main {
         _scanner = new CodeScanner();
         _scanner.setParent(_main);
 
+        setProjectLoaded(false);
+
         loadPreferences();
 
         System.out.println(System.currentTimeMillis() + ", " + (System.currentTimeMillis() - elapsed) + " :  Showing main window...");
@@ -822,7 +855,6 @@ public class Main {
             menu.add(item);
         }
 
-        System.out.println("Adding file menu to menubar: " + menu);
         menubar.add(menu);
 
         menu = new JMenu(getString("menu.tools.name"));
@@ -832,36 +864,7 @@ public class Main {
         menu.add(new JMenuItem(_analyticsAction));
         menu.add(new JMenuItem(_generateWebApplicationAction));
         menu.add(new JMenuItem(_editGameConfigAction));
-        item = new JMenuItem(getString("menu.tools.editDatabase.name"));
-        item.addActionListener((e) -> {
-            try {
-                DatabaseEditor de = new DatabaseEditor();
-                de.init();
-                de.setData(_project.getRecords());
-                de.addTableListener(new TableModelListener() {
-                    @Override
-                    public void tableChanged(TableModelEvent e) {
-                        int row = e.getFirstRow();
-                        try {
-                            _project.updateRecord(de.getData(row));
-                        } catch (RuntimeException rte) {
-                            // Throw this back to the TableModel to deal with
-                            throw rte;
-                        } catch (Exception ex) {
-                            // Throw this back to the TableModel to deal with
-                            throw new IllegalStateException("Table change veto");
-                        }
-                    }
-                });
-
-                SwingUtilities.invokeLater(() -> {
-                    de.setVisible(true);
-                });
-            } catch (Exception ex) {
-                showError(ex);
-            }
-        });
-        menu.add(item);
+        menu.add(new JMenuItem(_editDatabaseAction));
         menubar.add(menu);
 
 //        _projectMenuItem = new JMenuItem("Project");
@@ -1258,6 +1261,7 @@ public class Main {
         _generateWebApplicationAction.setEnabled(loaded);
         _analyticsAction.setEnabled(loaded);
         _editGameConfigAction.setEnabled(loaded);
+        _editDatabaseAction.setEnabled(loaded);
     }
 
     private void loadProject(Project project) throws SQLException {
