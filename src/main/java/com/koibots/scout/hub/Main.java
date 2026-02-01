@@ -43,6 +43,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.jar.JarFile;
 import java.util.prefs.BackingStoreException;
@@ -221,6 +223,37 @@ public class Main {
 
     private boolean isMacOS = System.getProperty("os.name") != null && System.getProperty("os.name").matches(".*Mac OS X.*");
 
+    private ResourceBundle bundle;
+    /**
+     * Gets a localized string for the given key.
+     *
+     * @param key The resource bundle key of the desired string.
+     *
+     * @return The string from the resource bundle matching the requested
+     *         key, or <code>null</code> if no value was found for the key.
+     */
+    private synchronized String getString(String key) {
+        if(null == bundle) {
+            try {
+                bundle = ResourceBundle.getBundle("bundles.scoutinghub");
+            } catch (MissingResourceException mre) {
+                UIUtils.showError(mre, _main);
+
+                // NOTE: Do not internationalize this string
+                JOptionPane.showMessageDialog(_main, "Failed to load local strings. Exiting.", "Fatal Error", JOptionPane.ERROR_MESSAGE);
+
+                System.exit(1);
+            }
+        }
+
+        try {
+            return bundle.getString(key);
+        } catch (MissingResourceException mre) {
+//            mre.printStackTrace();
+            return null;
+        }
+    }
+
     public void init() {
         long elapsed = System.currentTimeMillis();
 
@@ -281,15 +314,7 @@ public class Main {
 
         int metaKey = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
 
-        _newAction = new AbstractAction() {
-            {
-                putValue(Action.NAME, "New...");
-                putValue(Action.SHORT_DESCRIPTION, "Creates a new project.");
-                putValue(Action.LARGE_ICON_KEY, getIcon("/images/new.png"));
-                putValue(Action.MNEMONIC_KEY, (int)'n');
-                putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_N, metaKey));
-            }
-
+        _newAction = new ActionBase("action.new") {
             @Override
             public void actionPerformed(ActionEvent e) {
                 File projectDirectory = getNewFilename();
@@ -299,7 +324,7 @@ public class Main {
                         System.out.println("Creating project in " + projectDirectory.getAbsolutePath());
 
                         GameConfig emptyConfig = new GameConfig();
-                        emptyConfig.setPageTitle("New Project");
+                        emptyConfig.setPageTitle(getString("title.new-project"));
                         loadProject(Project.createProject(projectDirectory, emptyConfig));
                     } catch (Exception ex) {
                         showError(ex);
@@ -308,44 +333,21 @@ public class Main {
             }
         };
 
-        _openAction = new AbstractAction() {
-            {
-                putValue(Action.NAME, "Open...");
-                putValue(Action.SHORT_DESCRIPTION, "Opens a project.");
-                putValue(Action.LARGE_ICON_KEY, getIcon("/images/open.png"));
-                putValue(Action.MNEMONIC_KEY, (int)'o');
-                putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_O, metaKey));
-            }
-
+        _openAction = new ActionBase("action.open") {
             @Override
             public void actionPerformed(ActionEvent e) {
                 openProjectJFileChooser();
             }
         };
 
-        _closeAction = new AbstractAction() {
-            {
-                putValue(Action.NAME, "Close Project");
-                putValue(Action.SHORT_DESCRIPTION, "Closes the current project.");
-                putValue(Action.LARGE_ICON_KEY, getIcon("/images/close.png"));
-                putValue(Action.MNEMONIC_KEY, (int)'c');
-            }
-
+        _closeAction = new ActionBase("action.close") {
             @Override
             public void actionPerformed(ActionEvent e) {
                  closeProject();
             }
         };
 
-        _scanAction = new AbstractAction() {
-            {
-                putValue(Action.NAME, "Scan");
-                putValue(Action.SHORT_DESCRIPTION, "Opens the camera to scan a QR code.");
-                putValue(Action.LARGE_ICON_KEY, getIcon("/images/koibots-qr.png"));
-                putValue(Action.MNEMONIC_KEY, (int)'s');
-                putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_S, metaKey));
-            }
-
+        _scanAction = new ActionBase("action.scan") {
             @Override
             public void actionPerformed(ActionEvent e) {
                 new Thread(() -> {
@@ -369,8 +371,8 @@ public class Main {
                         if(cameraFailures.get() < 1) {
                             SwingUtilities.invokeLater(() ->
                                 JOptionPane.showMessageDialog(_main,
-                                    "Failed to open the camera. If you just gave permission to use the camera, please try one more time, or quit the app and re-launch it.",
-                                    "Camera Failure",
+                                    getString("error.camera.failedToOpen.text"),
+                                    getString("error.camera.failedToOpen.title"),
                                     JOptionPane.INFORMATION_MESSAGE)
                             );
                         } else {
@@ -384,14 +386,7 @@ public class Main {
             }
         };
 
-        _launchWebappAction = new AbstractAction() {
-            {
-                putValue(Action.NAME, "Launch Web Application");
-                putValue(Action.SHORT_DESCRIPTION, "Launches the QR Scout Web Application locally for testing.");
-                putValue(Action.MNEMONIC_KEY, (int)'w');
-                putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_W, metaKey | KeyEvent.SHIFT_DOWN_MASK));
-            }
-
+        _launchWebappAction = new ActionBase("action.launchWeb") {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
@@ -412,15 +407,7 @@ public class Main {
             }
         };
 
-        _importAction = new AbstractAction() {
-            {
-                putValue(Action.NAME, "Import");
-                putValue(Action.SHORT_DESCRIPTION, "Import the scanned data into the database.");
-                putValue(Action.LARGE_ICON_KEY, getIcon("/images/insert.png"));
-                putValue(Action.MNEMONIC_KEY, (int)'i');
-                putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_I, metaKey));
-            }
-
+        _importAction = new ActionBase("action.import") {
             @Override
             public void actionPerformed(ActionEvent e) {
                 new Thread(() -> {
@@ -429,14 +416,7 @@ public class Main {
             }
         };
 
-        _exportAction = new AbstractAction() {
-            {
-                putValue(Action.NAME, "Export");
-                putValue(Action.SHORT_DESCRIPTION, "Exports the database to CSV.");
-                putValue(Action.LARGE_ICON_KEY, getIcon("/images/export.png"));
-                putValue(Action.MNEMONIC_KEY, (int)'x');
-            }
-
+        _exportAction = new ActionBase("action.export") {
             @Override
             public void actionPerformed(ActionEvent e) {
                 new Thread(() -> {
@@ -449,13 +429,7 @@ public class Main {
             }
         };
 
-        _generateWebApplicationAction = new AbstractAction() {
-            {
-                putValue(Action.NAME, "Generate Web Application");
-                putValue(Action.SHORT_DESCRIPTION, "Exports the QR Scout App web application.");
-                putValue(Action.MNEMONIC_KEY, (int)'w');
-            }
-
+        _generateWebApplicationAction = new ActionBase("action.makeWebApp") {
             @Override
             public void actionPerformed(ActionEvent e) {
                 FileDialog dialog = new FileDialog(_main, "Save As", FileDialog.SAVE);
@@ -484,15 +458,7 @@ public class Main {
             }
         };
 
-        _analyticsAction = new AbstractAction() {
-            {
-                putValue(Action.NAME, "Analytics");
-                putValue(Action.SHORT_DESCRIPTION, "Run analyses against your scouting database.");
-//                putValue(Action.LARGE_ICON_KEY, getIcon("/images/export.png"));
-                putValue(Action.MNEMONIC_KEY, (int)'y');
-                putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_Y, metaKey));
-            }
-
+        _analyticsAction = new ActionBase("action.analytics") {
             @Override
             public void actionPerformed(ActionEvent e) {
                 // If the window already exists, just show it.
@@ -502,12 +468,14 @@ public class Main {
                 if(null == _analyticsWindow) {
                     _analyticsWindow = new AnalyticsWindow();
                     _analyticsWindow.init();
+/*
                     JMenuItem item = new JMenuItem("Analytics");
                     item.addActionListener((ev) -> {
                         _analyticsWindow.toFront();
                         _analyticsWindow.requestFocus();
                     });
-//                    _windowMenu.add(item);
+                    _windowMenu.add(item);
+*/
                     _analyticsWindow.addWindowListener(new WindowAdapter() {
                         @Override
                         public void windowClosing(WindowEvent e) {
@@ -525,13 +493,7 @@ public class Main {
             }
         };
 
-        _chooseCameraAction = new AbstractAction() {
-            {
-                putValue(Action.NAME, "Choose Camera");
-                putValue(Action.SHORT_DESCRIPTION, "Allow you to choose the camera device to use.");
-                putValue(Action.MNEMONIC_KEY, (int)'c');
-            }
-
+        _chooseCameraAction = new ActionBase("action.chooseCamera") {
             @Override
             public void actionPerformed(ActionEvent e) {
                 new Thread(() -> {
@@ -563,14 +525,7 @@ public class Main {
             }
         };
 
-        _justScanNow = new AbstractAction() {
-            {
-                putValue(Action.NAME, "Scan Code");
-                putValue(Action.SHORT_DESCRIPTION, "Scan a QR code and show the data.");
-                putValue(Action.MNEMONIC_KEY, (int)'s');
-                putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_S, metaKey | KeyEvent.SHIFT_DOWN_MASK));
-            }
-
+        _justScanNow = new ActionBase("action.scanNow") {
             @Override
             public void actionPerformed(ActionEvent e) {
                 new Thread(() -> {
@@ -604,12 +559,7 @@ public class Main {
             }
         };
 
-        _editGameConfigAction = new AbstractAction() {
-            {
-                putValue(Action.NAME, "Edit Game");
-                putValue(Action.SHORT_DESCRIPTION, "Edit the game configuration.");
-                putValue(Action.MNEMONIC_KEY, (int)'c');
-            }
+        _editGameConfigAction = new ActionBase("action.editGame") {
             @Override
             public void actionPerformed(ActionEvent e) {
                 final GameConfig config = _project.getGameConfig();
@@ -640,7 +590,7 @@ public class Main {
             // On MacOS, this will cause MacOS to add a "search" bar to the 'help' menu.
         }
 
-        _importImmediatelyOption = new JCheckBoxMenuItem("Import Immediately");
+        _importImmediatelyOption = new JCheckBoxMenuItem(getString("menu.options.importImmediately.name"));
         _importImmediatelyOption.addActionListener((e) -> {
             JCheckBoxMenuItem i = (JCheckBoxMenuItem)e.getSource();
             setInsertImmediately(i.isSelected());
@@ -760,7 +710,7 @@ public class Main {
         _statusLine = new JLabel("Ok");
         _statusLine.setBorder(BorderFactory.createLoweredBevelBorder());
 
-        _recordText = new JLabel("(No current record)");
+        _recordText = new JLabel(getString("recordText.noCurrentRecord"));
         _recordText.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         // Swing alignment is a Dark Art
         _recordText.setVerticalAlignment(SwingConstants.CENTER);
@@ -807,10 +757,53 @@ public class Main {
         _main.setVisible(true);
     }
 
+    /**
+     * A base class for Actions.
+     *
+     * Mostly configures an action based upon resource bundle values for
+     * localization.
+     */
+    private abstract class ActionBase extends AbstractAction {
+        private static final long serialVersionUID = 5480341350963717542L;
+
+        protected ActionBase(String bundleKeyPrefix) {
+            putValue(Action.NAME, getString(bundleKeyPrefix + ".name"));
+            putValue(Action.SHORT_DESCRIPTION, getString(bundleKeyPrefix + ".shortDescription"));
+            putValue(Action.LONG_DESCRIPTION, getString(bundleKeyPrefix + ".longDescription"));
+            putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(getString(bundleKeyPrefix + ".accelerator")));
+            putValue(Action.ACTION_COMMAND_KEY, getString(bundleKeyPrefix + ".actionCommand"));
+            putValue(Action.SELECTED_KEY, Boolean.valueOf(getString(bundleKeyPrefix + ".selected")));
+
+            String mnemonic = getString(bundleKeyPrefix + ".mnemonic");
+            if(null != mnemonic && mnemonic.length() > 0) {
+                putValue(Action.MNEMONIC_KEY, (int)mnemonic.charAt(0));
+            }
+
+            String mnemonicIndex = getString(bundleKeyPrefix + ".mnemonicIndex");
+            if(null != mnemonicIndex) {
+                try {
+                    putValue(Action.DISPLAYED_MNEMONIC_INDEX_KEY, Integer.valueOf(mnemonicIndex));
+                } catch (NumberFormatException nfe) {
+                    // Log and continue
+                    nfe.printStackTrace();
+                }
+            }
+
+            String icon = getString(bundleKeyPrefix + ".largeIcon");
+            if(null != icon) {
+                putValue(Action.LARGE_ICON_KEY, getIcon(icon));
+            }
+            icon = getString(bundleKeyPrefix + ".smallIcon");
+            if(null != icon) {
+                putValue(Action.SMALL_ICON, getIcon(icon));
+            }
+        }
+    }
+
     private JMenuBar createMenuBar() {
         JMenuBar menubar = new JMenuBar();
 
-        JMenu menu = new JMenu("File");
+        JMenu menu = new JMenu(getString("menu.file.name"));
         JMenuItem item;
 
         menu.add(new JMenuItem(_newAction));
@@ -822,23 +815,24 @@ public class Main {
         if(!isMacOS) {
             int metaKey = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
 
-            item = new JMenuItem("Quit");
+            item = new JMenuItem(getString("menu.file.quit.name"));
             item.setMnemonic('q');
             item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, metaKey));
             item.addActionListener(_quitHandler);
             menu.add(item);
         }
 
+        System.out.println("Adding file menu to menubar: " + menu);
         menubar.add(menu);
 
-        menu = new JMenu("Tools");
+        menu = new JMenu(getString("menu.tools.name"));
         menu.add(new JMenuItem(_chooseCameraAction));
         menu.add(new JMenuItem(_justScanNow));
         menu.add(new JMenuItem(_launchWebappAction));
         menu.add(new JMenuItem(_analyticsAction));
         menu.add(new JMenuItem(_generateWebApplicationAction));
         menu.add(new JMenuItem(_editGameConfigAction));
-        item = new JMenuItem("Edit Database");
+        item = new JMenuItem(getString("menu.tools.editDatabase.name"));
         item.addActionListener((e) -> {
             try {
                 DatabaseEditor de = new DatabaseEditor();
@@ -879,12 +873,12 @@ public class Main {
 //        _windowMenu.add(_projectMenuItem);
 //        menubar.add(_windowMenu);
 
-        menu = new JMenu("Options");
+        menu = new JMenu(getString("menu.options.name"));
         menu.add(_importImmediatelyOption);
         menubar.add(menu);
 
-        menu = new JMenu("Help");
-        item = new JMenuItem("Help");
+        menu = new JMenu(getString("menu.help.name"));
+        item = new JMenuItem(getString("menu.help.help.name"));
         item.addActionListener((e) -> {
             SwingUtilities.invokeLater(() -> showHelp() );
         });
