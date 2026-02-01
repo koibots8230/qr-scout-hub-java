@@ -13,6 +13,19 @@ let config;
  * Initialize the web app.
  */
 async function init() {
+  const ecSlider = document.getElementById("ec-level");
+  const ecLabel  = document.getElementById("ec-label");
+  EC_LEVELS.push({ label: "Low (L)",     value: QRCode.CorrectLevel.L });
+  EC_LEVELS.push({ label: "Medium (M)",  value: QRCode.CorrectLevel.M });
+  EC_LEVELS.push({ label: "Quartile (Q)",value: QRCode.CorrectLevel.Q });
+  EC_LEVELS.push({ label: "High (H)",    value: QRCode.CorrectLevel.H });
+
+  // Keep label in sync
+  ecSlider.addEventListener("input", () => {
+    ecLabel.textContent = EC_LEVELS[ecSlider.value].label;
+	generateQRCode();
+  });
+
   await loadConfig();
 
   startApp();
@@ -502,7 +515,7 @@ function makeElement(tag, props = {}, ...children) {
 function generateQRCode() {
   let data = assembleData();
 
-  const maxSize = 0.6; // percentage of viewport
+  const maxSize = 0.48; // percentage of viewport
   const qrSize = Math.min(window.innerWidth, window.innerHeight) * maxSize;
 
   console.log('Generating QR code of width ' + qrSize);
@@ -514,7 +527,7 @@ function generateQRCode() {
     text: data,
     width: qrSize,
     height: qrSize,
-	correctLevel: QRCode.CorrectLevel.L
+	correctLevel: getErrorCorrectionLevel()
   });
 
   let qrContainer = document.getElementById('qr-container');
@@ -575,3 +588,10 @@ document.addEventListener('DOMContentLoaded', function() {
   init();
 });
 
+// Map slider positions to QRCode.js values
+const EC_LEVELS = [];
+
+// Helper for QR generation
+function getErrorCorrectionLevel() {
+  return EC_LEVELS[document.getElementById("ec-level").value].value;
+}

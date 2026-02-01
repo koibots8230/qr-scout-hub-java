@@ -30,21 +30,36 @@ body {
   box-sizing:content-box;
 }
 
-#qr-wrapper {
-  position: relative;
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
+#qr-vwrapper {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:1rem;
+}
+
+#qr-hwrapper {
+  position:relative;
+  display:inline-flex;
+  justify-content:center;
+  align-items:center;
 }
 
 #qr-logo {
-  position: absolute;
+  position:absolute;
   width:3.5rem;
   height:auto;
   background:white; /* explicitly use white for quiet zone */
   padding:.1rem;
   border-radius:1rem;
   pointer-events:none;
+}
+
+#ec-level {
+  cursor:grab;
+}
+
+#ec-level:active {
+  cursor:grabbing;
 }
 
 h1 {

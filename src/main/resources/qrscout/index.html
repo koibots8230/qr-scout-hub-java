@@ -35,9 +35,25 @@
     <div class="modal-content">
       <span id="qr-close" class="close">&times;</span>
       <h1 id="qr-title"></h1>
-      <div id="qr-wrapper">
-        <div id="qr-container"></div>
-        <img id="qr-logo" src="koibots-logo.png" alt="Logo">
+      <div id="qr-vwrapper">
+        <div id="qr-hwrapper">
+          <div id="qr-container"></div>
+          <img id="qr-logo" src="koibots-logo.png" alt="Logo">
+        </div>
+        <div class="field">
+          <h3>Error correction</h3>
+
+          <input
+            type="range"
+            id="ec-level"
+            min="0"
+            max="3"
+            step="1"
+            value="0"
+          >
+
+          <div id="ec-label">Low (L)</div>
+        </div>
       </div>
     </div>
   </div>
