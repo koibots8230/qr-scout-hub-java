@@ -182,7 +182,8 @@ public class Main {
     private Action _editDatabaseAction;
 
     private ApplicationQuitHandler _quitHandler;
-    private JCheckBoxMenuItem _importImmediatelyOption = null;
+    private JCheckBoxMenuItem _importImmediatelyOption;
+    private Action _importImmediatelyAction;
 
     /**
      * The number of camera failures since process start.
@@ -207,6 +208,9 @@ public class Main {
 
     public void setInsertImmediately(boolean insertImmediately) {
         _insertImmediately = insertImmediately;
+
+        _importImmediatelyOption.setSelected(insertImmediately);
+        _importImmediatelyAction.putValue(Action.SELECTED_KEY, insertImmediately);
     }
 
     public boolean getInsertImmediately() {
@@ -637,11 +641,15 @@ public class Main {
             // On MacOS, this will cause MacOS to add a "search" bar to the 'help' menu.
         }
 
-        _importImmediatelyOption = new JCheckBoxMenuItem(getString("menu.options.importImmediately.name"));
-        _importImmediatelyOption.addActionListener((e) -> {
-            JCheckBoxMenuItem i = (JCheckBoxMenuItem)e.getSource();
-            setInsertImmediately(i.isSelected());
-        });
+        _importImmediatelyAction = new ActionBase("action.importImmediately") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JCheckBoxMenuItem item = (JCheckBoxMenuItem) e.getSource();
+                boolean selected = item.isSelected();
+
+                setInsertImmediately(selected);
+            }
+        };
 
         Desktop desktop = Desktop.getDesktop();
         _quitHandler = new ApplicationQuitHandler();
@@ -894,7 +902,7 @@ public class Main {
 //        menubar.add(_windowMenu);
 
         menu = new JMenu(getString("menu.options.name"));
-        menu.add(_importImmediatelyOption);
+        menu.add(_importImmediatelyOption = new JCheckBoxMenuItem(_importImmediatelyAction));
         menubar.add(menu);
 
         menu = new JMenu(getString("menu.help.name"));
@@ -970,8 +978,28 @@ public class Main {
         return fileDialogDirectory;
     }
 
+    private String toString(Preferences prefs) {
+        StringBuilder sb = new StringBuilder("Preferences {");
+
+        try {
+            boolean first = true;
+            for(String key : prefs.keys()) {
+                if(first) { first = false; } else { sb.append(", "); }
+
+                sb.append(key).append('=').append(prefs.get(key, ""));
+            }
+        } catch (BackingStoreException bse) {
+            // Do nothing
+        }
+
+        sb.append(" }");
+
+        return sb.toString();
+    }
     private void loadPreferences() {
         Preferences prefs = Preferences.userNodeForPackage(Main.class);
+
+System.out.println("Loaded preferences: " + toString(prefs));
 
         // File dialog path
         String fileDialogPath = prefs.get(PREFS_KEY_FILE_DIALOG_DIRECTORY, null);
@@ -1024,7 +1052,6 @@ public class Main {
         }
 
         setInsertImmediately(prefs.getBoolean(PREFS_KEY_INSERT_IMMEDIATELY, false));
-        _importImmediatelyOption.setSelected(getInsertImmediately());
     }
 
     private void exportQRScout(File file)
@@ -1138,6 +1165,8 @@ public class Main {
             prefs.put(PREFS_KEY_LAST_OPEN_PROJECT, _project.getDirectory().getAbsolutePath());
         }
 
+        prefs.putBoolean(PREFS_KEY_INSERT_IMMEDIATELY, getInsertImmediately());
+System.out.println("Saving preferences: " + toString(prefs));
         try {
             prefs.flush();
         } catch (BackingStoreException e) {
