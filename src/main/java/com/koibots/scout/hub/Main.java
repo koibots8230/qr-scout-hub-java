@@ -626,9 +626,7 @@ public class Main {
                         }
                     });
 
-                    SwingUtilities.invokeLater(() -> {
-                        de.setVisible(true);
-                    });
+                    de.setVisible(true);
                 } catch (Exception ex) {
                     showError(ex);
                 }
@@ -901,9 +899,9 @@ public class Main {
 
         menu = new JMenu(getString("menu.help.name"));
         item = new JMenuItem(getString("menu.help.help.name"));
-        item.addActionListener((e) -> {
-            SwingUtilities.invokeLater(() -> showHelp() );
-        });
+        item.addActionListener((e) ->
+            showHelp()
+        );
         menu.add(item);
         menubar.add(menu);
 
