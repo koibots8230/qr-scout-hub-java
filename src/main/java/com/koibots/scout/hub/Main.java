@@ -103,7 +103,7 @@ import com.koibots.scout.hub.utils.AnalyticUpdater;
 
 public class Main {
     private static final String PROGRAM_NAME = "KoiBots Scouting Hub";
-    private static final String ABOUT_HTML_URL = "/resources/navigator/about.html";
+    private static final String ABOUT_HTML_URL = "/help/about.html";
 
     private static final String PREFS_KEY_FILE_DIALOG_DIRECTORY = "file.dialog.directory";
     private static final String PREFS_KEY_CAMERA_DEVICE_ID = "camera.device.id";
@@ -182,7 +182,7 @@ public class Main {
     private Action _editDatabaseAction;
 
     private ApplicationQuitHandler _quitHandler;
-    JCheckBoxMenuItem _importImmediatelyOption = null;
+    private JCheckBoxMenuItem _importImmediatelyOption = null;
 
     /**
      * The number of camera failures since process start.
@@ -504,11 +504,9 @@ public class Main {
                         }
                     });
 
-                    SwingUtilities.invokeLater(() -> {
-                       _analyticsWindow.setVisible(true);
-                       _analyticsWindow.toFront();
-                       _analyticsWindow.requestFocus();
-                    });
+                    _analyticsWindow.setVisible(true);
+                    _analyticsWindow.toFront();
+                    _analyticsWindow.requestFocus();
                 }
             }
         };
@@ -677,7 +675,6 @@ public class Main {
                     String html = null;
                     if(null != url) {
                         html = getFileContents(url);
-
                         if(null != html) {
                             html = html
                                     .replaceAll("\\$\\{java.version}", System.getProperty("java.version"))
@@ -687,6 +684,8 @@ public class Main {
                     }
 
                     if(null == html) {
+                        System.out.println("No about file found at " + ABOUT_HTML_URL + "; falling back to build-in 'about' verbiage");
+
                         // Backup plan if no file found
                         StringBuilder sb = new StringBuilder("<html><style>body {font-family:sans; text-align:center;} p { margin-bottom:0;}</style>");
 
@@ -1557,8 +1556,6 @@ public class Main {
             }
 
             savePreferences();
-
-            System.exit(0);
         }
 
         @Override
