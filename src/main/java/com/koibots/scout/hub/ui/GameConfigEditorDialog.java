@@ -3,10 +3,10 @@ package com.koibots.scout.hub.ui;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
-import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Window;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
@@ -60,7 +60,7 @@ public class GameConfigEditorDialog
     private JTextField pageTitle;
     private GameConfigTreeModel model;
 
-    public GameConfigEditorDialog(Frame owner,
+    public GameConfigEditorDialog(Window owner,
                                   GameConfig config)
     {
         super(owner, "Edit Game", config);
@@ -152,6 +152,7 @@ public class GameConfigEditorDialog
         add(south, BorderLayout.SOUTH);
 
         setSize(400, 500);
+
         setLocationRelativeTo(owner);
     }
 
