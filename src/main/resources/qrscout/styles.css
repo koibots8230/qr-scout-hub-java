@@ -294,27 +294,17 @@ button:hover {
     margin-top:1rem;
   }
 
+  .field {
+    width:100%;
+    margin:1rem 0;
+  }
+
   .field select {
     width:100%;
-    zoom:500%;
+    zoom:250%;
   }
 
   .field input[type='checkbox'] {
-    zoom:400%;
-    margin:2rem;
-  }
-
-  .field .lap-timer .controls {
-    zoom:400%;
-  }
-
-  body {
-    font-size:40pt;
-    -webkit-text-size-adjust: none; /* For Chrome/Safari/Edge */
-    text-size-adjust: none;         /* Standard */
-  }
-
-  .field input.number, .field input.counter, .field input[type='text'], .counter-button, .lap-timer .display, .lap-timer button {
-    width:10rem;
+    zoom:200%;
   }
 }
