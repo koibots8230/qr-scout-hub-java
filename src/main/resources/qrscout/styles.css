@@ -135,8 +135,7 @@ select {
   width:12rem;
 }
 
-.field input.number {
-  width:4rem;
+.field input {
   color:var(--text-color);
   background-color:transparent;
   border:none;
@@ -144,13 +143,16 @@ select {
   font-size:var(--font-size-some-text);
 }
 
+.field input.text {
+  width:85%;
+}
+
+.field input.number {
+  width:4rem;
+}
+
 .field input.counter {
   width:2rem;
-  color:var(--text-color);
-  background-color:transparent;
-  border:none;
-  text-align:center;
-  font-size:var(--font-size-some-text);
 }
 
 .lap-timer .display {
@@ -226,6 +228,7 @@ input[type=number] {
   font-size:var(--font-size-some-text);
   padding:1ex 1em;
   cursor:pointer;
+  margin-bottom:1rem;
 }
 
 #buttons {

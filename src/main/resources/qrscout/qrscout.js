@@ -233,9 +233,10 @@ function createField(field) {
 
 function makeTextField(field) {
   let attrs = {
-	    'id' : 'field_' + field.code,
-	    'type' : 'text',
-	    'name' : field.code
+        'id' : 'field_' + field.code,
+        'type' : 'text',
+        'class' : 'text',
+        'name' : field.code
   };
 
   let element = makeElement('input', attrs);
