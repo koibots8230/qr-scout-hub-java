@@ -216,6 +216,33 @@
             <excludeFilterFile>${project.basedir}/conf/spotbugs-exclude.xml</excludeFilterFile>
           </configuration>
         </plugin>
+
+        <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>license-maven-plugin</artifactId>
+        <version>2.4.0</version>
+        <executions>
+          <execution>
+            <id>generate-third-party-license-file</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>add-third-party</goal>
+            </goals>
+            <configuration>
+              <thirdPartyFilename>LICENSES-THIRD-PARTY.txt</thirdPartyFilename>
+
+              <includeTransitiveDependencies>true</includeTransitiveDependencies>
+
+              <!-- Don’t fail your build on imperfect metadata -->
+              <failOnMissing>false</failOnMissing>
+              <useMissingFile>true</useMissingFile>
+
+              <encoding>UTF-8</encoding>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
 <!--
             <plugin>
                 <groupId></groupId>
@@ -624,6 +651,7 @@
                     </resources>
                   </configuration>
                 </execution>
+
                 <execution>
                   <id>copy-splash</id>
                   <phase>package</phase>
@@ -640,6 +668,47 @@
                     </resources>
                   </configuration>
                 </execution>
+
+                <!-- Copy the LICENSE file into application bundle -->
+                <execution>
+                  <id>copy-license</id>
+                  <phase>package</phase>
+                  <goals>
+                    <goal>copy-resources</goal>
+                  </goals>
+                  <configuration>
+                    <outputDirectory>${project.build.directory}/app</outputDirectory>
+                    <resources>
+                      <resource>
+                        <directory>.</directory>
+                        <includes>
+                          <include>LICENSE</include>
+                        </includes>
+                      </resource>
+                    </resources>
+                  </configuration>
+                </execution>
+
+                <!-- Copy the LICENSES-THIRD-PARTY.txt file into application bundle -->
+                <execution>
+                  <id>copy-third-party-licenses</id>
+                  <phase>package</phase>
+                  <goals>
+                    <goal>copy-resources</goal>
+                  </goals>
+                  <configuration>
+                    <outputDirectory>${project.build.directory}/app</outputDirectory>
+                    <resources>
+                      <resource>
+                        <directory>${project.build.directory}/generated-sources/license</directory>
+                        <includes>
+                          <include>LICENSES-THIRD-PARTY.txt</include>
+                        </includes>
+                      </resource>
+                    </resources>
+                  </configuration>
+                </execution>
+
               </executions>
             </plugin>
 
@@ -736,6 +805,7 @@
                       <argument>${project.basedir}/src/jpackage/entitlements.plist</argument>
 
                       <argument>--mac-sign</argument>
+
 <!--
 <argument>- -mac-app-image-sign-identity</argument>
 <argument>Christopher Schultz Code Signing</argument>
@@ -846,6 +916,7 @@
                     </resources>
                   </configuration>
                 </execution>
+
                 <execution>
                   <id>copy-splash</id>
                   <phase>package</phase>
@@ -857,6 +928,46 @@
                         <directory>src/main/resources/images</directory>
                         <includes>
                           <include>splash.png</include>
+                        </includes>
+                      </resource>
+                    </resources>
+                  </configuration>
+                </execution>
+
+                <!-- Copy the LICENSE file into application bundle -->
+                <execution>
+                  <id>copy-license</id>
+                  <phase>package</phase>
+                  <goals>
+                    <goal>copy-resources</goal>
+                  </goals>
+                  <configuration>
+                    <outputDirectory>${project.build.directory}/app</outputDirectory>
+                    <resources>
+                      <resource>
+                        <directory>.</directory>
+                        <includes>
+                          <include>LICENSE</include>
+                        </includes>
+                      </resource>
+                    </resources>
+                  </configuration>
+                </execution>
+
+                <!-- Copy the LICENSES-THIRD-PARTY.txt file into application bundle -->
+                <execution>
+                  <id>copy-third-party-licenses</id>
+                  <phase>package</phase>
+                  <goals>
+                    <goal>copy-resources</goal>
+                  </goals>
+                  <configuration>
+                    <outputDirectory>${project.build.directory}/app</outputDirectory>
+                    <resources>
+                      <resource>
+                        <directory>${project.build.directory}/generated-sources/license</directory>
+                        <includes>
+                          <include>LICENSES-THIRD-PARTY.txt</include>
                         </includes>
                       </resource>
                     </resources>
@@ -1029,6 +1140,7 @@
                     </resources>
                   </configuration>
                 </execution>
+
                 <execution>
                   <id>copy-splash</id>
                   <phase>package</phase>
@@ -1045,6 +1157,47 @@
                     </resources>
                   </configuration>
                 </execution>
+
+                <!-- Copy the LICENSE file into application bundle -->
+                <execution>
+                  <id>copy-license</id>
+                  <phase>package</phase>
+                  <goals>
+                    <goal>copy-resources</goal>
+                  </goals>
+                  <configuration>
+                    <outputDirectory>${project.build.directory}/app</outputDirectory>
+                    <resources>
+                      <resource>
+                        <directory>.</directory>
+                        <includes>
+                          <include>LICENSE</include>
+                        </includes>
+                      </resource>
+                    </resources>
+                  </configuration>
+                </execution>
+
+                <!-- Copy the LICENSES-THIRD-PARTY.txt file into application bundle -->
+                <execution>
+                  <id>copy-third-party-licenses</id>
+                  <phase>package</phase>
+                  <goals>
+                    <goal>copy-resources</goal>
+                  </goals>
+                  <configuration>
+                    <outputDirectory>${project.build.directory}/app</outputDirectory>
+                    <resources>
+                      <resource>
+                        <directory>${project.build.directory}/generated-sources/license</directory>
+                        <includes>
+                          <include>LICENSES-THIRD-PARTY.txt</include>
+                        </includes>
+                      </resource>
+                    </resources>
+                  </configuration>
+                </execution>
+
                 <!-- Copy the .ico file into the right place -->
                 <execution>
                   <id>copy-ico-file</id>
