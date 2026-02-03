@@ -7,6 +7,7 @@ import java.awt.Desktop;
 import java.awt.FileDialog;
 import java.awt.FlowLayout;
 import java.awt.Image;
+import java.awt.Rectangle;
 import java.awt.Taskbar;
 import java.awt.Toolkit;
 import java.awt.desktop.AboutEvent;
@@ -674,13 +675,18 @@ public class Main {
                     } else {
                         text.setText("<p>No help text found.</p>");
                     }
-                    helpFrame.add(new JScrollPane(text), BorderLayout.CENTER);
+
+                    JScrollPane html = new JScrollPane(text);
+                    helpFrame.add(html, BorderLayout.CENTER);
 
                     helpFrame.pack();
+
+                    helpFrame.setSize(800, 600);
                 }
 
                 helpFrame.setVisible(true);
                 helpFrame.requestFocus();
+                ((JScrollPane)helpFrame.getContentPane().getComponent(0)).scrollRectToVisible(new Rectangle());
             }
         };
 
@@ -940,11 +946,6 @@ public class Main {
 
         menu = new JMenu(getString("menu.help.name"));
         menu.add(_helpAction);
-        item = new JMenuItem(getString("menu.help.help.name"));
-        item.addActionListener((e) ->
-            showHelp()
-        );
-        menu.add(item);
         menubar.add(menu);
 
         return menubar;
@@ -1449,10 +1450,6 @@ System.out.println("Saving preferences: " + toString(prefs));
         SwingUtilities.invokeLater(() -> {
             dialog.setVisible(true);
         });
-    }
-
-    private void showHelp() {
-        JOptionPane.showConfirmDialog(_main, "Not yet implemented", "Help", JOptionPane.OK_CANCEL_OPTION);
     }
 
     private void showError(Throwable t) {
