@@ -15,10 +15,14 @@ let config;
 async function init() {
   const ecSlider = document.getElementById("ec-level");
   const ecLabel  = document.getElementById("ec-label");
-  EC_LEVELS.push({ label: "Low (L)",     value: QRCode.CorrectLevel.L });
-  EC_LEVELS.push({ label: "Medium (M)",  value: QRCode.CorrectLevel.M });
-  EC_LEVELS.push({ label: "Quartile (Q)",value: QRCode.CorrectLevel.Q });
-  EC_LEVELS.push({ label: "High (H)",    value: QRCode.CorrectLevel.H });
+  if(typeof QRCode != 'undefined' && QRCode != null) {
+    EC_LEVELS.push({ label: "Low (L)",     value: QRCode.CorrectLevel.L });
+    EC_LEVELS.push({ label: "Medium (M)",  value: QRCode.CorrectLevel.M });
+    EC_LEVELS.push({ label: "Quartile (Q)",value: QRCode.CorrectLevel.Q });
+    EC_LEVELS.push({ label: "High (H)",    value: QRCode.CorrectLevel.H });
+  } else {
+    alert("QRCode.js did not load. You aren't going to be able to generate QR codes :(");
+  }
 
   // Keep label in sync
   ecSlider.addEventListener("input", () => {
@@ -522,21 +526,25 @@ function generateQRCode() {
 
   let qr = document.createElement('div');
 
-  // generate
-  new QRCode(qr, {
-    text: data,
-    width: qrSize,
-    height: qrSize,
-	correctLevel: getErrorCorrectionLevel()
-  });
+  if(typeof QRCode != 'undefined' && QRCode != null) {
+    // generate
+    new QRCode(qr, {
+      text: data,
+      width: qrSize,
+      height: qrSize,
+          correctLevel: getErrorCorrectionLevel()
+    });
 
-  let qrContainer = document.getElementById('qr-container');
-  qrContainer.replaceChildren(qr);
-  let qrPopup = document.getElementById('qr-popup');
-  qrPopup.style.display = 'block';
-  document.getElementById('qr-close').onclick = function () {
-    qrPopup.style.display='none';
-  };
+    let qrContainer = document.getElementById('qr-container');
+    qrContainer.replaceChildren(qr);
+    let qrPopup = document.getElementById('qr-popup');
+    qrPopup.style.display = 'block';
+    document.getElementById('qr-close').onclick = function () {
+      qrPopup.style.display='none';
+    };
+  } else {
+    alert("QRCode.js did not load. You can't generate QR codes.");
+  }
 }
 
 /**
