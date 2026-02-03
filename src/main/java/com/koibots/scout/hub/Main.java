@@ -180,6 +180,7 @@ public class Main {
     private Action _launchWebappAction;
     private Action _editGameConfigAction;
     private Action _editDatabaseAction;
+    private Action _helpAction;
 
     private ApplicationQuitHandler _quitHandler;
     private JCheckBoxMenuItem _importImmediatelyOption;
@@ -651,6 +652,38 @@ public class Main {
             }
         };
 
+        _helpAction = new ActionBase("action.help") {
+            private JFrame helpFrame;
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(null == helpFrame) {
+                    helpFrame = new JFrame(getString("window.help.title")) {
+                        public void dispose() {
+                            super.dispose();
+
+                            helpFrame = null;
+                        }
+                    };
+                    helpFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+                    JTextPane text = new JTextPane();
+                    text.setContentType("text/html");
+
+                    URL url = getClass().getResource("/help/help.html");
+                    if(null != url) {
+                        text.setText(getFileContents(url));
+                    } else {
+                        text.setText("<p>No help text found.</p>");
+                    }
+                    helpFrame.add(new JScrollPane(text), BorderLayout.CENTER);
+
+                    helpFrame.pack();
+                }
+
+                helpFrame.setVisible(true);
+                helpFrame.requestFocus();
+            }
+        };
+
         Desktop desktop = Desktop.getDesktop();
         _quitHandler = new ApplicationQuitHandler();
 
@@ -906,6 +939,7 @@ public class Main {
         menubar.add(menu);
 
         menu = new JMenu(getString("menu.help.name"));
+        menu.add(_helpAction);
         item = new JMenuItem(getString("menu.help.help.name"));
         item.addActionListener((e) ->
             showHelp()
