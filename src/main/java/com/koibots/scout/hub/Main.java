@@ -7,6 +7,7 @@ import java.awt.Desktop;
 import java.awt.FileDialog;
 import java.awt.FlowLayout;
 import java.awt.Image;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Taskbar;
 import java.awt.Toolkit;
@@ -22,6 +23,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.geom.Rectangle2D;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -75,15 +77,20 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextPane;
+import javax.swing.JViewport;
 import javax.swing.KeyStroke;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.WindowConstants;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.filechooser.FileFilter;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.html.HTMLDocument;
 
 import org.bytedeco.javacv.FrameGrabber;
 
@@ -665,8 +672,65 @@ public class Main {
                         }
                     };
                     helpFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+
                     JTextPane text = new JTextPane();
+                    text.setEditable(false);
+                    text.setCaretPosition(0);
+                    text.setCaretColor(text.getBackground());
                     text.setContentType("text/html");
+
+                    JScrollPane html = new JScrollPane(text);
+
+                    text.addHyperlinkListener(new HyperlinkListener() {
+                        @Override
+                        public void hyperlinkUpdate(HyperlinkEvent e) {
+                            if (e.getEventType() != HyperlinkEvent.EventType.ACTIVATED) {
+                                return;
+                            }
+
+                            String ref;
+                            URL url = e.getURL();
+                            if(null != url) {
+                                ref = url.getRef();
+                            } else if(null != e.getDescription() && e.getDescription().startsWith("#")) {
+                                ref = e.getDescription().substring(1);
+                            } else {
+                                ref = null;
+                            }
+
+                            if(null == ref) {
+                                return;
+                            }
+
+                            HTMLDocument document = (HTMLDocument)text.getDocument();
+                            javax.swing.text.Element element = document.getElement(ref);
+
+                            if(null == element) {
+                                System.out.println("No target element found for anchor: " + ref);
+                            }
+
+                            // This is the target's offset in the text
+                            int startOffset = element.getStartOffset();
+
+                            try {
+                                // This is the on-screen location of the text offset
+                                Rectangle2D target = text.modelToView2D(startOffset);
+
+                                // Move the enclosing viewport (scroll pane) so the target
+                                // is placed as close to the top of the view as possible.
+                                JViewport viewport = html.getViewport();
+
+                                Rectangle r = target.getBounds();
+                                int maxY = text.getHeight() - viewport.getHeight();
+                                // Ensure that the y value is actually within bounds
+                                int y = Math.max(0, Math.min(r.y, maxY));
+
+                                viewport.setViewPosition(new Point(0, y));
+                            } catch (BadLocationException ble) {
+                                ble.printStackTrace();
+                            }
+                        }
+                    });
 
                     URL url = getClass().getResource("/help/help.html");
                     if(null != url) {
@@ -675,7 +739,6 @@ public class Main {
                         text.setText("<p>No help text found.</p>");
                     }
 
-                    JScrollPane html = new JScrollPane(text);
                     helpFrame.add(html, BorderLayout.CENTER);
 
                     helpFrame.pack();
@@ -685,7 +748,7 @@ public class Main {
 
                 helpFrame.setVisible(true);
                 helpFrame.requestFocus();
-                ((JScrollPane)helpFrame.getContentPane().getComponent(0)).scrollRectToVisible(new Rectangle());
+                ((JTextPane)((JScrollPane)helpFrame.getContentPane().getComponent(0)).getViewport().getView()).setCaretPosition(0);
             }
         };
 
