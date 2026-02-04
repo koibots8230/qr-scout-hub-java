@@ -1349,6 +1349,8 @@ System.out.println("Saving preferences: " + toString(prefs));
         _analyticsAction.setEnabled(loaded);
         _editGameConfigAction.setEnabled(loaded);
         _editDatabaseAction.setEnabled(loaded);
+        // Whether just closing OR loading a project, there is no data to import
+        _importAction.setEnabled(false);
     }
 
     private void loadProject(Project project) throws SQLException {
