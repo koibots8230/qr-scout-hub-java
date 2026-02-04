@@ -262,8 +262,7 @@ public class Main {
         try {
             return bundle.getString(key);
         } catch (MissingResourceException mre) {
-//            mre.printStackTrace();
-            return key;
+            return null;
         }
     }
 
