@@ -263,7 +263,7 @@ public class Main {
             return bundle.getString(key);
         } catch (MissingResourceException mre) {
 //            mre.printStackTrace();
-            return null;
+            return key;
         }
     }
 
@@ -906,7 +906,6 @@ public class Main {
         menu.add(new JMenuItem(_newAction));
         menu.add(new JMenuItem(_openAction));
         menu.add(new JMenuItem(_closeAction));
-        menu.add(new JMenuItem(_exportAction));
 
         // MacOS has its own quit menu under the application menu
         if(!isMacOS) {
@@ -921,14 +920,21 @@ public class Main {
 
         menubar.add(menu);
 
+        menu = new JMenu(getString("menu.project.name"));
+        menu.add(new JMenuItem(_editGameConfigAction));
+        menu.add(new JMenuItem(_launchWebappAction));
+        menu.add(new JMenuItem(_generateWebApplicationAction));
+        menubar.add(menu);
+
+        menu = new JMenu(getString("menu.database.name"));
+        menu.add(new JMenuItem(_analyticsAction));
+        menu.add(new JMenuItem(_editDatabaseAction));
+        menu.add(new JMenuItem(_exportAction));
+        menubar.add(menu);
+
         menu = new JMenu(getString("menu.tools.name"));
         menu.add(new JMenuItem(_chooseCameraAction));
         menu.add(new JMenuItem(_justScanNow));
-        menu.add(new JMenuItem(_launchWebappAction));
-        menu.add(new JMenuItem(_analyticsAction));
-        menu.add(new JMenuItem(_generateWebApplicationAction));
-        menu.add(new JMenuItem(_editGameConfigAction));
-        menu.add(new JMenuItem(_editDatabaseAction));
         menubar.add(menu);
 
 //        _projectMenuItem = new JMenuItem("Project");
