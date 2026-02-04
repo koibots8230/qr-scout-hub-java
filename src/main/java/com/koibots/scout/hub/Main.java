@@ -29,6 +29,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -934,6 +935,64 @@ public class Main {
         menubar.add(menu);
 
         menu = new JMenu(getString("menu.help.name"));
+
+        item = new JMenuItem(getString("menu.help.thirdPartyLicenses.name"));
+        item.addActionListener((e) -> {
+            URL url = null;
+            System.out.println("CWD is " + new File(".").getAbsolutePath());
+
+            for(String path : new String[] {
+                    "app/LICENSES-THIRD-PARTY.txt",
+                    "target/generated-sources/license/LICENSES-THIRD-PARTY.txt"
+            }) {
+                File file = new File(path);
+
+                if(file.exists()) {
+                    try {
+                        url = file.toURI().toURL();
+
+                        System.out.println("Found third-party licenses file at " + file.getAbsolutePath());
+                        break;
+                    } catch (MalformedURLException mue) {
+                        // Shouldn't happen
+                        UIUtils.showError(mue, _main);
+                    }
+                }
+            }
+
+            if(null == url) {
+                try {
+                    // Try to load the file off the disk in the neighborhood of the app bundle
+                    Path jarPath = Paths.get(
+                            Main.class.getProtectionDomain()
+                            .getCodeSource()
+                            .getLocation()
+                            .toURI()
+                            );
+
+                    Path appDir = jarPath.getParent();  // Contents/app
+                    Path textFile = appDir.resolve("LICENSES-THIRD-PARTY.txt");
+                    if(Files.exists(textFile)) {
+                        System.out.println("Found third-party licenses file at " + textFile.toAbsolutePath());
+                        url = textFile.toUri().toURL();
+                    }
+                    /*} catch (Exception ex) {
+                ex.printStackTrace();*/
+                } catch (URISyntaxException | MalformedURLException urle) {
+                    // Should never happen
+                    UIUtils.showError(urle, _main);
+                }
+            }
+
+            if(null != url) {
+                FileViewer viewer = new FileViewer(_main, getString("window.thirdPartyLicenses.title"), url, "text/plain");
+                viewer.setModal(true);
+                viewer.setVisible(true);
+            } else {
+                JOptionPane.showMessageDialog(_main, "Not Found", "Could not file LICENSES-THIRD-PARTY.txt", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+        menu.add(item);
 
         menu.add(_helpAction);
         menubar.add(menu);
