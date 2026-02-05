@@ -182,6 +182,7 @@ public class Main {
     private Action _editGameConfigAction;
     private Action _editDatabaseAction;
     private Action _helpAction;
+    private Action _importGameConfigAction;
 
     private ApplicationQuitHandler _quitHandler;
     private JCheckBoxMenuItem _importImmediatelyOption;
@@ -591,17 +592,7 @@ public class Main {
 
                 if(gced.isConfirmed()) {
                     try {
-                        // Update the database structure
-                        processDatabaseAlterations(config);
-
-                        // Make a backup copy of the original config
-                        File configFile = new File(_project.getDirectory(), "config.json");
-                        configFile.renameTo(new File(_project.getDirectory(), "config.bak"));
-
-                        // Save the new config
-                        config.saveToFile(configFile, true);
-
-                        _main.setTitle(PROGRAM_NAME + ": " + config.getPageTitle());
+                        updateGameConfig(config);
                     } catch (Exception ex) {
                         UIUtils.showError(ex, _main);
                     }
@@ -674,6 +665,50 @@ public class Main {
             }
         };
 
+        _importGameConfigAction = new ActionBase("action.importGameConfig") {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Collection<Field> fields = _project.getGameConfig().getFields();
+                if(null != fields && fields.size() > 1) {
+                    JOptionPane.showMessageDialog(_main,
+                            "You cannot import into a project with existing fields.",
+                            "Cannot Import",
+                            JOptionPane.ERROR_MESSAGE);
+
+                    return;
+                }
+
+                JFileChooser chooser = new JFileChooser();
+                chooser.setCurrentDirectory(getFileDialogDirectory());
+                chooser.setDialogTitle("Import Scouting Config");
+                chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                chooser.setMultiSelectionEnabled(false);
+
+                chooser.setFileFilter(new FileFilter() {
+                    @Override
+                    public boolean accept(File f) {
+                        return f.isFile() && f.getName().toLowerCase().endsWith(".json");
+                    }
+
+                    @Override
+                    public String getDescription() {
+                        return "JSON Files";
+                    }
+
+                });
+                int result = chooser.showOpenDialog(_main);
+                if (result == JFileChooser.APPROVE_OPTION) {
+                    setFileDialogDirectory(chooser.getCurrentDirectory());
+
+                    try {
+                        updateGameConfig(GameConfig.readFile(chooser.getSelectedFile()));
+                    } catch (Exception ex) {
+                        UIUtils.showError(ex, _main);
+                    }
+                }
+            }
+        };
         Desktop desktop = Desktop.getDesktop();
         _quitHandler = new ApplicationQuitHandler();
 
@@ -905,6 +940,7 @@ public class Main {
         menubar.add(menu);
 
         menu = new JMenu(getString("menu.project.name"));
+        menu.add(new JMenuItem(_importGameConfigAction));
         menu.add(new JMenuItem(_editGameConfigAction));
         menu.add(new JMenuItem(_launchWebappAction));
         menu.add(new JMenuItem(_generateWebApplicationAction));
@@ -1311,36 +1347,6 @@ System.out.println("Saving preferences: " + toString(prefs));
         }
     }
 
-    private File getConfigFilename() {
-        JFileChooser chooser = new JFileChooser();
-        chooser.setCurrentDirectory(getFileDialogDirectory());
-        chooser.setDialogTitle("Choose Scouting Config");
-        chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        chooser.setMultiSelectionEnabled(false);
-
-        chooser.setFileFilter(new FileFilter() {
-
-            @Override
-            public boolean accept(File f) {
-                return !f.isDirectory() && f.getName().toLowerCase().endsWith(".json");
-            }
-
-            @Override
-            public String getDescription() {
-                return "JSON Files";
-            }
-
-        });
-        int result = chooser.showOpenDialog(_main);
-        if (result != JFileChooser.APPROVE_OPTION) {
-            return null;
-        } else {
-            setFileDialogDirectory(chooser.getCurrentDirectory());
-
-            return chooser.getSelectedFile();
-        }
-    }
-
     private void openProjectJFileChooser() {
         JFileChooser chooser = new JFileChooser();
 
@@ -1392,6 +1398,8 @@ System.out.println("Saving preferences: " + toString(prefs));
         _analyticsAction.setEnabled(loaded);
         _editGameConfigAction.setEnabled(loaded);
         _editDatabaseAction.setEnabled(loaded);
+        _importGameConfigAction.setEnabled(loaded);
+
         // Whether just closing OR loading a project, there is no data to import
         _importAction.setEnabled(false);
     }
@@ -1629,7 +1637,23 @@ System.out.println("Saving preferences: " + toString(prefs));
         }
     }
 
-    private void processDatabaseAlterations(GameConfig config) throws Exception {
+    private void updateGameConfig(GameConfig config) throws SQLException, IOException {
+        // Update the database structure
+        processDatabaseAlterations(config);
+
+        // Make a backup copy of the original config
+        File configFile = new File(_project.getDirectory(), "config.json");
+        configFile.renameTo(new File(_project.getDirectory(), "config.bak"));
+
+        // Save the new config
+        config.saveToFile(configFile, true);
+
+        _project.setGameConfig(config);
+
+        _main.setTitle(PROGRAM_NAME + ": " + config.getPageTitle());
+    }
+
+    private void processDatabaseAlterations(GameConfig config) throws SQLException {
         _project.applyChanges(config);
     }
 
