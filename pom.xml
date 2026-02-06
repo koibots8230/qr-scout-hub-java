@@ -573,6 +573,11 @@
         <id>jpackage-mac</id>
         <!-- Builds an "application" including a JRE and all application assets. -->
         <!-- mvn package -Pjpackage-mac -->
+        <activation>
+          <os>
+            <family>mac</family>
+          </os>
+        </activation>
         <build>
           <plugins>
             <!-- 0. Delete any application bundle if it already exists. -->
@@ -835,9 +840,14 @@
       </profile>
 
       <profile>
-        <id>jpackage-linux-app</id>
+        <id>jpackage-linux</id>
         <!-- Builds an "application" including a JRE and all application assets. -->
         <!-- mvn package -Pjpackage-linux-app -->
+        <activation>
+          <os>
+            <family>linux</family>
+          </os>
+        </activation>
         <build>
           <plugins>
             <!-- 0. Delete any application bundle if it already exists. -->
@@ -1062,6 +1072,11 @@
         <id>jpackage-win</id>
         <!-- Builds an "application" directory including a JRE and all application assets. -->
         <!-- mvn package -Pjpackage-win -->
+        <activation>
+          <os>
+            <family>windows</family>
+          </os>
+        </activation>
         <build>
           <plugins>
             <!-- 0. Delete any application bundle if it already exists. -->
