@@ -9,20 +9,36 @@ and Maven 3.6 or later installed to build.
 $ mvn package
 ```
 
-This builds a JAR file containing the application. The first time you run
-Maven on this project, it will likely download a **large** number of
-dependencies to your computer. This is because the JavaCV library includes
-a large number of supported platforms and architectures. We may be able to
-trim these down over time to only those platforms we choose to support.
+This should build a platform-specific (Mac, Windows, or Linux) application
+bundle in the <code>target/</code> directory. The first time you run Maven on
+this project, it will likely download a **large** number of dependencies to
+your computer. This is because the JavaCV library includes a large number of
+supported platforms and architectures. We may be able to trim these down over
+time to only those platforms we choose to support.
+
+# How to just build for development, local testing, etc.
+Maven really wants to build the full package, so you have to tell it NOT to
+do that. The exact syntax depends upon your platform:
+
+```
+$ mvn package "-P!jpackage-{mac|windows|linux}"
+```
+
+Once you've run that, you should have an executable JAR file in
+<code>target/</code>. That JAR file is a bit awkward to run since it only
+contains the main application classes and not all of the dependencies.
+
+We've included two scripts that can make this easier, but first you need to
+copy all of the dependencies into a convenient place:
 
 ```
 $ mvn dependency:copy-dependencies
 ```
 
-This will copy all dependencies into target/dependency.
+This will copy all dependencies into <code>target/dependency</code>.
 
 ```
-$ ./run.sh
+$ ./run.sh  (or run.bat on Windows)
 ```
 
 This will launch the QR Scout Hub application.
@@ -61,7 +77,7 @@ x86-64 or arm64 to arm64).
 On Linux, you can build an application directory using this command:
 
 ```
-$ mvn package -Pjpackage-linux-app
+$ mvn package -Pjpackage-linux
 ```
 
 This will create a directory `target/KoiBots QR Scout Hub` containing a binary
