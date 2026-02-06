@@ -900,7 +900,7 @@ public class Main {
                         platform = "control";
                     }
 
-                    accelerator.replace("platform", platform);
+                    accelerator = accelerator.replace("platform", platform);
                 }
 
                 putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(accelerator));
