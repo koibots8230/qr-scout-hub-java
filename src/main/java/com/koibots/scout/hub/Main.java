@@ -1712,6 +1712,8 @@ System.out.println("Saving preferences: " + toString(prefs));
         @Override
         public void actionPerformed(ActionEvent e) {
             quit();
+
+            System.exit(0);
         }
 
         @Override
