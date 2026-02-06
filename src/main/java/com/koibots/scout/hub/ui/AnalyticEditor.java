@@ -2,39 +2,34 @@ package com.koibots.scout.hub.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Window;
-import java.awt.event.ActionEvent;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
-import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import javax.swing.WindowConstants;
+import com.koibots.scout.hub.Analytic;
 
 /**
  * An editor dialog for an Analytic.
  */
 public class AnalyticEditor
-    extends JDialog
+    extends EditorDialog<Analytic>
 {
     private static final long serialVersionUID = -3120450351246782177L;
 
-    public AnalyticEditor(Window owner) {
-        super(owner);
+    public AnalyticEditor(Window owner, String title, Analytic analytic) {
+        super(owner, title, analytic);
 
-        setTitle("Editing Analytic");
+        initUI();
+        loadFromAnalytic(analytic);
+        pack();
+        setLocationRelativeTo(owner);
+    }
 
-        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        UIUtils.setupCloseBehavior(getRootPane(), new UIUtils.StandardWindowClosingAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-               _confirmed = true;
-
-               super.actionPerformed(e);
-            }
-        });
+    private void initUI() {
+        setLayout(new BorderLayout(10, 10));
 
         setModal(true);
         _name = new JTextField(_analyticName);
@@ -60,71 +55,39 @@ public class AnalyticEditor
         panel.add(top, BorderLayout.NORTH);
         panel.add(center, BorderLayout.CENTER);
 
-        JPanel buttons = new JPanel();
-        JButton save = new JButton("Save");
-        save.addActionListener((e) -> {
-            closeEditor(true);
-        });
-
-        JButton cancel = new JButton("Cancel");
-        cancel.addActionListener((e) -> {
-            closeEditor(false);
-        });
-
-        buttons.add(save);
-        buttons.add(cancel);
-
-        panel.add(buttons, BorderLayout.SOUTH);
-
         add(panel, BorderLayout.CENTER);
-
-        pack();
-
-        setLocationRelativeTo(owner);
+        add(createButtonPanel(new JButton("Save")), BorderLayout.SOUTH);
     }
 
+    private void loadFromAnalytic(Analytic analytic) {
+        if(null == analytic.getName()) {
+            _name.setText("New Analytic");
+        } else {
+            _name.setText(analytic.getName().trim());
+        }
+        if(null == analytic.getQuery()) {
+            _query.setText("SELECT 1");
+        } else {
+            _query.setText(analytic.getQuery().trim());
+        }
+    }
     private String _analyticName;
     private String _analyticQuery;
-
-    private boolean _confirmed = false;
 
     private JTextField _name;
     private JTextArea _query;
 
-    public String getAnalyticName() {
-        return _analyticName;
-    }
-
-    public void setAnalyticName(String name) {
-        _analyticName = name;
-    }
-
-    public String getAnalyticQuery() {
-        return _analyticQuery;
-    }
-
-    public void setAnalyticQuery(String query) {
-        _analyticQuery = query;
-    }
-
-    private void closeEditor(boolean confirmed) {
-        _confirmed = confirmed;
-
-        if(confirmed) {
-            _analyticName = _name.getText();
-            _analyticQuery = _query.getText();
-        }
-
-        dispose();
-    }
-
-    public boolean isConfirmed() {
-        return _confirmed;
+    @Override
+    protected void applyChanges(Analytic analytic) {
+        analytic.setFilename(getUserObject().getFilename());
+        analytic.setName(_name.getText().trim());
+        analytic.setQuery(_query.getText().trim());
     }
 
     public static void main(String[] args) throws Exception {
-        AnalyticEditor editor = new AnalyticEditor(null);
-        editor.setAnalyticName("Foo");
+        Analytic analytic = new Analytic();
+        analytic.setName("New Analytic");
+        AnalyticEditor editor = new AnalyticEditor(null, "New Analytic", analytic);
 
         editor.setVisible(true);
     }

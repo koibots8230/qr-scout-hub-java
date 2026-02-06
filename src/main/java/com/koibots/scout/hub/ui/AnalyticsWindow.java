@@ -56,18 +56,15 @@ public class AnalyticsWindow
         JPanel newPanel = new JPanel();
         JButton newButton = new JButton("New...");
         newButton.addActionListener((e) -> {
-            AnalyticEditor editor = new AnalyticEditor(this);
+            Analytic newAnalytic = new Analytic();
+            AnalyticEditor editor = new AnalyticEditor(this, "New Analytic", newAnalytic);
 
             // This call blocks the UI and waits here
             editor.setVisible(true);
 
             if(editor.isConfirmed()) {
-                Analytic newAnalytic = new Analytic();
-                newAnalytic.setName(editor.getAnalyticName());
-                newAnalytic.setQuery(editor.getAnalyticQuery());
-
                 try {
-                    _analyticUpdater.updateAnalytic(null, newAnalytic);
+                    _analyticUpdater.updateAnalytic(null, editor.getUserObject());
 
                     JPanel analyticPanel = createAnalyticPanel(newAnalytic, this);
                     contents.add(analyticPanel, contents.getComponentCount() - 1); // Insert before "New..."
@@ -179,23 +176,16 @@ public class AnalyticsWindow
         JButton editButton = new JButton("Edit");
 
         editButton.addActionListener((e) -> {
-            AnalyticEditor editor = new AnalyticEditor(this);
-            editor.setAnalyticName(analytic.getName());
-            editor.setAnalyticQuery(analytic.getQuery());
+            AnalyticEditor editor = new AnalyticEditor(this, analytic.getName(), analytic);
 
             // This call blocks the UI and waits here
             editor.setVisible(true);
 
             if(editor.isConfirmed()) {
-                Analytic newAnalytic = new Analytic();
-                newAnalytic.setName(editor.getAnalyticName());
-                newAnalytic.setQuery(editor.getAnalyticQuery());
-
                 try {
-                    _analyticUpdater.updateAnalytic(analytic, newAnalytic);
-                    analytic.setName(newAnalytic.getName());
-                    analytic.setQuery(newAnalytic.getQuery());
-                    analyticButton.setText(newAnalytic.getName());
+                    _analyticUpdater.updateAnalytic(analytic, editor.getUserObject());
+
+                    analyticButton.setText(editor.getUserObject().getName());
                 } catch (Throwable t) {
                     UIUtils.showError(t, this);
                 }
