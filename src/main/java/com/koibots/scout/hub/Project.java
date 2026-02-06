@@ -333,7 +333,7 @@ public class Project
         Collection<Field> fields = getGameConfig().getFields();
 
         if(values.length != fields.size()) {
-            throw new IllegalArgumentException("Code and game config size mismatch: " + fields.size() + " != " + values.length);
+            throw new IllegalArgumentException("QR code and game config size mismatch: " + values.length + " != " + fields.size());
         }
 
         HashMap<Field,String> data = new HashMap<Field,String>();
