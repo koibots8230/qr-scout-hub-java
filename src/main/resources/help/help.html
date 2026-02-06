@@ -2,17 +2,31 @@
 <head>
 <style>
 body {
-  font-family:sans;
+  font-family:sans-serif;
   margin:1em 1em;
+}
+ol {
+  list-style-type:upper-roman;
+}
+ol ol {
+  list-style-type:decimal;
 }
 </style>
 </head>
 <body>
 <h1>QR Scout Hub</h1>
 
-
 <ol>
   <li><a href="#introduction">Introduction</a></li>
+  <li>
+    <a href="#howto">How to use QR Scout Hub</a>
+    <ol>
+      <li><a href="#howto_building">Building a Game Configuration</a></li>
+      <li><a href="#howto_scouting">Scouting</a></li>
+      <li><a href="#howto_analytics">Building and running Analytics</a></li>
+    </ol>
+  </li>
+  <li><a href="#license">License</a></li>
   <li><a href="#credits">Credits and Acknowledgments</a>
 </ol>
 
@@ -31,7 +45,120 @@ body {
   QR Scout and its game configuration files.
 <p>
 
-<h2>License</h2>
+<h2 id="howto">How to use QR Scout Hub</h2>
+
+<p>
+  QR Scout Hub can be used for three major activities:
+</p>
+<ol>
+  <li>Building a Game Configuration from scratch</li>
+  <li>Collecting scouting data during a competition</li>
+  <li>Running analytics against the collected data</li>
+</ol>
+
+<h3 id="howto_building">Building a Game Configuration</h3>
+
+<p>
+  To build a new Game Configuration (or to import one you got from another
+  team), first create a new <b>Project</b> by selecting "New..." from the
+  <i>File</i> menu.
+</p>
+
+<p>
+  If you want to use an existing Game Configuration file, choose
+  "Import Config..." from the <i>Project</i>i> menu.
+</p>
+
+<p>
+  You can then review or modify the Game Configuration as necessary by choosing
+  "Edit Game..." from the <i>Project</i> menu.
+</p>
+
+<p>
+  Once your Game Configuration is looking good, you can test it locally by
+  choosing "Launch Web Application" from the <i>Project</i> menu. This will
+  let you preview the QR Scout that your scouting team will be using
+  (if you would like to use our QR Scout). Once you are happy with that,
+  choose "Export Web Application..." from the <i>Project</i> menu to export
+  the QR Scout as a web application in a ZIP file. You can upload and expand
+  this onto your web server for your scouts to use during a competition.
+</p>
+
+<h3 id="howto_scouting">Scouting</h3>
+<p>
+  During matches, have your scouts use the QR Scout web application to record
+  details of robots performances. After each match, each scout will generate a
+  QR code containing the match data for a single robot. Click the big "Scan"
+  button in the QR Scout Hub, then scan the QR code from the scouter's device.
+  You'll see a preview of the data from the match at the bottom of the screen
+  for confirmation. Then click the big "Import" button in the QR Scout Hub
+  to import the data into the hub's database.
+</p>
+
+<p>
+  You can view the whole database in two different ways if you'd like to take
+  a peek: choose "Export Database" from the <i>Database</i> menu to view the
+  data in CSV format, or choose "Edit Database..." from the <i>Database</i>
+  menu to open an editor that will let you <i>make changes to the data in the
+  database</i>. Be very careful with that second option: the changes you make
+  are final and cannot be undone.
+</p>
+
+<h3 id="howto_analyzing">Building and Running Analytics</h3>
+<p>
+  One of the most powerful features of QR Scout is the ability to perform
+  analytics on your scouting data right from within the QR Scout Hub
+  application. There is no need to export your data for use in a spreadsheet
+  or other analytics application (unless you really like those other analytics
+  capabilities).
+</p>
+
+<p>
+  Choose "Analytics..." from the <i>Database</i> menu to open the
+  <b>Analytics</b> manager. If this is the first time you've opened it, the
+  Analytics window will contain nothing other than a "New..." button.
+  Otherwise, it will list each of the Analytics you have defined for the
+  project. You can edit or run any of the Analytics and even keep those
+  individual windows open during the competition.
+</p>
+
+<p>
+  An Analytic is just a named SQL query for the database. To write a new
+  Analytic, click the "New..." button in the Analytics window, then enter a
+  name for your Analytic and a SQL query to run.
+</p>
+
+<p>
+  To write a SQL query, you will need to be familiar with SQL query syntax.
+  The database used for QR Scout Hub is Apache Derby. You can read their
+  reference documentation here:
+  <a href="https://db.apache.org/derby/docs/10.17/ref/index.html">https://db.apache.org/derby/docs/10.17/ref/index.html</a>.
+</p>
+
+<p>
+  There is only one table in the QR Scout Hub database, and its name is
+  <code>stand_scouting</code>. Each of the columns in the database will match
+  the <code>code</code> that you used for each scouting field. For example,
+  if you have a field with the title "Teleop Score" and code "T_score", then
+  you would use "<code>t_score</code>" in your SQL query. A simple Analytic
+  query might be (assuming you also have a <code>teamNumber</code> field,
+  which we highly recommend!):
+</p>
+<pre>
+SELECT teamNumber, SUM(T_score) AS total_score
+FROM stand_scouting
+GROUP BY teamNumber
+ORDER BY SUM(T_score) DESC
+</pre>
+<p>
+  This uses an aggregation function (<code>SUM</code>code>) to compute the
+  total "Teleop Score" for each team (due to the <code>GROUP BY</code> clause)
+  and then <code>ORDER BY</code> that same total Teleop Score putting the
+  highest team at the top. We would recommend that you use more nuanced
+  analytics than this example, but this should be enough to get you started.
+</p>
+
+<h2 id="license">License</h2>
 
 <p>
   This software is distributed under the terms of the MIT License.
