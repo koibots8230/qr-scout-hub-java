@@ -18,6 +18,7 @@ import java.awt.desktop.QuitHandler;
 import java.awt.desktop.QuitResponse;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -886,7 +887,24 @@ public class Main {
             putValue(Action.NAME, getString(bundleKeyPrefix + ".name"));
             putValue(Action.SHORT_DESCRIPTION, getString(bundleKeyPrefix + ".shortDescription"));
             putValue(Action.LONG_DESCRIPTION, getString(bundleKeyPrefix + ".longDescription"));
-            putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(getString(bundleKeyPrefix + ".accelerator")));
+            String accelerator = getString(bundleKeyPrefix + ".accelerator");
+            if(null != accelerator) {
+                // Use "platform" to mean "the commonly used control key on this platform"
+                if(accelerator.contains("platform")) {
+                    String platform;
+                    int mask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
+
+                    if (mask == InputEvent.META_DOWN_MASK) {
+                        platform = "meta";
+                    } else {
+                        platform = "control";
+                    }
+
+                    accelerator.replace("platform", platform);
+                }
+
+                putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(accelerator));
+            }
             putValue(Action.ACTION_COMMAND_KEY, getString(bundleKeyPrefix + ".actionCommand"));
             putValue(Action.SELECTED_KEY, Boolean.valueOf(getString(bundleKeyPrefix + ".selected")));
 
