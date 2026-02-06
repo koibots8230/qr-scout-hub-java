@@ -536,38 +536,6 @@
     -->
     <profiles>
       <profile>
-        <id>uber</id>
-        <!-- Will build an Uber-JAR: one JAR with *everything* -->
-        <!-- mvn package -Puber -->
-        <build>
-          <plugins>
-            <!-- Maven Shade Plugin -->
-            <plugin>
-              <groupId>org.apache.maven.plugins</groupId>
-              <artifactId>maven-shade-plugin</artifactId>
-              <version>3.5.0</version>
-              <executions>
-                <execution>
-                  <phase>package</phase>
-                  <goals>
-                    <goal>shade</goal>
-                  </goals>
-                  <configuration>
-                    <transformers>
-                      <!-- Set Main-Class in the manifest -->
-                      <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                        <mainClass>${main.class}</mainClass>
-                      </transformer>
-                    </transformers>
-                  </configuration>
-                </execution>
-              </executions>
-            </plugin>
-          </plugins>
-        </build>
-      </profile>
-
-      <profile>
         <id>jpackage-mac</id>
         <!-- Builds an "application" including a JRE and all application assets. -->
         <!-- mvn package -Pjpackage-mac -->
