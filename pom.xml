@@ -749,7 +749,7 @@
                 </execution>
                 <execution>
                   <id>generate-icns</id>
-                  <phase>generate-resources</phase>
+                  <phase>prepare-package</phase>
                   <goals><goal>exec</goal></goals>
                   <configuration>
                     <executable>bash</executable>
