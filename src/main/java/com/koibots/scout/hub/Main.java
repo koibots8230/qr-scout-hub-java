@@ -111,6 +111,7 @@ public class Main {
     private static final String PREFS_KEY_CAMERA_DEVICE_ID = "camera.device.id";
     private static final String PREFS_KEY_LAST_OPEN_PROJECT = "last.project.directory";
     private static final String PREFS_KEY_INSERT_IMMEDIATELY = "insert.immediately";
+    private static final String PREFS_KEY_RESCAN_IMMEDIATELY = "rescan.immediately";
 
     private static final Collection<String> IMAGE_URLs = Arrays.asList(new String[] {
             "/icons/koibots-logo-16x16.png",
@@ -188,6 +189,8 @@ public class Main {
     private ApplicationQuitHandler _quitHandler;
     private JCheckBoxMenuItem _importImmediatelyOption;
     private Action _importImmediatelyAction;
+    private JCheckBoxMenuItem _rescanImmediatelyOption;
+    private Action _rescanImmediatelyAction;
 
     /**
      * The number of camera failures since process start.
@@ -206,9 +209,22 @@ public class Main {
     private CodeScanner _scanner;
 
     /**
+     * The last code that was scanned. Storing this allows us to avoid
+     * scanning the same code multiple times.
+     */
+    private volatile String _lastScannedCode;
+
+    private final AtomicInteger _lastScannedCodeRepeatCount = new AtomicInteger();
+
+    /**
      * Whether or not to insert records immediately without asking.
      */
     private boolean _insertImmediately = true;
+
+    /**
+     * Whether or not to resume scanning immediately after importing.
+     */
+    private boolean _rescanImmediately = true;
 
     public void setInsertImmediately(boolean insertImmediately) {
         _insertImmediately = insertImmediately;
@@ -219,6 +235,17 @@ public class Main {
 
     public boolean getInsertImmediately() {
         return _insertImmediately;
+    }
+
+    public void setRescanImmediately(boolean rescanImmediately) {
+        _rescanImmediately = rescanImmediately;
+
+        _rescanImmediatelyOption.setSelected(rescanImmediately);
+        _rescanImmediatelyAction.putValue(Action.SELECTED_KEY, rescanImmediately);
+    }
+
+    public boolean getRescanImmediately() {
+        return _rescanImmediately;
     }
 
     /**
@@ -363,37 +390,7 @@ public class Main {
             @Override
             public void actionPerformed(ActionEvent e) {
                 new Thread(() -> {
-                    try {
-                        String code = _scanner.scanCode();
-
-                        if(null != code) {
-                            System.out.println("Got code: " + code);
-
-                            _recordText.setText(code);
-
-                            if(getInsertImmediately()) {
-                                insertRecord(code);
-                            }
-
-                            _importAction.setEnabled(true);
-                        } else {
-                            System.out.println("User cancelled code capture");
-                        }
-                    } catch (FrameGrabber.Exception fge) {
-                        if(cameraFailures.get() < 1) {
-                            SwingUtilities.invokeLater(() ->
-                                JOptionPane.showMessageDialog(_main,
-                                    getString("error.camera.failedToOpen.text"),
-                                    getString("error.camera.failedToOpen.title"),
-                                    JOptionPane.INFORMATION_MESSAGE)
-                            );
-                        } else {
-                            showError(fge);
-                        }
-                        cameraFailures.incrementAndGet();
-                    } catch (Throwable t) {
-                        showError(t);
-                    }
+                    scan();
                 }).start();
             }
         };
@@ -641,6 +638,16 @@ public class Main {
                 boolean selected = item.isSelected();
 
                 setInsertImmediately(selected);
+            }
+        };
+
+        _rescanImmediatelyAction = new ActionBase("action.rescanImmediately") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JCheckBoxMenuItem item = (JCheckBoxMenuItem) e.getSource();
+                boolean selected = item.isSelected();
+
+                setRescanImmediately(selected);
             }
         };
 
@@ -986,6 +993,7 @@ public class Main {
 
         menu = new JMenu(getString("menu.options.name"));
         menu.add(_importImmediatelyOption = new JCheckBoxMenuItem(_importImmediatelyAction));
+        menu.add(_rescanImmediatelyOption = new JCheckBoxMenuItem(_rescanImmediatelyAction));
         menubar.add(menu);
 
         menu = new JMenu(getString("menu.help.name"));
@@ -1190,6 +1198,42 @@ System.out.println("Loaded preferences: " + toString(prefs));
         }
 
         setInsertImmediately(prefs.getBoolean(PREFS_KEY_INSERT_IMMEDIATELY, false));
+        setRescanImmediately(prefs.getBoolean(PREFS_KEY_RESCAN_IMMEDIATELY, false));
+    }
+
+    private void scan() {
+        String code = null;
+        try {
+            code = _scanner.scanCode();
+
+            if(null != code) {
+                System.out.println("Got code: " + code);
+
+                _recordText.setText(code);
+
+                if(getInsertImmediately()) {
+                    insertRecord(code);
+                } else {
+                    SwingUtilities.invokeLater(() -> _importAction.setEnabled(true));
+                }
+            } else {
+                System.out.println("User cancelled code capture");
+            }
+        } catch (FrameGrabber.Exception fge) {
+            if(cameraFailures.get() < 1) {
+                SwingUtilities.invokeLater(() ->
+                    JOptionPane.showMessageDialog(_main,
+                        getString("error.camera.failedToOpen.text"),
+                        getString("error.camera.failedToOpen.title"),
+                        JOptionPane.INFORMATION_MESSAGE)
+                );
+            } else {
+                showError(fge);
+            }
+            cameraFailures.incrementAndGet();
+        } catch (Throwable t) {
+            showError(t);
+        }
     }
 
     private void exportQRScout(File file)
@@ -1304,6 +1348,8 @@ System.out.println("Loaded preferences: " + toString(prefs));
         }
 
         prefs.putBoolean(PREFS_KEY_INSERT_IMMEDIATELY, getInsertImmediately());
+        prefs.putBoolean(PREFS_KEY_RESCAN_IMMEDIATELY, getRescanImmediately());
+
 System.out.println("Saving preferences: " + toString(prefs));
         try {
             prefs.flush();
@@ -1469,15 +1515,68 @@ System.out.println("Saving preferences: " + toString(prefs));
     }
 
     private void insertRecord(String codeData) {
+        if(null == codeData) {
+            System.out.println("Ignoring empty code");
+            return;
+        }
+
+        if(codeData.equals(_lastScannedCode)) {
+            System.out.println("Ignoring duplicate code (" + _lastScannedCodeRepeatCount + ")");
+
+            int count = _lastScannedCodeRepeatCount.incrementAndGet();
+            if(count > 2) {
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(_main,
+                            "You've already scanned this code " + _lastScannedCodeRepeatCount + " times. It's time to move on.",
+                            "Duplicate Code Scanned",
+                            JOptionPane.WARNING_MESSAGE);
+
+                    if(getRescanImmediately()) {
+                        // Run this separately in its own thread.
+                        // This prevents infinite recursion which we might get
+                        // if we call scan() directly, which calls us back
+                        // and so on.
+                        System.out.println("Immediately re-scanning after shaming the user.");
+                        new Thread(this::scan).start();
+                    }
+                });
+            } else {
+                if(getRescanImmediately()) {
+                    // Run this separately in its own thread.
+                    // This prevents infinite recursion which we might get
+                    // if we call scan() directly, which calls us back
+                    // and so on.
+                    System.out.println("Immediately re-scanning after a duplicate");
+                    new Thread(this::scan).start();
+                }
+            }
+
+            return;
+        }
+
+        System.out.println("Zeroing-out last scanned code repeat count");
+        _lastScannedCodeRepeatCount.set(0);
+
         try {
             _project.insertRecord(codeData);
+            _lastScannedCode = codeData;
 
             int recordCount = _project.getRecordCount();
 
             SwingUtilities.invokeLater(() -> {
                 _recordText.setText("Import successful.");
                 _statusLine.setText("Record count: " + recordCount);
-                _importAction.setEnabled(false);
+
+                if(getRescanImmediately()) {
+                    // Run this separately in its own thread.
+                    // This prevents infinite recursion which we might get
+                    // if we call scan() directly, which calls us back
+                    // and so on.
+                    System.out.println("Immeditely re-scanning after successful import");
+                    new Thread(this::scan).start();
+                } else {
+                    _importAction.setEnabled(false);
+                }
             });
         } catch (Throwable t) {
             showError(t);
