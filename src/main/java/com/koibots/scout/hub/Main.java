@@ -852,8 +852,8 @@ public class Main {
         _cardLayout = new CardLayout();
         _cardPanel = new JPanel(_cardLayout);
 
-        _cardPanel.add(welcomePanel);
-        _cardPanel.add(workPanel);
+        _cardPanel.add(welcomePanel, "welcome");
+        _cardPanel.add(workPanel, "work");
 
         mainPanel.add(_cardPanel, BorderLayout.CENTER);
         mainPanel.add(_statusLine, BorderLayout.SOUTH);
@@ -1420,6 +1420,12 @@ System.out.println("Saving preferences: " + toString(prefs));
 
         // Whether just closing OR loading a project, there is no data to import
         _importAction.setEnabled(false);
+
+        if(loaded) {
+            _cardLayout.show(_cardPanel, "work");
+        } else {
+            _cardLayout.show(_cardPanel, "welcome");
+        }
     }
 
     private void loadProject(Project project) throws SQLException {
@@ -1430,8 +1436,6 @@ System.out.println("Saving preferences: " + toString(prefs));
 
         SwingUtilities.invokeLater(() -> {
             _main.setTitle(PROGRAM_NAME + ": " + projectName);
-
-            _cardLayout.next(_cardPanel);
 
             setProjectLoaded(true);
 
@@ -1445,8 +1449,6 @@ System.out.println("Saving preferences: " + toString(prefs));
     }
 
     private void closeProject() {
-        _cardLayout.first(_cardPanel);
-
         setProjectLoaded(false);
 
         _main.setTitle(PROGRAM_NAME);
