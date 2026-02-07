@@ -595,7 +595,6 @@
 
                       <!-- MacOS -->
                       <delete dir="${project.build.directory}/${project.name}.app"/>
-                      <delete file="${project.build.directory}/${project.name}.dmg"/>
 
                       <!-- Windows -->
                       <delete file="${project.build.directory}/${project.name}.exe"/>
@@ -865,7 +864,6 @@
 
                       <!-- MacOS -->
                       <delete dir="${project.build.directory}/${project.name}.app"/>
-                      <delete file="${project.build.directory}/${project.name}.dmg"/>
 
                       <!-- Windows -->
                       <delete file="${project.build.directory}/${project.name}.exe"/>
@@ -1094,7 +1092,6 @@
 
                       <!-- MacOS -->
                       <delete dir="${project.build.directory}/${project.name}.app"/>
-                      <delete file="${project.build.directory}/${project.name}.dmg"/>
 
                       <!-- Windows -->
                       <delete file="${project.build.directory}/${project.name}.exe"/>
