@@ -1256,34 +1256,6 @@
                     </arguments>
                   </configuration>
                 </execution>
-<!--
-                <execution>
-                  <id>generate-icns</id>
-                  <phase>generate-resources</phase>
-                  <goals><goal>exec</goal></goals>
-                  <configuration>
-                    <executable>bash</executable>
-                    <arguments>
-                      <argument>-c</argument>
-                      <argument>
-                          set -e &amp;&amp; \
-                          mkdir -p target/icons/myapp.iconset &amp;&amp; \
-                          sips -z 16 16 src/main/resources/icons/koibots-logo.png - -out target/icons/myapp.iconset/icon_16x16.png &amp;&amp; \
-                          sips -z 32 32 src/main/resources/icons/koibots-logo.png - -out target/icons/myapp.iconset/icon_16x16@2x.png &amp;&amp; \
-                          sips -z 32 32 src/main/resources/icons/koibots-logo.png - -out target/icons/myapp.iconset/icon_32x32.png &amp;&amp; \
-                          sips -z 64 64 src/main/resources/icons/koibots-logo.png - -out target/icons/myapp.iconset/icon_32x32@2x.png &amp;&amp; \
-                          sips -z 128 128 src/main/resources/icons/koibots-logo.png - -out target/icons/myapp.iconset/icon_128x128.png &amp;&amp; \
-                          sips -z 256 256 src/main/resources/icons/koibots-logo.png - -out target/icons/myapp.iconset/icon_128x128@2x.png &amp;&amp; \
-                          sips -z 256 256 src/main/resources/icons/koibots-logo.png - -out target/icons/myapp.iconset/icon_256x256.png &amp;&amp; \
-                          sips -z 512 512 src/main/resources/icons/koibots-logo.png - -out target/icons/myapp.iconset/icon_256x256@2x.png &amp;&amp; \
-                          sips -z 512 512 src/main/resources/icons/koibots-logo.png - -out target/icons/myapp.iconset/icon_512x512.png &amp;&amp; \
-                          sips -z 1024 1024 src/main/resources/icons/koibots-logo.png - -out target/icons/myapp.iconset/icon_512x512@2x.png &amp;&amp; \
-                          iconutil -c icns target/icons/myapp.iconset -o "target/icons/${project.build.finalName}.icns"
-                      </argument>
-                    </arguments>
-                  </configuration>
-                </execution>
--->
                 <execution>
                   <id>run-jpackage</id>
                   <phase>package</phase>
