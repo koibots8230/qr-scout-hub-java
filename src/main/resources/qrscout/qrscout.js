@@ -570,8 +570,8 @@ function assembleData() {
     } else if (tag === 'select') {
       let value = '';
       Array.from(field.options).forEach(option => {
-        if (value.length > 0) { value += ',' }
         if(option.selected) {
+          if (value.length > 0) { value += ',' }
           value = value + option.value;
         }
       });
