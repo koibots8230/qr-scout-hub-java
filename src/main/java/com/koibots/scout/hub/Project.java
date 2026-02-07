@@ -26,8 +26,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -974,12 +976,15 @@ public class Project
     public void updateAnalytic(Analytic oldAnalytic, Analytic newAnalytic)
         throws IOException
     {
+        boolean isNew;
         String filename;
         if(null == oldAnalytic || null == oldAnalytic.getFilename()) {
             // Need a new filename for this analytic
             filename = newAnalytic.getName() + ".json";
+            isNew = true;
         } else {
             filename = oldAnalytic.getFilename();
+            isNew = false;
         }
 
         File file = new File(getDirectory(), ANALYTICS_SUBDIRECTORY);
@@ -991,6 +996,14 @@ public class Project
         file = new File(file, filename);
 
         newAnalytic.saveToFile(file);
+
+        // Update the in-memory set of analytics
+        if(isNew) {
+            analytics.add(newAnalytic);
+        } else {
+            oldAnalytic.setName(newAnalytic.getName());
+            oldAnalytic.setQuery(newAnalytic.getQuery());
+        }
     }
 
     public void deleteAnalytic(Analytic analytic)
@@ -1002,6 +1015,14 @@ public class Project
             file = new File(file, filename);
 
             Files.delete(file.toPath());
+
+            // Update the in-memory set of analytics
+            for(Iterator<Analytic> i = analytics.iterator(); i.hasNext(); ) {
+                Analytic a = i.next();
+                if(Objects.equals(a.getFilename(), analytic.getFilename())) {
+                    i.remove();
+                }
+            }
         }
     }
 
