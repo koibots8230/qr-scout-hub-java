@@ -1,7 +1,10 @@
 package com.koibots.scout.hub.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.Window;
+import java.util.Collection;
+
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -9,6 +12,11 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.JTextPane;
+import javax.swing.SwingUtilities;
+
+import org.apache.commons.text.StringEscapeUtils;
+
 import com.koibots.scout.hub.Analytic;
 import com.koibots.scout.hub.utils.Queryable;
 
@@ -29,6 +37,7 @@ public class AnalyticEditor
 
         initUI();
         loadFromAnalytic(analytic);
+        setMinimumSize(new Dimension(300, 200));
         pack();
         setLocationRelativeTo(owner);
     }
@@ -60,8 +69,33 @@ public class AnalyticEditor
         panel.add(top, BorderLayout.NORTH);
         panel.add(center, BorderLayout.CENTER);
 
+        JTextPane helpText = new JTextPane();
+        helpText.setContentType("text/html");
+        StringBuilder help = new StringBuilder(
+        "<html><head><style>"
+                + "body { font-family:sans-serif }"
+                + "</style>"
+                + "<h3>Available Tables</h3>"
+                + "<ul><li><code>stand_scouting</code></li></ul>"
+                + "<h3>Available Fields</h3>"
+                + "<ul>");
+
+        Collection<String> fieldNames = _queryable.getQueryableFieldNames();
+        if(null != fieldNames) {
+            for(String fieldName : fieldNames) {
+                help.append("<li><code>").append(StringEscapeUtils.escapeHtml3(fieldName)).append("</code></li>");
+            }
+        }
+        help.append("</ul>");
+        helpText.setText(help.toString());
+        JScrollPane helpScroll = new JScrollPane(helpText);
+        helpScroll.setPreferredSize(new Dimension(200, 200));
+        panel.add(helpScroll, BorderLayout.EAST);
+
         add(panel, BorderLayout.CENTER);
         add(createButtonPanel(new JButton("Save")), BorderLayout.SOUTH);
+
+        SwingUtilities.invokeLater(() -> helpScroll.getVerticalScrollBar().setValue(0));
     }
 
     private void loadFromAnalytic(Analytic analytic) {
@@ -71,7 +105,7 @@ public class AnalyticEditor
             _name.setText(analytic.getName().trim());
         }
         if(null == analytic.getQuery()) {
-            _query.setText("SELECT 1");
+            _query.setText("SELECT 1 FROM stand_scouting");
         } else {
             _query.setText(analytic.getQuery().trim());
         }

@@ -538,6 +538,24 @@ public class Main {
                                 {
                                     _project.validateQuery(query);
                                 }
+
+                                @Override
+                                public Collection<String> getQueryableFieldNames() {
+                                    ArrayList<String> allFields = new ArrayList<String>();
+                                    allFields.add("ID");
+
+                                    Collection<Field> fields = _project.getGameConfig().getFields();
+                                    if(null != fields) {
+                                        // Add all field names
+                                        fields.stream().map(Field::getCode).collect(
+                                                () -> allFields,
+                                                ArrayList::add,
+                                                ArrayList::addAll
+                                                )
+                                        ;
+                                    }
+                                    return allFields;
+                                }
                             },
                             new AnalyticUpdater() {
 
