@@ -6,6 +6,7 @@ import java.awt.Component;
 import java.awt.Desktop;
 import java.awt.FileDialog;
 import java.awt.FlowLayout;
+import java.awt.Frame;
 import java.awt.Image;
 import java.awt.Taskbar;
 import java.awt.Toolkit;
@@ -25,6 +26,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -103,6 +105,7 @@ public class Main {
     private static final String PREFS_KEY_LAST_OPEN_PROJECT = "last.project.directory";
     private static final String PREFS_KEY_INSERT_IMMEDIATELY = "insert.immediately";
     private static final String PREFS_KEY_RESCAN_IMMEDIATELY = "rescan.immediately";
+    private static final String PREFS_KEY_USE_PLATFORM_FILE_DIALOGS = "file.use.platform.file.dialogs";
 
     private static final Collection<String> IMAGE_URLs = Arrays.asList(new String[] {
             "/icons/koibots-logo-16x16.png",
@@ -182,6 +185,8 @@ public class Main {
     private Action _importImmediatelyAction;
     private JCheckBoxMenuItem _rescanImmediatelyOption;
     private Action _rescanImmediatelyAction;
+    private JCheckBoxMenuItem _usePlatformFileDialogsOption;
+    private Action _usePlatformFileDialogsAction;
 
     /**
      * The number of camera failures since process start.
@@ -217,6 +222,8 @@ public class Main {
      */
     private boolean _rescanImmediately = true;
 
+    private boolean _usePlatformFileDialogs = false;
+
     public void setInsertImmediately(boolean insertImmediately) {
         _insertImmediately = insertImmediately;
 
@@ -237,6 +244,17 @@ public class Main {
 
     public boolean getRescanImmediately() {
         return _rescanImmediately;
+    }
+
+    public void setUsePlatformFileDialogs(boolean platformDialogs) {
+        _usePlatformFileDialogs = platformDialogs;
+
+        _usePlatformFileDialogsOption.setSelected(platformDialogs);
+        _usePlatformFileDialogsAction.putValue(Action.SELECTED_KEY, platformDialogs);
+    }
+
+    public boolean getUsePlatformFileDialogs() {
+        return _usePlatformFileDialogs;
     }
 
     /**
@@ -347,17 +365,24 @@ public class Main {
         _newAction = new ActionBase("action.new") {
             @Override
             public void actionPerformed(ActionEvent e) {
-                File projectDirectory = getNewFilename();
+                File selectedDirectory = showSaveFileDialog(_main, "New Project", null, JFileChooser.DIRECTORIES_ONLY);
 
-                if(null != projectDirectory) {
-                    try {
-                        System.out.println("Creating project in " + projectDirectory.getAbsolutePath());
+                if(null != selectedDirectory) {
+                    if (selectedDirectory.exists()) {
+                        JOptionPane.showMessageDialog(_main,
+                                "File already exists. Please choose a different name.",
+                                "File Exists",
+                                JOptionPane.WARNING_MESSAGE);
+                    } else {
+                        try {
+                            System.out.println("Creating project in " + selectedDirectory.getAbsolutePath());
 
-                        GameConfig emptyConfig = new GameConfig();
-                        emptyConfig.setPageTitle(getString("title.new-project"));
-                        loadProject(Project.createProject(projectDirectory, emptyConfig));
-                    } catch (Exception ex) {
-                        showError(ex);
+                            GameConfig emptyConfig = new GameConfig();
+                            emptyConfig.setPageTitle(getString("title.new-project"));
+                            loadProject(Project.createProject(selectedDirectory, emptyConfig));
+                        } catch (Throwable t) {
+                            showError(t);
+                        }
                     }
                 }
             }
@@ -366,7 +391,37 @@ public class Main {
         _openAction = new ActionBase("action.open") {
             @Override
             public void actionPerformed(ActionEvent e) {
-                openProjectJFileChooser();
+                File selectedFile = showOpenFileDialog(_main,
+                        "Open Project",
+                        JFileChooser.DIRECTORIES_ONLY,
+                        new FileFilter[] {
+                                new FileFilter() {
+                                    @Override
+                                    public boolean accept(File f) {
+                                        return f.isDirectory();
+                                    }
+
+                                    @Override
+                                    public String getDescription() {
+                                        return "Project Directory";
+                                    }
+                                }
+                        });
+
+                if(null != selectedFile) {
+                    if(selectedFile.isDirectory()) {
+                        try {
+                            openProject(selectedFile);
+                        } catch (Throwable t) {
+                            showError(t);
+                        }
+                    } else {
+                        JOptionPane.showMessageDialog(_main,
+                                "You must select a project directory to open.",
+                                "Invalid Project",
+                                JOptionPane.ERROR_MESSAGE);
+                    }
+                }
             }
         };
 
@@ -419,23 +474,17 @@ public class Main {
         _exportAction = new ActionBase("action.export") {
             @Override
             public void actionPerformed(ActionEvent e) {
-                FileDialog dialog = new FileDialog(_main, "Export CSV", FileDialog.SAVE);
+                File selectedFile = showSaveFileDialog(_main,
+                        "Export CSV",
+                        new File(getFileDialogDirectory(), _project.getGameConfig().getPageTitle() + ".csv"),
+                        JFileChooser.FILES_ONLY);
 
-                // Set default filename
-                dialog.setFile(_project.getGameConfig().getPageTitle() + ".csv");
-                dialog.setDirectory(getFileDialogDirectory().getAbsolutePath());
-                dialog.setVisible(true);
+                if (selectedFile != null) {
+                    setFileDialogDirectory(selectedFile.getParentFile());
 
-                String file = dialog.getFile();
-                String dir = dialog.getDirectory();
-
-                if (file != null) {
-                    File targetFile = new File(dir, file);
-
-                    setFileDialogDirectory(new File(dir));
                     new Thread(() -> {
                         try {
-                            exportDatabase(targetFile);
+                            exportDatabase(selectedFile);
                         } catch (Throwable t) {
                             showError(t);
                         }
@@ -447,28 +496,19 @@ public class Main {
         _generateWebApplicationAction = new ActionBase("action.makeWebApp") {
             @Override
             public void actionPerformed(ActionEvent e) {
-                FileDialog dialog = new FileDialog(_main, "Save As", FileDialog.SAVE);
+                File selectedFile = showSaveFileDialog(_main,
+                        "Save As",
+                        new File(getFileDialogDirectory(), _project.getGameConfig().getPageTitle() + ".zip"),
+                        JFileChooser.FILES_ONLY);
 
-                // restrict to .zip files
-                dialog.setFilenameFilter((dir, name) ->
-                    name.toLowerCase().endsWith(".zip")
-                );
-
-                // Set default filename
-                dialog.setFile("qrscout.zip");
-                dialog.setVisible(true);
-
-                String file = dialog.getFile();
-                String dir = dialog.getDirectory();
-
-                if (file != null) {
-                    File targetFile = new File(dir, file);
-
-                    try {
-                        exportQRScout(targetFile);
-                    } catch (Throwable t) {
-                        showError(t);
-                    }
+                if (null != selectedFile) {
+                    new Thread(() -> {
+                        try {
+                            exportQRScout(selectedFile);
+                        } catch (Throwable t) {
+                            showError(t);
+                        }
+                    }).start();
                 }
             }
         };
@@ -657,6 +697,16 @@ public class Main {
             }
         };
 
+        _usePlatformFileDialogsAction = new ActionBase("action.usePlatformFileDialogs") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JCheckBoxMenuItem item = (JCheckBoxMenuItem) e.getSource();
+                boolean selected = item.isSelected();
+
+                setUsePlatformFileDialogs(selected);
+            }
+        };
+
         _helpAction = new ActionBase("action.help") {
             private FileViewer helpFrame;
             @Override
@@ -693,30 +743,27 @@ public class Main {
                     return;
                 }
 
-                JFileChooser chooser = new JFileChooser();
-                chooser.setCurrentDirectory(getFileDialogDirectory());
-                chooser.setDialogTitle("Import Scouting Config");
-                chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-                chooser.setMultiSelectionEnabled(false);
+                File selectedFile = showOpenFileDialog(_main,
+                        "Import Game Config",
+                        JFileChooser.FILES_ONLY,
+                        new FileFilter[] {
+                                new FileFilter() {
+                                    @Override
+                                    public boolean accept(File f) {
+                                        return f.isFile() && f.getName().toLowerCase().endsWith(".json");
+                                    }
 
-                chooser.setFileFilter(new FileFilter() {
-                    @Override
-                    public boolean accept(File f) {
-                        return f.isFile() && f.getName().toLowerCase().endsWith(".json");
-                    }
+                                    @Override
+                                    public String getDescription() {
+                                        return "JSON Files";
+                                    }
 
-                    @Override
-                    public String getDescription() {
-                        return "JSON Files";
-                    }
-
+                                }
                 });
-                int result = chooser.showOpenDialog(_main);
-                if (result == JFileChooser.APPROVE_OPTION) {
-                    setFileDialogDirectory(chooser.getCurrentDirectory());
 
+                if (null != selectedFile) {
                     try {
-                        updateGameConfig(GameConfig.readFile(chooser.getSelectedFile()));
+                        updateGameConfig(GameConfig.readFile(selectedFile));
                     } catch (Exception ex) {
                         UIUtils.showError(ex, _main);
                     }
@@ -887,6 +934,126 @@ public class Main {
         _main.setVisible(true);
     }
 
+    private File showSaveFileDialog(Frame owner,
+                                    String title,
+                                    File sampleFile,
+                                    int fileSelectionMode)
+    {
+        File selectedFile = null;
+
+        if(getUsePlatformFileDialogs()) {
+            FileDialog dialog = new FileDialog(owner, title, FileDialog.SAVE);
+
+            // Set default filename
+            if(null != sampleFile) {
+                dialog.setFile(sampleFile.getName());
+            } else {
+                dialog.setDirectory(getFileDialogDirectory().getAbsolutePath());
+            }
+            dialog.setVisible(true);
+
+            String file = dialog.getFile();
+
+            if(null != file) {
+                selectedFile = new File(dialog.getDirectory(), file);
+            }
+        } else {
+            JFileChooser chooser = new JFileChooser(getFileDialogDirectory());
+            chooser.setDialogTitle(title);
+            chooser.setFileSelectionMode(fileSelectionMode);
+            if(null != sampleFile) {
+                chooser.setSelectedFile(sampleFile);
+            }
+
+            int result = chooser.showSaveDialog(owner);
+            if (result == JFileChooser.APPROVE_OPTION) {
+                selectedFile = chooser.getSelectedFile();
+            }
+        }
+
+        if(null != selectedFile) {
+            setFileDialogDirectory(selectedFile.getParentFile());
+        }
+
+        return selectedFile;
+    }
+
+    private File showOpenFileDialog(Frame owner,
+            String title,
+            int fileSelectionMode,
+            FileFilter[] fileFilters)
+    {
+        File selectedFile = null;
+
+        if(getUsePlatformFileDialogs()) {
+            if(0 == (fileSelectionMode & JFileChooser.DIRECTORIES_ONLY)) {
+                // Don't enable directory-selection
+                System.setProperty("apple.awt.fileDialogForDirectories", "false");
+            } else {
+                // Allow directories to be selected
+                System.setProperty("apple.awt.fileDialogForDirectories", "true");
+            }
+
+            FileDialog dialog = new FileDialog(owner, title, FileDialog.LOAD);
+            dialog.setDirectory(getFileDialogDirectory().getAbsolutePath());
+
+            if(null != fileFilters) {
+                dialog.setFilenameFilter(new FilenameFilter() {
+                    @Override
+                    public boolean accept(File dir, String name) {
+                        File file = new File(dir, name);
+
+                        for(FileFilter ff : fileFilters) {
+                            if(ff.accept(file)) {
+                                return true;
+                            }
+                        }
+
+                        return false;
+                    }
+                });
+            }
+
+            dialog.setVisible(true);
+
+            String file = dialog.getFile();
+
+            if(null != file) {
+                selectedFile = new File(dialog.getDirectory(), file);
+            }
+        } else {
+            JFileChooser chooser = new JFileChooser(getFileDialogDirectory());
+            chooser.setDialogTitle(title);
+            chooser.setFileSelectionMode(fileSelectionMode);
+
+            if(null != fileFilters) {
+                FileFilter firstFilter = null;
+
+                for(FileFilter ff : fileFilters) {
+                    if(null == firstFilter) {
+                        firstFilter = ff;
+                    } else {
+                        chooser.addChoosableFileFilter(ff);
+                    }
+                }
+                if(null != firstFilter) {
+                    chooser.setFileFilter(firstFilter);
+                }
+            }
+
+            int result = chooser.showOpenDialog(owner);
+
+            if (result == JFileChooser.APPROVE_OPTION) {
+                selectedFile = chooser.getSelectedFile();
+            }
+        }
+
+        if(null != selectedFile) {
+            setFileDialogDirectory(selectedFile.getParentFile());
+        }
+
+        return selectedFile;
+    }
     /**
      * A base class for Actions.
      *
@@ -1000,6 +1167,7 @@ public class Main {
         menu = new JMenu(getString("menu.options.name"));
         menu.add(_importImmediatelyOption = new JCheckBoxMenuItem(_importImmediatelyAction));
         menu.add(_rescanImmediatelyOption = new JCheckBoxMenuItem(_rescanImmediatelyAction));
+        menu.add(_usePlatformFileDialogsOption = new JCheckBoxMenuItem(_usePlatformFileDialogsAction));
         menubar.add(menu);
 
         menu = new JMenu(getString("menu.help.name"));
@@ -1205,6 +1373,7 @@ System.out.println("Loaded preferences: " + toString(prefs));
 
         setInsertImmediately(prefs.getBoolean(PREFS_KEY_INSERT_IMMEDIATELY, false));
         setRescanImmediately(prefs.getBoolean(PREFS_KEY_RESCAN_IMMEDIATELY, false));
+        setUsePlatformFileDialogs(prefs.getBoolean(PREFS_KEY_USE_PLATFORM_FILE_DIALOGS, false));
     }
 
     private void scan() {
@@ -1355,6 +1524,7 @@ System.out.println("Loaded preferences: " + toString(prefs));
 
         prefs.putBoolean(PREFS_KEY_INSERT_IMMEDIATELY, getInsertImmediately());
         prefs.putBoolean(PREFS_KEY_RESCAN_IMMEDIATELY, getRescanImmediately());
+        prefs.putBoolean(PREFS_KEY_USE_PLATFORM_FILE_DIALOGS, getUsePlatformFileDialogs());
 
 System.out.println("Saving preferences: " + toString(prefs));
         try {
@@ -1385,55 +1555,6 @@ System.out.println("Saving preferences: " + toString(prefs));
         if(null != button.getIcon()) {
             button.setHorizontalTextPosition(SwingConstants.CENTER);
             button.setVerticalTextPosition(SwingConstants.BOTTOM);
-        }
-    }
-
-    private File getNewFilename() {
-        JFileChooser chooser = new JFileChooser();
-        chooser.setCurrentDirectory(getFileDialogDirectory());
-
-        chooser.setDialogTitle("New Project");
-        chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        chooser.setApproveButtonText("Create");
-        chooser.setMultiSelectionEnabled(false);
-
-        while (true) {
-            int result = chooser.showSaveDialog(_main);
-            if (result != JFileChooser.APPROVE_OPTION) {
-                return null;
-            }
-
-            File selectedFile = chooser.getSelectedFile();
-            if (selectedFile.exists()) {
-                JOptionPane.showMessageDialog(_main,
-                        "File already exists. Please choose a different name.",
-                        "File Exists",
-                        JOptionPane.WARNING_MESSAGE);
-            } else {
-                setFileDialogDirectory(chooser.getCurrentDirectory());
-
-                return selectedFile;
-            }
-        }
-    }
-
-    private void openProjectJFileChooser() {
-        JFileChooser chooser = new JFileChooser();
-
-        chooser.setCurrentDirectory(getFileDialogDirectory());
-        chooser.setMultiSelectionEnabled(false);
-        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-
-        int status = chooser.showOpenDialog(_main);
-
-        if(JFileChooser.APPROVE_OPTION == status) {
-            setFileDialogDirectory(chooser.getCurrentDirectory());
-
-            try {
-                openProject(chooser.getSelectedFile());
-            } catch (Throwable t) {
-                showError(t);
-            }
         }
     }
 
