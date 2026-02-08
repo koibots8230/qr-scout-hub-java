@@ -556,9 +556,9 @@ public class Main {
                     });
 
                     _analyticsWindow.setVisible(true);
-                    _analyticsWindow.toFront();
-                    _analyticsWindow.requestFocus();
                 }
+                _analyticsWindow.toFront();
+                _analyticsWindow.requestFocus();
             }
         };
 
