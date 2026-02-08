@@ -601,30 +601,36 @@ public class Project
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
-               ResultSetMetaData rsmd = rs.getMetaData();
+            conn.setReadOnly(true);
 
-               ArrayList<Object[]> rows = new ArrayList<>();
+            ArrayList<Object[]> rows = new ArrayList<>();
 
-               final int columnCount = rsmd.getColumnCount();
-               Object[] headers = new String[columnCount];
+            try {
+                ResultSetMetaData rsmd = rs.getMetaData();
 
-               for(int i=0; i<columnCount; ) {
-                   headers[i] = rsmd.getColumnLabel(++i);
-               }
+                final int columnCount = rsmd.getColumnCount();
+                Object[] headers = new String[columnCount];
 
-               rows.add(headers);
+                for(int i=0; i<columnCount; ) {
+                    headers[i] = rsmd.getColumnLabel(++i);
+                }
 
-               while(rs.next()) {
-                   Object[] data = new Object[columnCount];
+                rows.add(headers);
 
-                   for(int i=0; i < rsmd.getColumnCount(); ) {
-                       data[i] = rs.getObject(++i);
-                   }
+                while(rs.next()) {
+                    Object[] data = new Object[columnCount];
 
-                   rows.add(data);
-               }
+                    for(int i=0; i < rsmd.getColumnCount(); ) {
+                        data[i] = rs.getObject(++i);
+                    }
 
-               return rows;
+                    rows.add(data);
+                }
+            } finally {
+                conn.setReadOnly(false);
+            }
+
+            return rows;
         }
     }
 
