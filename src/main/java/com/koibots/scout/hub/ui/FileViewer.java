@@ -99,6 +99,8 @@ public class FileViewer
 
         if(null == element) {
             System.out.println("No target element found for anchor: " + ref);
+
+            return;
         }
 
         // This is the target's offset in the text
