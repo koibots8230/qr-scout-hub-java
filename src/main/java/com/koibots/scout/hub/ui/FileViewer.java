@@ -1,6 +1,7 @@
 package com.koibots.scout.hub.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Window;
@@ -14,6 +15,7 @@ import javax.swing.JTextPane;
 import javax.swing.JViewport;
 import javax.swing.KeyStroke;
 import javax.swing.WindowConstants;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.text.BadLocationException;
@@ -51,7 +53,8 @@ public class FileViewer
         _html.setCaretPosition(0);
         _html.setCaretColor(_html.getBackground());
         _html.setContentType(contentType);
-
+        int marginSize = 10;
+        _html.setBorder(new EmptyBorder(marginSize, marginSize, marginSize, marginSize));
         _scroller = new JScrollPane(_html);
 
         _html.addHyperlinkListener(this);
@@ -67,6 +70,7 @@ public class FileViewer
         pack();
 
         setSize(800, 600);
+        setMinimumSize(new Dimension(300, 200));
 
         setVisible(true);
         requestFocus();
