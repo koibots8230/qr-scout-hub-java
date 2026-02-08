@@ -6,4 +6,6 @@ import java.util.List;
 
 public interface Queryable {
     public List<Object[]> query(String query) throws IOException, SQLException;
+
+    public void validateQuery(String query) throws IOException, SQLException;
 }

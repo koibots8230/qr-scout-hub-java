@@ -58,7 +58,7 @@ public class AnalyticsWindow
         JButton newButton = new JButton("New...");
         newButton.addActionListener((e) -> {
             Analytic newAnalytic = new Analytic();
-            AnalyticEditor editor = new AnalyticEditor(this, "New Analytic", newAnalytic);
+            AnalyticEditor editor = new AnalyticEditor(this, "New Analytic", newAnalytic, _queryable);
 
             // This call blocks the UI and waits here
             editor.setVisible(true);
@@ -177,7 +177,7 @@ public class AnalyticsWindow
         JButton editButton = new JButton("Edit");
 
         editButton.addActionListener((e) -> {
-            AnalyticEditor editor = new AnalyticEditor(this, analytic.getName(), analytic);
+            AnalyticEditor editor = new AnalyticEditor(this, analytic.getName(), analytic, _queryable);
 
             // This call blocks the UI and waits here
             editor.setVisible(true);

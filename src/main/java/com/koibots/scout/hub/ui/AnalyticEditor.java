@@ -10,6 +10,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import com.koibots.scout.hub.Analytic;
+import com.koibots.scout.hub.utils.Queryable;
 
 /**
  * An editor dialog for an Analytic.
@@ -19,8 +20,12 @@ public class AnalyticEditor
 {
     private static final long serialVersionUID = -3120450351246782177L;
 
-    public AnalyticEditor(Window owner, String title, Analytic analytic) {
+    private Queryable _queryable;
+
+    public AnalyticEditor(Window owner, String title, Analytic analytic, Queryable queryable) {
         super(owner, title, analytic);
+
+        _queryable = queryable;
 
         initUI();
         loadFromAnalytic(analytic);
@@ -93,6 +98,16 @@ public class AnalyticEditor
             return false;
         }
 
+        if(null != _queryable) {
+            try {
+                _queryable.validateQuery(_query.getText());
+            } catch (Throwable t) {
+                showValidationError(t.getMessage());
+
+                return false;
+            }
+        }
+
         return true;
     }
 
@@ -106,7 +121,7 @@ public class AnalyticEditor
     public static void main(String[] args) throws Exception {
         Analytic analytic = new Analytic();
         analytic.setName("New Analytic");
-        AnalyticEditor editor = new AnalyticEditor(null, "New Analytic", analytic);
+        AnalyticEditor editor = new AnalyticEditor(null, "New Analytic", analytic, null);
 
         editor.setVisible(true);
     }

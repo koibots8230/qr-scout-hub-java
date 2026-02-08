@@ -46,6 +46,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -90,6 +91,7 @@ import com.koibots.scout.hub.ui.FileViewer;
 import com.koibots.scout.hub.ui.GameConfigEditorDialog;
 import com.koibots.scout.hub.ui.UIUtils;
 import com.koibots.scout.hub.utils.AnalyticUpdater;
+import com.koibots.scout.hub.utils.Queryable;
 
 //
 // Project directory structure:
@@ -525,7 +527,18 @@ public class Main {
                     _analyticsWindow = new AnalyticsWindow(_main,
                             _project.getAnalytics(),
                             _analyticWindows,
-                            (s) -> _project.queryDatabase(s),
+                            new Queryable() {
+                                @Override
+                                public List<Object[]> query(String query) throws IOException, SQLException
+                                {
+                                    return _project.queryDatabase(query);
+                                }
+                                @Override
+                                public void validateQuery(String query) throws IOException, SQLException
+                                {
+                                    _project.validateQuery(query);
+                                }
+                            },
                             new AnalyticUpdater() {
 
                                 @Override

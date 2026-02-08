@@ -592,6 +592,24 @@ public class Project
         return "Project { dir=" + getDirectory() + ", game=" + getGameConfig().getPageTitle() + " }";
     }
 
+    public void validateQuery(String sql)
+        throws IOException, SQLException
+    {
+        try (Connection conn = DriverManager.getConnection(getDatabaseURL());
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            conn.setReadOnly(true);
+            ps.setMaxRows(0);
+
+            try {
+                ps.executeQuery();
+            } finally {
+                conn.setReadOnly(false);
+            }
+        }
+
+    }
+
     public List<Object[]> queryDatabase(String sql)
         throws IOException, SQLException
     {
@@ -601,9 +619,9 @@ public class Project
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
-            conn.setReadOnly(true);
-
             ArrayList<Object[]> rows = new ArrayList<>();
+
+            conn.setReadOnly(true);
 
             try {
                 ResultSetMetaData rsmd = rs.getMetaData();
