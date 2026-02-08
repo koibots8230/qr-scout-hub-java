@@ -19,16 +19,15 @@ import java.awt.desktop.QuitResponse;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.StringWriter;
 import java.io.UncheckedIOException;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -54,17 +53,13 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import javax.swing.Action;
-import javax.swing.ActionMap;
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
-import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JComponent;
-import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -73,15 +68,12 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
 import javax.swing.JTextPane;
 import javax.swing.KeyStroke;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
-import javax.swing.WindowConstants;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.filechooser.FileFilter;
@@ -94,7 +86,6 @@ import com.koibots.scout.hub.ui.DatabaseEditor;
 import com.koibots.scout.hub.ui.FileViewer;
 import com.koibots.scout.hub.ui.GameConfigEditorDialog;
 import com.koibots.scout.hub.ui.UIUtils;
-import com.koibots.scout.hub.ui.WindowCloser;
 import com.koibots.scout.hub.utils.AnalyticUpdater;
 
 //
@@ -428,13 +419,28 @@ public class Main {
         _exportAction = new ActionBase("action.export") {
             @Override
             public void actionPerformed(ActionEvent e) {
-                new Thread(() -> {
-                    try {
-                        exportDatabase();
-                    } catch (Throwable t) {
-                        showError(t);
-                    }
-                }).start();
+                FileDialog dialog = new FileDialog(_main, "Export CSV", FileDialog.SAVE);
+
+                // Set default filename
+                dialog.setFile(_project.getGameConfig().getPageTitle() + ".csv");
+                dialog.setDirectory(getFileDialogDirectory().getAbsolutePath());
+                dialog.setVisible(true);
+
+                String file = dialog.getFile();
+                String dir = dialog.getDirectory();
+
+                if (file != null) {
+                    File targetFile = new File(dir, file);
+
+                    setFileDialogDirectory(new File(dir));
+                    new Thread(() -> {
+                        try {
+                            exportDatabase(targetFile);
+                        } catch (Throwable t) {
+                            showError(t);
+                        }
+                    }).start();
+                }
             }
         };
 
@@ -1583,51 +1589,15 @@ System.out.println("Saving preferences: " + toString(prefs));
         }
     }
 
-    private void exportDatabase() throws IOException, SQLException {
-        String dataString = null;
-        try (StringWriter out = new StringWriter()) {
+    private void exportDatabase(File targetFile) throws IOException, SQLException {
+        try (FileWriter out = new FileWriter(targetFile)) {
             _project.exportDatabase(out);
 
-            dataString = out.toString();
+            SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(_main,
+                    "Exported database to " + targetFile,
+                    "Data Exported",
+                    JOptionPane.INFORMATION_MESSAGE));
         }
-
-        JTextArea text = new JTextArea(dataString);
-        JDialog dialog = new JDialog(_main, "Export Scouting Data");
-        dialog.setModal(true);
-        JScrollPane scroller = new JScrollPane(text);
-        scroller.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        dialog.getContentPane().add(scroller, BorderLayout.CENTER);
-        JButton closeButton = new JButton("Close");
-        WindowCloser closer = new WindowCloser() {
-            @Override
-            public void handleClose() {
-                dialog.setVisible(false);
-                dialog.dispose();
-            }
-        };
-        closeButton.addActionListener(closer);
-        dialog.getContentPane().add(closeButton, BorderLayout.SOUTH);
-
-        // Configure the dialog to close on X button, CTRL-W, or ESC
-        dialog.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-        dialog.addWindowListener(closer);
-        InputMap inputMap = dialog.getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
-        ActionMap actionMap = dialog.getRootPane().getActionMap();
-
-        int metaKey = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
-        inputMap.put(KeyStroke.getKeyStroke("ESCAPE"), "closeDialog");
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_W, metaKey), "closeDialog");
-        actionMap.put("closeDialog", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                closer.handleClose();
-            }
-        });
-        dialog.setSize(640, 480);
-
-        SwingUtilities.invokeLater(() -> {
-            dialog.setVisible(true);
-        });
     }
 
     private void showError(Throwable t) {
