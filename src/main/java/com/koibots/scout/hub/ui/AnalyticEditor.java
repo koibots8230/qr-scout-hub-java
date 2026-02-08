@@ -3,8 +3,10 @@ package com.koibots.scout.hub.ui;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Window;
+import java.awt.event.ActionEvent;
 import java.util.Collection;
 
+import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -13,7 +15,9 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JTextPane;
+import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
+import javax.swing.undo.UndoManager;
 
 import org.apache.commons.text.StringEscapeUtils;
 
@@ -52,6 +56,7 @@ public class AnalyticEditor
         _query.setColumns(50);
         _query.setLineWrap(true);
         _query.setWrapStyleWord(true);
+        addUndoCapability(_query);
 
         JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
@@ -96,6 +101,38 @@ public class AnalyticEditor
         add(createButtonPanel(new JButton("Save")), BorderLayout.SOUTH);
 
         SwingUtilities.invokeLater(() -> helpScroll.getVerticalScrollBar().setValue(0));
+    }
+
+    private static void addUndoCapability(JTextArea text) {
+        UndoManager undoManager = new UndoManager();
+        text.getDocument().addUndoableEditListener(e -> {
+            undoManager.addEdit(e.getEdit());
+        });
+
+        text.getInputMap().put(KeyStroke.getKeyStroke("control Z"), "Undo");
+        text.getInputMap().put(KeyStroke.getKeyStroke("meta Z"), "Undo"); // for Mac
+
+        text.getActionMap().put("Undo", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (undoManager.canUndo()) {
+                    undoManager.undo();
+                }
+            }
+        });
+
+        // Redo: CMD-Y / CTRL-Y
+        text.getInputMap().put(KeyStroke.getKeyStroke("control Y"), "Redo");
+        text.getInputMap().put(KeyStroke.getKeyStroke("meta Y"), "Redo"); // for Mac
+
+        text.getActionMap().put("Redo", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (undoManager.canRedo()) {
+                    undoManager.redo();
+                }
+            }
+        });
     }
 
     private void loadFromAnalytic(Analytic analytic) {
