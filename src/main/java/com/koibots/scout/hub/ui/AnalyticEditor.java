@@ -78,6 +78,25 @@ public class AnalyticEditor
     private JTextArea _query;
 
     @Override
+    protected boolean validateInput() {
+        // Name
+        if (_name.getText() == null || _name.getText().isBlank()) {
+            showValidationError("Name is required.");
+            _name.requestFocusInWindow();
+            return false;
+        }
+
+        // Query
+        if (_query.getText() == null || _query.getText().isBlank()) {
+            showValidationError("Query is required.");
+            _query.requestFocusInWindow();
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
     protected void applyChanges(Analytic analytic) {
         analytic.setFilename(getUserObject().getFilename());
         analytic.setName(_name.getText().trim());
