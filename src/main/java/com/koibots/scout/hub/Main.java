@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Component;
 import java.awt.Desktop;
+import java.awt.Dimension;
 import java.awt.FileDialog;
 import java.awt.FlowLayout;
 import java.awt.Frame;
@@ -922,6 +923,7 @@ public class Main {
 
         // Set up default action states
         _main.setSize(800, 600);
+        _main.setMinimumSize(new Dimension(300, 200));
 
         _scanner = new CodeScanner();
         _scanner.setParent(_main);

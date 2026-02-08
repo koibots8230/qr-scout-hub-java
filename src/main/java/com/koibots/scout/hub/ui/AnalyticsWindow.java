@@ -1,6 +1,7 @@
 package com.koibots.scout.hub.ui;
 
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Window;
 import java.util.List;
 
@@ -80,8 +81,8 @@ public class AnalyticsWindow
 
         setContentPane(contents);
 
+        setMinimumSize(new Dimension(300, 200));
         pack();
-
         setLocationRelativeTo(owner);
     }
 

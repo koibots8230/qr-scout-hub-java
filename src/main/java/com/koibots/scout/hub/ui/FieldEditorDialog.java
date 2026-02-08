@@ -56,6 +56,7 @@ public class FieldEditorDialog
 
         initUI();
         loadFromField(field);
+        setMinimumSize(new Dimension(300, 200));
         pack();
         setLocationRelativeTo(owner);
     }

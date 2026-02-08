@@ -46,7 +46,7 @@ public class SectionEditorDialog
 
         add(center, BorderLayout.CENTER);
         add(createButtonPanel(new JButton("Save")), BorderLayout.SOUTH);
-
+        setResizable(false);
         pack();
         setLocationRelativeTo(owner);
     }

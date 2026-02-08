@@ -2,6 +2,7 @@ package com.koibots.scout.hub.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -151,6 +152,7 @@ public class GameConfigEditorDialog
 
         add(south, BorderLayout.SOUTH);
 
+        setMinimumSize(new Dimension(300, 200));
         setSize(400, 500);
 
         setLocationRelativeTo(owner);

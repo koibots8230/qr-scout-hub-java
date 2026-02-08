@@ -67,10 +67,11 @@ public class FileViewer
 
         add(_scroller, BorderLayout.CENTER);
 
+        setMinimumSize(new Dimension(300, 200));
+
         pack();
 
         setSize(800, 600);
-        setMinimumSize(new Dimension(300, 200));
 
         setVisible(true);
         requestFocus();

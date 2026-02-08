@@ -1,6 +1,7 @@
 package com.koibots.scout.hub.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.Window;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -73,6 +74,7 @@ public class AnalyticWindow
         contents.add(buttons, BorderLayout.SOUTH);
 
         setContentPane(contents);
+        setMinimumSize(new Dimension(300, 200));
 
         pack();
     }
