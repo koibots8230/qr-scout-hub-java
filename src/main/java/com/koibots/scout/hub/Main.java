@@ -23,6 +23,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -32,6 +33,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -45,8 +48,10 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -59,6 +64,7 @@ import java.util.zip.ZipOutputStream;
 import javax.swing.Action;
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -72,6 +78,7 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JTextArea;
 import javax.swing.JTextPane;
 import javax.swing.KeyStroke;
 import javax.swing.SwingConstants;
@@ -83,6 +90,13 @@ import javax.swing.event.TableModelListener;
 import javax.swing.filechooser.FileFilter;
 import org.bytedeco.javacv.FrameGrabber;
 
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.EncodeHintType;
+import com.google.zxing.WriterException;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
+import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import com.koibots.scout.hub.ui.AnalyticWindow;
 import com.koibots.scout.hub.ui.AnalyticsWindow;
 import com.koibots.scout.hub.ui.CodeScanner;
@@ -458,7 +472,55 @@ public class Main {
 
                     URI uri = new URI("http://localhost:" + webServer.getPort() + "/");
 
-                    Desktop.getDesktop().browse(uri);
+                    String urlString = uri.toString().replace("localhost", getLocalIPAddress());
+                    JPanel panel = new JPanel();
+                    ImageIcon qr = generateQRImageIcon(urlString, 200, 200);
+                    panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS)); // Stack components vertically
+
+                 // Info text
+                    JTextArea infoText = new JTextArea(
+                            "The web server is running at " + urlString +
+                            ". You may be able to scan this QR code on your phone to load it, if you are on the same network and there are no firewalls, etc. stopping you."
+                    );
+                    infoText.setLineWrap(true);
+                    infoText.setWrapStyleWord(true);
+                    infoText.setEditable(false);
+                    infoText.setFocusable(false);
+                    infoText.setOpaque(false);
+                    infoText.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+
+                    int maxWidth = 400; // desired maximum width in pixels
+                    infoText.setSize(maxWidth, Short.MAX_VALUE); // temporarily allow huge height
+                    Dimension pref = infoText.getPreferredSize(); // now pref.height matches text
+                    infoText.setMaximumSize(new Dimension(maxWidth, pref.height));
+                    infoText.setPreferredSize(new Dimension(maxWidth, pref.height));
+
+                    panel.add(infoText);
+
+                    panel.add(Box.createVerticalStrut(10));
+
+                    // QR code
+                    JLabel qrLabel = new JLabel(qr);
+                    qrLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+                    qrLabel.setMaximumSize(qrLabel.getPreferredSize());  // prevent extra vertical space
+                    panel.add(qrLabel);
+
+                    panel.add(Box.createVerticalStrut(10));
+
+                    JLabel questionLabel = new JLabel("Would you like to launch QR Scout in your web browser?");
+                    questionLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+                    panel.add(questionLabel);
+
+                    int result = JOptionPane.showConfirmDialog(_main,
+                            panel,
+                            "Web Server Started",
+                            JOptionPane.YES_NO_OPTION,
+                            JOptionPane.INFORMATION_MESSAGE);
+
+                    if(JOptionPane.YES_OPTION == result) {
+                        Desktop.getDesktop().browse(uri);
+                    }
                 } catch (Throwable t) {
                     showError(t);
                 }
@@ -1898,6 +1960,42 @@ System.out.println("Saving preferences: " + toString(prefs));
 
     private void processDatabaseAlterations(GameConfig config) throws SQLException {
         _project.applyChanges(config);
+    }
+
+    private ImageIcon generateQRImageIcon(String s, int width, int height)
+        throws WriterException
+    {
+        QRCodeWriter qrCodeWriter = new QRCodeWriter();
+
+        Map<EncodeHintType, Object> hints = new HashMap<>();
+        hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.L);
+        hints.put(EncodeHintType.MARGIN, 1);
+
+        // Encode the text into a QR code BitMatrix
+        BitMatrix bitMatrix = qrCodeWriter.encode(
+                s,
+                BarcodeFormat.QR_CODE,
+                width,
+                height,
+                hints
+        );
+
+        // Convert BitMatrix to BufferedImage
+        BufferedImage bufferedImage = MatrixToImageWriter.toBufferedImage(bitMatrix);
+
+        // Convert BufferedImage to ImageIcon (for Swing)
+        return new ImageIcon(bufferedImage);
+    }
+
+    private static String getLocalIPAddress() throws IOException {
+        return getPrimaryLocalAddress().getHostAddress();
+    }
+
+    private static InetAddress getPrimaryLocalAddress() throws IOException {
+        try (DatagramSocket socket = new DatagramSocket()) {
+            socket.connect(InetAddress.getByName("192.168.0.1"), 10002);
+            return socket.getLocalAddress();
+        }
     }
 
     public static String getFileContents(URL url) {
