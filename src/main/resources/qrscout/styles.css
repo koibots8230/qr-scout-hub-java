@@ -128,6 +128,7 @@ select {
 
 .field input, .field select {
   margin:.5rem;
+  font-size:calc(var(--font-size-some-text) - .5rem);
 }
 .field input[type != 'checkbox'] {
   width:12rem;
