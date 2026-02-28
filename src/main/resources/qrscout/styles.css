@@ -104,6 +104,7 @@ select {
   background-color:transparent;
   color:var(--text-color);
   border:none;
+  font-size:calc(var(--font-size-some-text) - .5rem);
 }
 
 #sections {
@@ -128,7 +129,6 @@ select {
 
 .field input, .field select {
   margin:.5rem;
-  font-size:calc(var(--font-size-some-text) - .5rem);
 }
 .field input[type != 'checkbox'] {
   width:12rem;
@@ -321,5 +321,9 @@ button:hover {
 
   .field input[type='checkbox'] {
     zoom:200%;
+  }
+
+  .field select {
+    font-size:inherit; /* don't get huge on mobile */
   }
 }
