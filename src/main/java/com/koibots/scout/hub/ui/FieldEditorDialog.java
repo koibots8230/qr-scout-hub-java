@@ -8,7 +8,6 @@ import com.koibots.scout.hub.Field;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -267,13 +266,9 @@ public class FieldEditorDialog
         field.setStep(parseInt(stepField.getText()));
         field.setOutputType((String) outputTypeCombo.getSelectedItem());
         Map<String,String> choices = choicesModel.getChoices();
+        // Remove any empty choices
         if(null != choices) {
-            // Remove any empty choices
-            for(Iterator<Map.Entry<String,String>> i = choices.entrySet().iterator(); i.hasNext(); ) {
-                if(isEmpty(i.next())) {
-                    i.remove();
-                }
-            }
+            choices.entrySet().removeIf(e -> isEmpty(e));
         }
         field.setChoices(choices);
     }
