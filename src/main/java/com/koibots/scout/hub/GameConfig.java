@@ -14,7 +14,6 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
 import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
@@ -249,6 +248,13 @@ public class GameConfig {
                             // Use LinkedHashMap to keep these options IN ORDER
                             @SuppressWarnings("unchecked")
                             LinkedHashMap<String,String> choices = new LinkedHashMap<>((Map<String,String>)o);
+
+                            // Remove any empty options
+                            choices.entrySet().removeIf(e ->
+                                (e.getKey() == null || e.getKey().isEmpty()) &&
+                                (e.getValue() == null || e.getValue().isEmpty())
+                            );
+
                             f.setChoices(choices);
                         }
 
