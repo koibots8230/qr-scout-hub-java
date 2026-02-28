@@ -419,8 +419,10 @@ function makeCounterField(field) {
 function makeSelectField(field) {
   let items = [];
 
-  if(field.type === 'select') {
-    items.push(makeElement('option', { 'value' : '' }));
+  if(!field.required) {
+    items.push(makeElement('option',
+		{ 'value' : '' },
+		document.createTextNode('Choose')));
   }
 
   // field.choices is an object of choice:name
@@ -440,7 +442,7 @@ function makeSelectField(field) {
 
   let attrs = {
     'id' : 'field_' + field.code,
-    'name' : field.code,
+    'name' : field.code
   };
 
   if(field.type == 'multi-select') {
