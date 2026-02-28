@@ -484,8 +484,13 @@ public class Project
             Collection<Field> fields = getGameConfig().getFields();
 
             int index = 0; // JDBC uses 1-based addressing; we start at 0 and pre-increment
-            int i = 1; // Skip the "id" field
+            int i = 2; // Skip the "id" and "deleted" fields
+            // Handle the 'deleted' flag specially
+            ps.setBoolean(++index, Boolean.parseBoolean(record[1]));
+System.out.println("Binding parameter index=" + index + " for deleted value " + record[1]);
             for(Field field : fields) {
+System.out.println("Binding parameter index=" + (index+1) + ", i=" + i + " for field " + field.getCode() + " with value [[" + record[i] + "]]");
+
                 String datum;
                 if(null == record[i]) {
                     datum = null;
@@ -522,16 +527,16 @@ public class Project
     }
 
     private String getUpdateStatement() {
-        StringBuilder update = new StringBuilder("UPDATE stand_scouting SET ");
+        StringBuilder update = new StringBuilder("UPDATE stand_scouting SET deleted=?");
 
         Collection<Field> fields = getGameConfig().getFields();
 
-        boolean first = true;
         for(Field field : fields) {
-            if(first) { first = false; }
-            else { update.append(','); }
-
-            update.append('"').append(normalizeColumnName(field.getCode())).append("\"=?");
+            update
+            .append(',')
+            .append('"')
+            .append(normalizeColumnName(field.getCode()))
+            .append("\"=?");
         }
 
         update.append(" WHERE id=?");

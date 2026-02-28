@@ -757,28 +757,7 @@ public class Main {
                                         throw rte;
                                     } catch (Exception ex) {
                                         // Throw this back to the TableModel to deal with
-                                        throw new IllegalStateException("Table change veto");
-                                    }
-                                case TableModelEvent.DELETE:
-                                    int start = e.getFirstRow();
-                                    int end = e.getLastRow();
-
-                                    if(0 == start && Integer.MAX_VALUE == end) {
-                                        UIUtils.showError(new IllegalStateException("Refusing to delete the whole database. Please restart."), _main);
-                                    }
-
-                                    System.out.println("start=" + start + ", end=" + end + ", size=" + (end - start + 1));
-                                    // NOTE: end is inclusive, not exclusive
-                                    ArrayList<Integer> rowIds= new ArrayList<>(end - start + 1);
-                                    // NOTE: end is inclusive, not exclusive
-                                    for(int i=start; i<= end; ++i) {
-                                        rowIds.add(Integer.valueOf(de.getData(i)[0]));
-                                    }
-System.out.println("Deleting row ids: " + rowIds);
-                                    try {
-                                        _project.deleteRecords(rowIds);
-                                    } catch (Exception ex) {
-
+                                        throw new IllegalStateException("Table change veto", ex);
                                     }
                                 default:
                                     // Do nothing

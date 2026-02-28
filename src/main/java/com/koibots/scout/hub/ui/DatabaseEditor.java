@@ -14,7 +14,6 @@ import javax.swing.AbstractAction;
 import javax.swing.InputMap;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -100,19 +99,7 @@ public class DatabaseEditor
             table.getCellEditor().stopCellEditing();
         }
 
-        int result = JOptionPane.showConfirmDialog(
-            this,
-            "Delete " + selected.length + " selected record(s)?\nThis cannot be undone.",
-            "Confirm Delete",
-            JOptionPane.YES_NO_OPTION,
-            JOptionPane.WARNING_MESSAGE
-        );
-
-        if (result != JOptionPane.YES_OPTION) {
-            return;
-        }
-
-        tableModel.deleteRows(selected);
+        tableModel.toggleDeleted(selected);
     }
 
     private class DatabaseEditorTableModel
@@ -200,39 +187,38 @@ System.out.println("Updating row " + row + " column " + column + " with value " 
             }
         }
 
-        public void deleteRows(int[] rows) {
+        public void toggleDeleted(int[] rows) {
             if (rows == null || rows.length == 0) {
                 return;
             }
 
             Arrays.sort(rows);
-            // Delete from bottom up, grouping contiguous ranges
-            int start = rows[rows.length - 1];
-            int end = start;
 
-            for (int i = rows.length - 1; i >= 0; i--) {
+            int start = rows[0];
+            int end = rows[0];
+
+            for (int i = 0; i < rows.length; i++) {
                 int row = rows[i];
 
-                // Remove from underlying data (+1 because header is row 0)
-//                _data.remove(row + 1);
-System.out.println("'Deleting' row " + row + ", id=" + _data.get(row+1)[0]);
-                // NOTE: Row 0 is the header
-                _data.get(row + 1)[1] = "true";
+                String[] data = _data.get(row + 1);
+                boolean deleted = Boolean.parseBoolean(data[1]);
 
-                if (i > 0 && rows[i - 1] == row - 1) {
+                // Toggle deleted flag in the data
+                data[1] = Boolean.toString(!deleted);
+
+                if (i > 0 && rows[i] == rows[i - 1] + 1) {
                     // Still contiguous
-                    start = rows[i - 1];
+                    end = rows[i];
                 } else {
                     // End of contiguous block → fire event
                     // NOTE: Row 0 is the header
-                    fireTableRowsDeleted(start, end);
-
-                    if (i > 0) {
-                        start = rows[i - 1];
-                        end = start;
-                    }
+                    fireTableRowsUpdated(start, end);
+                    start = row;
+                    end = row;
                 }
             }
+
+            fireTableRowsUpdated(start, end);
         }
     }
 }
