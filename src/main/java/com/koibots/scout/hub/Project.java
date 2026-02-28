@@ -544,16 +544,16 @@ public class Project
         return update.toString();
     }
 
-    public void deleteRecords(Collection<Integer> rowIds) throws SQLException {
+    /**
+     * Purges all records marked for deletion.
+     *
+     * @throws SQLException If there is a problem deleting the records.
+     */
+    public void purgeDatabase() throws SQLException {
         try(Connection conn = DriverManager.getConnection(getDatabaseURL());
-            PreparedStatement ps = conn.prepareStatement("UPDATE stand_scouting SET deleted=TRUE WHERE id=?")) {
-            for(int rowId : rowIds) {
-                ps.setInt(1, rowId);
+            PreparedStatement ps = conn.prepareStatement("DELETE FROM stand_scouting WHERE deleted=TRUE")) {
 
-                ps.addBatch();
-            }
-
-            ps.executeBatch();
+            ps.executeUpdate();
         }
     }
 

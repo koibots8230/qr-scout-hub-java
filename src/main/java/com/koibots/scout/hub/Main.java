@@ -194,6 +194,7 @@ public class Main {
     private Action _launchWebappAction;
     private Action _editGameConfigAction;
     private Action _editDatabaseAction;
+    private Action _purgeDatabaseAction;
     private Action _helpAction;
     private Action _importGameConfigAction;
 
@@ -774,6 +775,24 @@ public class Main {
             }
         };
 
+        _purgeDatabaseAction = new ActionBase("action.purgeDatabase") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int option = JOptionPane.showConfirmDialog(_main,
+                        "You you sure you want to permanently DELETE all records marked for deletion?",
+                        "Confirm Purge",
+                        JOptionPane.YES_NO_OPTION);
+
+                if(JOptionPane.YES_OPTION == option) {
+                    try {
+                        _project.purgeDatabase();
+                    } catch (Throwable t) {
+                        UIUtils.showError(t, _main);
+                    }
+                }
+            }
+        };
+
         if(isMacOS) {
             // On MacOS, this will cause MacOS to add a "search" bar to the 'help' menu.
         }
@@ -1249,6 +1268,7 @@ public class Main {
         menu = new JMenu(getString("menu.database.name"));
         menu.add(new JMenuItem(_analyticsAction));
         menu.add(new JMenuItem(_editDatabaseAction));
+        menu.add(new JMenuItem(_purgeDatabaseAction));
         menu.add(new JMenuItem(_exportAction));
         menubar.add(menu);
 
