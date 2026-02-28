@@ -156,6 +156,16 @@ select {
   width:2rem;
 }
 
+.field input.range {
+  width:10rem;
+  margin-bottom:0;
+  cursor:grab;
+}
+
+.field div.range-label {
+  font-size:var(--font-size-some-text);
+}
+
 .lap-timer .display {
   margin:.5rem;
   font-size:var(--font-size-some-text);

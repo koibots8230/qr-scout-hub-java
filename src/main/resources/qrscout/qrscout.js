@@ -198,8 +198,11 @@ function createField(field) {
       break;
 
     case 'counter' :
+	    element = makeCounterField(field);
+	    break;
+
     case 'range' :
-      element = makeCounterField(field);
+      element = makeRangeField(field);
       break;
 
     case 'boolean' :
@@ -277,6 +280,64 @@ function makeNumberField(field) {
   }
 
   return number;
+}
+
+function makeRangeField(field) {
+  let items = [];
+
+  if(!field.hasOwnProperty('min') || '' == field.min) {
+    field.min = 0;
+  }
+  if(!field.hasOwnProperty('max') || '' == field.max) {
+    field.max = 999999;
+  }
+  if(!field.hasOwnProperty('defaultValue') || '' == field.defaultValue) {
+    field.defaultValue = field.min;
+  }
+
+console.log('range field ' + field.code + ' has default value ' + field.defaultValue);
+
+  if(!field.hasOwnProperty('step')) {
+	field.step = 1;
+  }
+
+  let attrs = {
+    'id' : 'field_' + field.code,
+	'type' : 'range',
+	'class' : 'range',
+	'readonly' : 'readonly',
+	'name' : field.code,
+	'value' : field.defaultValue,
+	'defaultValue' : field.defaultValue,
+	'min' : field.min,
+	'max' : field.max,
+	'step' : field.step
+  };
+  
+  let number = makeElement('input', attrs);
+
+  if(field.formResetBehavior == 'preserve') {
+    // Update the default value with each change
+    number.addEventListener('change', function() { this.defaultValue = this.value; });
+  }
+  
+  let label = makeElement('div',
+	                      { 'id' : 'label_' + field.code,
+							'class' : 'range-label' },
+    document.createTextNode(field.defaultValue)
+  );
+
+    // Keep label in sync
+  number.addEventListener("input", () => {
+    label.textContent = number.value;
+  });
+
+  items.push(makeElement('div', {}, number));
+  items.push(label);
+
+  return makeElement('div', {
+    'class' : 'range-wrapper'
+  }, items);
 }
 
 function makeCounterField(field) {
