@@ -749,9 +749,11 @@ public class Main {
                         public void tableChanged(TableModelEvent e) {
                             switch(e.getType()) {
                                 case TableModelEvent.UPDATE:
-                                    int row = e.getFirstRow();
                                     try {
-                                        _project.updateRecord(de.getData(row));
+                                        for(int row = e.getFirstRow(); row <= e.getLastRow(); ++row) {
+                                            _project.updateRecord(de.getData(row));
+                                        }
+                                        _statusLine.setText("Record count: " + _project.getRecordCount());
                                     } catch (RuntimeException rte) {
                                         // Throw this back to the TableModel to deal with
                                         throw rte;
