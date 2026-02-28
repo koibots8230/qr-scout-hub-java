@@ -487,9 +487,9 @@ public class Project
             int i = 2; // Skip the "id" and "deleted" fields
             // Handle the 'deleted' flag specially
             ps.setBoolean(++index, Boolean.parseBoolean(record[1]));
-System.out.println("Binding parameter index=" + index + " for deleted value " + record[1]);
+//System.out.println("Binding parameter index=" + index + " for deleted value " + record[1]);
             for(Field field : fields) {
-System.out.println("Binding parameter index=" + (index+1) + ", i=" + i + " for field " + field.getCode() + " with value [[" + record[i] + "]]");
+//System.out.println("Binding parameter index=" + (index+1) + ", i=" + i + " for field " + field.getCode() + " with value [[" + record[i] + "]]");
 
                 String datum;
                 if(null == record[i]) {
