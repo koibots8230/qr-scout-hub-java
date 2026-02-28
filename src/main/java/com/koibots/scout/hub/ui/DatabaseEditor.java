@@ -1,16 +1,25 @@
 package com.koibots.scout.hub.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Toolkit;
 import java.awt.Window;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
+import javax.swing.AbstractAction;
+import javax.swing.InputMap;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.KeyStroke;
+import javax.swing.ListSelectionModel;
 import javax.swing.WindowConstants;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
@@ -41,6 +50,23 @@ public class DatabaseEditor
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         contents.add(new JScrollPane(table), BorderLayout.CENTER);
 
+        // Allow multi-row selection
+        table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+
+        // Determine platform shortcut mask (Cmd on macOS, Ctrl elsewhere)
+        int menuMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
+
+        InputMap im = table.getInputMap(JTable.WHEN_FOCUSED);
+
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, menuMask), "deleteRows");
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, menuMask), "deleteRows"); // For full keyboards
+
+        table.getActionMap().put("deleteRows", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                deleteSelectedRows(table);
+            }
+        });
         JPanel status = new JPanel();
         status.add(new JLabel("You are live-editing the database. All edits are final and not undoable. Press ESC to cancel an edit."));
         contents.add(status, BorderLayout.SOUTH);
@@ -62,6 +88,31 @@ public class DatabaseEditor
 
     public void addTableListener(TableModelListener listener) {
         tableModel.addTableModelListener(listener);
+    }
+
+    private void deleteSelectedRows(JTable table) {
+        int[] selected = table.getSelectedRows();
+        if (selected.length == 0) {
+            return;
+        }
+
+        if (table.isEditing()) {
+            table.getCellEditor().stopCellEditing();
+        }
+
+        int result = JOptionPane.showConfirmDialog(
+            this,
+            "Delete " + selected.length + " selected record(s)?\nThis cannot be undone.",
+            "Confirm Delete",
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.WARNING_MESSAGE
+        );
+
+        if (result != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        tableModel.deleteRows(selected);
     }
 
     private class DatabaseEditorTableModel
@@ -102,8 +153,8 @@ public class DatabaseEditor
 
         @Override
         public boolean isCellEditable(int row, int column) {
-            // Disallow modification of the id field
-            return column > 0;
+            // Disallow modification of the id and deleted fields
+            return column > 1;
         }
 
         @Override
@@ -146,6 +197,41 @@ System.out.println("Updating row " + row + " column " + column + " with value " 
 
                 data[column] = oldValue;
                 fireTableRowsUpdated(row, row);
+            }
+        }
+
+        public void deleteRows(int[] rows) {
+            if (rows == null || rows.length == 0) {
+                return;
+            }
+
+            Arrays.sort(rows);
+            // Delete from bottom up, grouping contiguous ranges
+            int start = rows[rows.length - 1];
+            int end = start;
+
+            for (int i = rows.length - 1; i >= 0; i--) {
+                int row = rows[i];
+
+                // Remove from underlying data (+1 because header is row 0)
+//                _data.remove(row + 1);
+System.out.println("'Deleting' row " + row + ", id=" + _data.get(row+1)[0]);
+                // NOTE: Row 0 is the header
+                _data.get(row + 1)[1] = "true";
+
+                if (i > 0 && rows[i - 1] == row - 1) {
+                    // Still contiguous
+                    start = rows[i - 1];
+                } else {
+                    // End of contiguous block → fire event
+                    // NOTE: Row 0 is the header
+                    fireTableRowsDeleted(start, end);
+
+                    if (i > 0) {
+                        start = rows[i - 1];
+                        end = start;
+                    }
+                }
             }
         }
     }

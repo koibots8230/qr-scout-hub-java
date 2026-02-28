@@ -176,7 +176,7 @@ public class Project
 
     // NOTE: Caller is responsible for resource management
     private static void createTables(GameConfig config, Connection conn) throws SQLException {
-        StringBuilder sql = new StringBuilder("CREATE TABLE stand_scouting (id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1)");
+        StringBuilder sql = new StringBuilder("CREATE TABLE stand_scouting (id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1), deleted BOOLEAN NOT NULL DEFAULT FALSE");
 
         for(Field field : config.getFields()) {
             sql.append(", \"") // NOTE: Using explicit " surrounding the column name to protect keywords, etc.
@@ -211,7 +211,7 @@ public class Project
     }
 
     private int getRecordCount(Connection conn) throws SQLException {
-        try(PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) AS cnt FROM stand_scouting");
+        try(PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) AS cnt FROM stand_scouting WHERE deleted = FALSE");
             ResultSet rs = ps.executeQuery();) {
 
             if(rs.next()) {
@@ -253,8 +253,10 @@ public class Project
 
         System.out.println("Config: " + config);
 
+        boolean hasDeletedField = false;
         try(Connection conn = DriverManager.getConnection(databaseURL)) {
 
+            PreparedStatement ps = null;
             ResultSet rs = null;
             try {
                 _derbyLoaded = true;
@@ -268,6 +270,8 @@ public class Project
                     dbFields.put(rs.getString("COLUMN_NAME"), rs.getString("TYPE_NAME"));
                 }
 
+                hasDeletedField = dbFields.containsKey("DELETED");
+
                 // Check all columns are defined
                 for(Field field : config.getFields()) {
                     String columnName = normalizeColumnName(field.getCode());
@@ -280,7 +284,7 @@ public class Project
                 for(Map.Entry<String,String> entry : dbFields.entrySet()) {
                     String columnName = entry.getKey();
 
-                    if(!"id".equalsIgnoreCase(columnName)) {
+                    if(!"id".equalsIgnoreCase(columnName) && !"deleted".equalsIgnoreCase(columnName)) {
                         Field field = getFieldFromSQLColumn(config, columnName);
                         if(null == field) {
                             throw new IllegalStateException("Database contains field not found in configuration: " + columnName);
@@ -288,8 +292,18 @@ public class Project
                     }
                 }
 
-                System.out.println("Verification complete");
+                if(!hasDeletedField) {
+                    ps = conn.prepareStatement("ALTER TABLE stand_scouting ADD COLUMN deleted BOOLEAN NOT NULL DEFAULT FALSE");
+
+                    ps.executeUpdate();
+                }
+
+                System.out.println("Verification complete; hasDeleted=" + hasDeletedField);
             } finally {
+                if(null != ps) try { ps.close(); }
+                catch (SQLException sqle) {
+                    sqle.printStackTrace();
+                }
                 if(null != rs) try { rs.close(); }
                 catch (SQLException sqle) {
                     sqle.printStackTrace();
@@ -418,6 +432,8 @@ public class Project
                 // The "id" field doesn't have a Field
                 if("id".equalsIgnoreCase(columnName)) {
                     data[i] = "id";
+                } else if("deleted".equalsIgnoreCase(columnName)) {
+                    data[i] = "deleted";
                 } else {
                     Field field = getFieldFromSQLColumn(config, columnName);
 
@@ -440,7 +456,7 @@ public class Project
     }
 
     private String getSelectAllStatement() {
-        StringBuilder select = new StringBuilder("SELECT id");
+        StringBuilder select = new StringBuilder("SELECT id, deleted");
 
         Collection<Field> fields = getGameConfig().getFields();
 
@@ -523,6 +539,19 @@ public class Project
         return update.toString();
     }
 
+    public void deleteRecords(Collection<Integer> rowIds) throws SQLException {
+        try(Connection conn = DriverManager.getConnection(getDatabaseURL());
+            PreparedStatement ps = conn.prepareStatement("UPDATE stand_scouting SET deleted=TRUE WHERE id=?")) {
+            for(int rowId : rowIds) {
+                ps.setInt(1, rowId);
+
+                ps.addBatch();
+            }
+
+            ps.executeBatch();
+        }
+    }
+
     /**
      * Exports the database records as CSV.
      *
@@ -548,7 +577,7 @@ public class Project
                 sql.append('"').append(normalizeColumnName(field.getCode())).append('"');
             }
         }
-        sql.append(" FROM stand_scouting");
+        sql.append(" FROM stand_scouting WHERE deleted=FALSE");
 
         try (Connection conn = DriverManager.getConnection(getDatabaseURL());
              PreparedStatement ps = conn.prepareStatement(sql.toString());
@@ -1180,6 +1209,7 @@ public class Project
         // Remove all still-used field names (codes)
         dbFieldNames.removeAll(retainedFieldNames);
         dbFieldNames.remove("ID");
+        dbFieldNames.remove("DELETED");
 
         if(!dbFieldNames.isEmpty()) {
             try(Statement stmt = conn.createStatement()) {
