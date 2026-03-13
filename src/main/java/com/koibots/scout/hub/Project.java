@@ -22,6 +22,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -44,6 +45,23 @@ public class Project
 {
     private static final String ANALYTICS_SUBDIRECTORY = "analytics";
     private static final String DB_SUBDIRECTORY = "db";
+
+    private static final Set<String> PROHIBITED_FIELD_CODES
+        = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(new String[] {
+            "id",
+            "deleted"
+    })));
+
+    /**
+     * Returns true if the specified code is prohibited
+     *
+     * @param code
+     *
+     * @return
+     */
+    public static boolean isProhibitedFieldCode(String code) {
+        return null == code || PROHIBITED_FIELD_CODES.contains(code.toLowerCase());
+    }
 
     /**
      * The directory in which the project lives.
@@ -137,7 +155,7 @@ public class Project
     }
 
     private static String normalizeColumnName(String column) {
-        return column.toUpperCase().replaceAll("[^A-Z]+", "_");
+        return column.toUpperCase().replaceAll("[^A-Z0-9]+", "_");
     }
 
     private static Field getFieldFromSQLColumn(GameConfig config, String sqlColumnName) {

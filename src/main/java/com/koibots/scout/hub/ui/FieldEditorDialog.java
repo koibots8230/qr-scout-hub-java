@@ -4,6 +4,7 @@ import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 
 import com.koibots.scout.hub.Field;
+import com.koibots.scout.hub.Project;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -233,6 +234,11 @@ public class FieldEditorDialog
         // Code
         if (codeField.getText() == null || codeField.getText().isBlank()) {
             showValidationError("Code is required.");
+            codeField.requestFocusInWindow();
+            return false;
+        }
+        if(Project.isProhibitedFieldCode(codeField.getText())) {
+            showValidationError("This code is prohibited. Please choose another code.");
             codeField.requestFocusInWindow();
             return false;
         }
