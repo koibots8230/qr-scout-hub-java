@@ -238,7 +238,7 @@ public class FieldEditorDialog
             return false;
         }
         if(Project.isProhibitedFieldCode(codeField.getText())) {
-            showValidationError("This code is prohibited. Please choose another code.");
+            showValidationError("Code must contain ony letters, numbers, and _ (underscore) characters, and must begin with a letter.");
             codeField.requestFocusInWindow();
             return false;
         }

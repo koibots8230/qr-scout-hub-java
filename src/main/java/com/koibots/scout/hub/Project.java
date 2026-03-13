@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import com.opencsv.CSVWriter;
@@ -52,6 +53,8 @@ public class Project
             "deleted"
     })));
 
+    private static final Pattern SQL_92_FIELD_NAME_PATTERN = Pattern.compile("(?i)^[a-z][a-z0-9_]*$");
+
     /**
      * Returns true if the specified code is prohibited
      *
@@ -60,7 +63,12 @@ public class Project
      * @return
      */
     public static boolean isProhibitedFieldCode(String code) {
-        return null == code || PROHIBITED_FIELD_CODES.contains(code.toLowerCase());
+        if(null == code || PROHIBITED_FIELD_CODES.contains(code.toLowerCase())) {
+            return true;
+        }
+
+        // Check for SQL-92 field name compliance
+        return !SQL_92_FIELD_NAME_PATTERN.matcher(code).matches();
     }
 
     /**
