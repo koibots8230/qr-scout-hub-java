@@ -1335,7 +1335,10 @@ public class Main {
                 viewer.setModal(true);
                 viewer.setVisible(true);
             } else {
-                JOptionPane.showMessageDialog(_main, "Not Found", "Could not file LICENSES-THIRD-PARTY.txt", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(_main,
+                        MessageFormat.format(UIUtils.getString("error.fileNotFound.text"), "LICENSES-THIRD-PARTY.txt"),
+                        UIUtils.getString("error.fileNotFound.title"),
+                        JOptionPane.ERROR_MESSAGE);
             }
         });
         menu.add(item);
@@ -1601,7 +1604,7 @@ System.out.println("Loaded preferences: " + toString(prefs));
             }
 
             if(0 == copiedFiles.get()) {
-                throw new IOException("Could not find QR Scout web application source. Packaging error?");
+                throw new IOException(UIUtils.getString("error.webApp.noSource.text"));
             }
 
             ZipEntry zipEntry = new ZipEntry("config.json");
@@ -1617,8 +1620,8 @@ System.out.println("Loaded preferences: " + toString(prefs));
         }
 
         JOptionPane.showMessageDialog(_main,
-                "QR Scout successfully saved to " + file.getAbsolutePath(),
-                "QR Scout Exported",
+                MessageFormat.format(UIUtils.getString("info.qrScoutExported.text"), file.getAbsolutePath()),
+                UIUtils.getString("info.qrScoutExported.title"),
                 JOptionPane.INFORMATION_MESSAGE);
     }
 
@@ -1673,10 +1676,10 @@ System.out.println("Saving preferences: " + toString(prefs));
             File dbFile = new File(project, "db");
             File configFile = new File(project, "config.json");
 
-            if(!configFile.exists() || !dbFile.isDirectory()) {
-                throw new IllegalArgumentException("Directory " + project + " does not contain a valid scouting config.");
+            if(!configFile.isFile()) {
+                throw new IllegalArgumentException(MessageFormat.format(UIUtils.getString("error.projectDirectory.invalidConfig"), project));
             } else if(!dbFile.isDirectory()) {
-                throw new IllegalArgumentException("Directory " + project + " does not contain a valid database.");
+                throw new IllegalArgumentException(MessageFormat.format(UIUtils.getString("error.projectDirectory.invalidDatabase"), project));
             } else {
                 new Thread(() -> {
                         try {
@@ -1724,7 +1727,10 @@ System.out.println("Saving preferences: " + toString(prefs));
 
             _statusLine.setText(MessageFormat.format(UIUtils.getString("info.statusBar.recordCount"), recordCount));
 
-            JOptionPane.showMessageDialog(_main, "Successfully loaded project \"" + projectName + "\"", "Project Loaded", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(_main,
+                    MessageFormat.format(UIUtils.getString("info.projectLoaded.text"), projectName),
+                    UIUtils.getString("info.projectLoaded.title"),
+                    JOptionPane.INFORMATION_MESSAGE);
         });
     }
     private void loadProject(File projectDir) throws IOException, SQLException {
@@ -1735,7 +1741,7 @@ System.out.println("Saving preferences: " + toString(prefs));
         setProjectLoaded(false);
 
         _main.setTitle(PROGRAM_NAME);
-        _statusLine.setText("Project closed.");
+        _statusLine.setText(UIUtils.getString("info.statusBar.projectClosed"));
 
         // Close any analytic windows
         for(Iterator<AnalyticWindow> i=_analyticWindows.iterator(); i.hasNext(); ) {
@@ -1764,8 +1770,8 @@ System.out.println("Saving preferences: " + toString(prefs));
             if(count > 2) {
                 SwingUtilities.invokeLater(() -> {
                     JOptionPane.showMessageDialog(_main,
-                            "You've already scanned this code " + _lastScannedCodeRepeatCount + " times. It's time to move on.",
-                            "Duplicate Code Scanned",
+                            MessageFormat.format(UIUtils.getString("warning.duplicateScans.title"), _lastScannedCodeRepeatCount),
+                            UIUtils.getString("warning.duplicateScans.title"),
                             JOptionPane.WARNING_MESSAGE);
 
                     if(getRescanImmediately()) {
@@ -1801,7 +1807,7 @@ System.out.println("Saving preferences: " + toString(prefs));
             int recordCount = _project.getRecordCount();
 
             SwingUtilities.invokeLater(() -> {
-                _recordText.setText("Import successful.");
+                _recordText.setText(UIUtils.getString("recordText.importSuccessful"));
                 _statusLine.setText(MessageFormat.format(UIUtils.getString("info.statusBar.recordCount"), recordCount));
 
                 if(getRescanImmediately()) {
@@ -1825,8 +1831,8 @@ System.out.println("Saving preferences: " + toString(prefs));
             _project.exportDatabase(out);
 
             SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(_main,
-                    "Exported database to " + targetFile,
-                    "Data Exported",
+                    MessageFormat.format(UIUtils.getString("info.exportedDatabase.title"), targetFile.getAbsolutePath()),
+                    UIUtils.getString("info.exportedDatabase.title"),
                     JOptionPane.INFORMATION_MESSAGE));
         }
     }
@@ -1910,7 +1916,7 @@ System.out.println("Saving preferences: " + toString(prefs));
         }
 
         if(0 == copiedFiles.get()) {
-            throw new IOException("Could not find QR Scout web application source. Packaging error?");
+            throw new IOException(UIUtils.getString("error.webApp.noSource.text"));
         }
 
         // Finally, copy the config.json file from the project into the target
