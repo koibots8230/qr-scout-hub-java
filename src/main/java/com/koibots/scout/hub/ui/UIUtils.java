@@ -41,6 +41,7 @@ public class UIUtils
 
         @Override
         protected Object handleGetObject(String key) {
+            System.err.println("Warning: attempt to fetch key " + key + " before resource bundle has been set.");
             return null;
         }
 

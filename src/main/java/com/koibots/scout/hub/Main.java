@@ -53,6 +53,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.jar.JarFile;
 import java.util.prefs.BackingStoreException;
@@ -300,6 +302,17 @@ public class Main {
     }
 
     public void init() {
+        try {
+            UIUtils.setResourceBundle(ResourceBundle.getBundle("bundles.scoutinghub"));
+        } catch (MissingResourceException mre) {
+            UIUtils.showError(mre, _main);
+
+            // NOTE: Do not internationalize this string
+            JOptionPane.showMessageDialog(_main, "Failed to load local strings. Exiting.", "Fatal Error", JOptionPane.ERROR_MESSAGE);
+
+            System.exit(1);
+        }
+
         long elapsed = System.currentTimeMillis();
 
         System.out.println(System.currentTimeMillis() + ", " + (System.currentTimeMillis() - elapsed) + " :  Initilizing UI...");
