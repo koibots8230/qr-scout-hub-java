@@ -292,40 +292,29 @@ public class Main {
 
     private boolean isMacOS = System.getProperty("os.name") != null && System.getProperty("os.name").matches(".*Mac OS X.*");
 
-    private ResourceBundle bundle;
     /**
-     * Gets a localized string for the given key.
-     *
-     * @param key The resource bundle key of the desired string.
-     *
-     * @return The string from the resource bundle matching the requested
-     *         key, or <code>null</code> if no value was found for the key.
+     * @deprecated Use {@link UIUtils#getString(String)} instead.
      */
-    private synchronized String getString(String key) {
-        if(null == bundle) {
-            try {
-                bundle = ResourceBundle.getBundle("bundles.scoutinghub");
-            } catch (MissingResourceException mre) {
-                UIUtils.showError(mre, _main);
-
-                // NOTE: Do not internationalize this string
-                JOptionPane.showMessageDialog(_main, "Failed to load local strings. Exiting.", "Fatal Error", JOptionPane.ERROR_MESSAGE);
-
-                System.exit(1);
-            }
-        }
-
-        try {
-            return bundle.getString(key);
-        } catch (MissingResourceException mre) {
-            return null;
-        }
+    @Deprecated
+    private String getString(String key) {
+        return UIUtils.getString(key);
     }
 
     public void init() {
         long elapsed = System.currentTimeMillis();
 
         System.out.println(System.currentTimeMillis() + ", " + (System.currentTimeMillis() - elapsed) + " :  Initilizing UI...");
+
+        try {
+            UIUtils.setResourceBundle(ResourceBundle.getBundle("bundles.scoutinghub"));
+        } catch (MissingResourceException mre) {
+            UIUtils.showError(mre, _main);
+
+            // NOTE: Do not internationalize this string
+            JOptionPane.showMessageDialog(_main, "Failed to load local strings. Exiting.", "Fatal Error", JOptionPane.ERROR_MESSAGE);
+
+            System.exit(1);
+        }
 
         _main = new JFrame(PROGRAM_NAME);
 
