@@ -90,6 +90,7 @@ public class GameConfigEditorDialog
                 Object obj = node.getUserObject();
                 if (obj instanceof Section) {
                     setText(((Section) obj).getName());
+                    setIcon(getOpenIcon());
                 } else if (obj instanceof Field) {
                     setText(((Field) obj).getTitle());
                 }
