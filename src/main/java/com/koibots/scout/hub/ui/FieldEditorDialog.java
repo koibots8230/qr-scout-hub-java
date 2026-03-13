@@ -317,7 +317,7 @@ public class FieldEditorDialog
 
         @Override public int getRowCount() { return data.size() + 1; }
         @Override public int getColumnCount() { return 2; }
-        @Override public String getColumnName(int c) { return c == 0 ? "Name" : "Value"; }
+        @Override public String getColumnName(int c) { return c == 0 ? "Value" : "Label"; }
         @Override public boolean isCellEditable(int r, int c) { return true; }
 
         @Override
