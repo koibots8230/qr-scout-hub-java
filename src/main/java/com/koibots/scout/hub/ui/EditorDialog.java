@@ -92,7 +92,7 @@ public abstract class EditorDialog<T>
         JOptionPane.showMessageDialog(
                 this,
                 message,
-                "Invalid Field",
+                UIUtils.getString("error.dialog.invalidField.text"),
                 JOptionPane.ERROR_MESSAGE
         );
     }
