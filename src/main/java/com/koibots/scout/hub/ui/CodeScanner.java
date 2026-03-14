@@ -15,6 +15,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.io.PrintStream;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -234,9 +235,9 @@ public class CodeScanner {
         JDialog dialog = new JDialog(owner, title);
         dialog.setModal(getModal());
         dialog.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        JLabel videoLabel = new JLabel("Starting camera...", SwingConstants.CENTER);
+        JLabel videoLabel = new JLabel(UIUtils.getString("camera.status.startingCamera"), SwingConstants.CENTER);
         videoLabel.setFont(videoLabel.getFont().deriveFont(Font.BOLD, 24f));
-        JButton cancelButton = new JButton("Cancel");
+        JButton cancelButton = new JButton(UIManager.getString("OptionPane.cancelButtonText"));
         dialog.setLayout(new BorderLayout());
         dialog.add(videoLabel, BorderLayout.CENTER);
         dialog.add(cancelButton, BorderLayout.SOUTH);
@@ -279,7 +280,7 @@ public class CodeScanner {
     public String scanCode() throws FrameGrabber.Exception {
         cancelled = false;
 
-        JDialog dialog = createDialog(getParent(), "QR Code Scanner");
+        JDialog dialog = createDialog(getParent(), UIUtils.getString("title.qrScanner"));
 
         // Show the frame on the EDT
         SwingUtilities.invokeLater(() -> dialog.setVisible(true));
@@ -474,7 +475,7 @@ public class CodeScanner {
     }
 
     public String[] probeDevices(JLabel status) {
-        SwingUtilities.invokeLater(() -> status.setText("Enumerating cameras by probing..."));
+        SwingUtilities.invokeLater(() -> status.setText(UIUtils.getString("camera.status.enumeratingByProbing")));
 
         ArrayList<String> devices = new ArrayList<String>();
         for (int i = 0; i < 10; i++) {
@@ -485,7 +486,7 @@ public class CodeScanner {
                 grabber.start();
 
                 String deviceName = "Camera " + i + " (" + grabber.getImageWidth() + "x" + grabber.getImageHeight() + ")";
-                SwingUtilities.invokeLater(() -> status.setText("Discovered " + deviceName));
+                SwingUtilities.invokeLater(() -> status.setText(MessageFormat.format(UIUtils.getString("camera.status.discovered"), deviceName)));
 
                 devices.add(deviceName);
 
@@ -511,30 +512,30 @@ public class CodeScanner {
             return cameraDevices;
         }
 
-        SwingUtilities.invokeLater(() -> status.setText("Enumerating devices...") );
+        SwingUtilities.invokeLater(() -> status.setText(UIUtils.getString("camera.status.enumeraringDevices")) );
 
         try {
-            SwingUtilities.invokeLater(() -> status.setText("Enumerating devices with OpenCV...") );
+            SwingUtilities.invokeLater(() -> status.setText(UIUtils.getString("camera.status.enumeraringOpenCV")) );
 
             return cameraDevices = getDevicesWith(OpenCVFrameGrabber.class, "OpenCVFrameGrabber");
         } catch (Throwable ignore) {
-            SwingUtilities.invokeLater(() -> status.setText("OpenCV failed") );
+            SwingUtilities.invokeLater(() -> status.setText(UIUtils.getString("camera.status.enumeraringOpenCV.failed")) );
         }
 
         try {
-            SwingUtilities.invokeLater(() -> status.setText("Enumerating devices with VideoInput...") );
+            SwingUtilities.invokeLater(() -> status.setText(UIUtils.getString("camera.status.enumeraringVideoInput")) );
 
             return cameraDevices = getDevicesWith(VideoInputFrameGrabber.class, "VideoInputFrameGrabber");
         } catch (Throwable ignore) {
-            SwingUtilities.invokeLater(() -> status.setText("VideoInput failed") );
+            SwingUtilities.invokeLater(() -> status.setText(UIUtils.getString("camera.status.enumeraringVideoInput.failed")) );
         }
 
         try {
-            SwingUtilities.invokeLater(() -> status.setText("Enumerating devices with FFmpeg...") );
+            SwingUtilities.invokeLater(() -> status.setText(UIUtils.getString("camera.status.enumeraringFFmpeg")) );
 
             return cameraDevices = getDevicesWith(FFmpegFrameGrabber.class, "FFmpegFrameGrabber");
         } catch (Throwable ignore) {
-            SwingUtilities.invokeLater(() -> status.setText("FFmpeg failed") );
+            SwingUtilities.invokeLater(() -> status.setText(UIUtils.getString("camera.status.enumeraringFFmped.failed")) );
         }
 
         if(cancelled) {
@@ -557,7 +558,7 @@ public class CodeScanner {
     public int chooseCamera() {
         cancelled = false; // Clear flag
 
-        JDialog dialog = createDialog(getParent(), "Choose Camera");
+        JDialog dialog = createDialog(getParent(), UIUtils.getString("title.chooseCamera"));
 
         // Grab a reference to the CENTER component -- a JLabel -- so we can
         // update it
@@ -580,7 +581,7 @@ public class CodeScanner {
 
             JPanel panel = new JPanel(new FlowLayout());
 
-            JButton okButton = new JButton("Choose");
+            JButton okButton = new JButton(UIUtils.getString("button.choose.label"));
             okButton.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
@@ -588,7 +589,7 @@ public class CodeScanner {
                     chosenCamera.complete(Integer.valueOf(deviceId));
                 }
             });
-            panel.add(new JLabel("Camera:"));
+            panel.add(new JLabel(UIUtils.getString("label.cameras")));
             panel.add(dropdown);
             panel.add(okButton);
 
@@ -653,7 +654,7 @@ public class CodeScanner {
                     JOptionPane.showMessageDialog(
                             getParent(),
                             errorMessage,
-                            "Error",
+                            UIUtils.getString("title.error"),
                             JOptionPane.ERROR_MESSAGE
                             );
 
@@ -667,8 +668,8 @@ public class CodeScanner {
 
                 JOptionPane.showMessageDialog(
                         getParent(),
-                        "No cameras found.",
-                        "Camera Detection",
+                        UIUtils.getString("error.camera.noCamerasDetected.text"),
+                        UIUtils.getString("error.camera.noCamerasDetected.title"),
                         JOptionPane.INFORMATION_MESSAGE
                         );
             });
