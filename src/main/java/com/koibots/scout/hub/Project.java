@@ -22,6 +22,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -31,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import com.opencsv.CSVWriter;
@@ -44,6 +46,30 @@ public class Project
 {
     private static final String ANALYTICS_SUBDIRECTORY = "analytics";
     private static final String DB_SUBDIRECTORY = "db";
+
+    private static final Set<String> PROHIBITED_FIELD_CODES
+        = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(new String[] {
+            "id",
+            "deleted"
+    })));
+
+    private static final Pattern SQL_92_FIELD_NAME_PATTERN = Pattern.compile("(?i)^[a-z][a-z0-9_]*$");
+
+    /**
+     * Returns true if the specified code is prohibited
+     *
+     * @param code
+     *
+     * @return
+     */
+    public static boolean isProhibitedFieldCode(String code) {
+        if(null == code || PROHIBITED_FIELD_CODES.contains(code.toLowerCase())) {
+            return true;
+        }
+
+        // Check for SQL-92 field name compliance
+        return !SQL_92_FIELD_NAME_PATTERN.matcher(code).matches();
+    }
 
     /**
      * The directory in which the project lives.
@@ -137,7 +163,7 @@ public class Project
     }
 
     private static String normalizeColumnName(String column) {
-        return column.toUpperCase().replaceAll("[^A-Z]+", "_");
+        return column.toUpperCase().replaceAll("[^A-Z0-9]+", "_");
     }
 
     private static Field getFieldFromSQLColumn(GameConfig config, String sqlColumnName) {

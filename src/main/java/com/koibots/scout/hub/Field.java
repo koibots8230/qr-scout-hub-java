@@ -67,6 +67,13 @@ public class Field {
     }
 
     public void setCode(String code) {
+        if(null == code) {
+            throw new IllegalArgumentException("Code may not be null.");
+        }
+        if(Project.isProhibitedFieldCode(code)) {
+            throw new IllegalArgumentException("The field code '" + code + "' is prohibited");
+        }
+
         this.code = code;
     }
 
