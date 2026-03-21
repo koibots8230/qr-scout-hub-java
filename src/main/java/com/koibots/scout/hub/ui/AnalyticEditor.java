@@ -17,6 +17,7 @@ import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.undo.UndoManager;
 
 import org.apache.commons.text.StringEscapeUtils;
@@ -64,11 +65,11 @@ public class AnalyticEditor
         JPanel top = new JPanel(new BorderLayout(5, 0));
         top.setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
         // Get as wide as the panel allows
-        top.add(new JLabel("Name"), BorderLayout.NORTH);
+        top.add(new JLabel(UIUtils.getString("analytics.name.label")), BorderLayout.NORTH);
         top.add(_name, BorderLayout.CENTER);
 
         JPanel center = new JPanel(new BorderLayout(5, 0));
-        center.add(new JLabel("Query"), BorderLayout.NORTH);
+        center.add(new JLabel(UIUtils.getString("analytics.query.label")), BorderLayout.NORTH);
         center.add(new JScrollPane(_query), BorderLayout.CENTER);
         center.setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
         panel.add(top, BorderLayout.NORTH);
@@ -80,9 +81,13 @@ public class AnalyticEditor
         "<html><head><style>"
                 + "body { font-family:sans-serif }"
                 + "</style>"
-                + "<h3>Available Tables</h3>"
+                + "<h3>")
+                .append(UIUtils.getString("analytics.availableTables"))
+                .append("</h3>"
                 + "<ul><li><code>stand_scouting</code></li></ul>"
-                + "<h3>Available Fields</h3>"
+                + "<h3>")
+                .append(UIUtils.getString("analytics.availableFields"))
+                .append("</h3>"
                 + "<ul>");
 
         Collection<String> fieldNames = _queryable.getQueryableFieldNames();
@@ -98,7 +103,7 @@ public class AnalyticEditor
         panel.add(helpScroll, BorderLayout.EAST);
 
         add(panel, BorderLayout.CENTER);
-        add(createButtonPanel(new JButton("Save")), BorderLayout.SOUTH);
+        add(createButtonPanel(new JButton(UIManager.getString("FileChooser.saveButtonText"))), BorderLayout.SOUTH);
 
         SwingUtilities.invokeLater(() -> helpScroll.getVerticalScrollBar().setValue(0));
     }
@@ -137,7 +142,7 @@ public class AnalyticEditor
 
     private void loadFromAnalytic(Analytic analytic) {
         if(null == analytic.getName()) {
-            _name.setText("New Analytic");
+            _name.setText(UIUtils.getString("analytics.newAnalytic.name"));
         } else {
             _name.setText(analytic.getName().trim());
         }
@@ -157,14 +162,14 @@ public class AnalyticEditor
     protected boolean validateInput() {
         // Name
         if (_name.getText() == null || _name.getText().isBlank()) {
-            showValidationError("Name is required.");
+            showValidationError(UIUtils.getString("error.analytics.name.required"));
             _name.requestFocusInWindow();
             return false;
         }
 
         // Query
         if (_query.getText() == null || _query.getText().isBlank()) {
-            showValidationError("Query is required.");
+            showValidationError(UIUtils.getString("error.analytics.query.required"));
             _query.requestFocusInWindow();
             return false;
         }
@@ -191,8 +196,8 @@ public class AnalyticEditor
 
     public static void main(String[] args) throws Exception {
         Analytic analytic = new Analytic();
-        analytic.setName("New Analytic");
-        AnalyticEditor editor = new AnalyticEditor(null, "New Analytic", analytic, null);
+        analytic.setName(UIUtils.getString("analytics.newAnalytic.name"));
+        AnalyticEditor editor = new AnalyticEditor(null, UIUtils.getString("analytics.newAnalytic.name"), analytic, null);
 
         editor.setVisible(true);
     }

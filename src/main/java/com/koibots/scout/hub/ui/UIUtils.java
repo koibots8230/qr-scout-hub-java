@@ -8,6 +8,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -30,6 +34,43 @@ import javax.swing.SwingUtilities;
  */
 public class UIUtils
 {
+    private static ResourceBundle bundle = new EmptyResourceBundle();
+
+    private static class EmptyResourceBundle
+        extends ResourceBundle {
+
+        @Override
+        protected Object handleGetObject(String key) {
+            System.err.println("Warning: attempt to fetch key " + key + " before resource bundle has been set.");
+            return null;
+        }
+
+        @Override
+        public Enumeration<String> getKeys() {
+            return Collections.emptyEnumeration();
+        }
+    }
+
+    public static void setResourceBundle(ResourceBundle bnd) {
+        bundle = bnd;
+    }
+
+    /**
+     * Gets a localized string for the given key.
+     *
+     * @param key The resource bundle key of the desired string.
+     *
+     * @return The string from the resource bundle matching the requested
+     *         key, or <code>null</code> if no value was found for the key.
+     */
+    public static String getString(String key) {
+        try {
+            return bundle.getString(key);
+        } catch (MissingResourceException mre) {
+            return null;
+        }
+    }
+
     public static void showError(Throwable t, Component parent) {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));

@@ -45,6 +45,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -292,42 +293,31 @@ public class Main {
 
     private boolean isMacOS = System.getProperty("os.name") != null && System.getProperty("os.name").matches(".*Mac OS X.*");
 
-    private ResourceBundle bundle;
     /**
-     * Gets a localized string for the given key.
-     *
-     * @param key The resource bundle key of the desired string.
-     *
-     * @return The string from the resource bundle matching the requested
-     *         key, or <code>null</code> if no value was found for the key.
+     * @deprecated Use {@link UIUtils#getString(String)} instead.
      */
-    private synchronized String getString(String key) {
-        if(null == bundle) {
-            try {
-                bundle = ResourceBundle.getBundle("bundles.scoutinghub");
-            } catch (MissingResourceException mre) {
-                UIUtils.showError(mre, _main);
-
-                // NOTE: Do not internationalize this string
-                JOptionPane.showMessageDialog(_main, "Failed to load local strings. Exiting.", "Fatal Error", JOptionPane.ERROR_MESSAGE);
-
-                System.exit(1);
-            }
-        }
-
-        try {
-            return bundle.getString(key);
-        } catch (MissingResourceException mre) {
-            return null;
-        }
+    @Deprecated
+    private String getString(String key) {
+        return UIUtils.getString(key);
     }
 
     public void init() {
+        try {
+            UIUtils.setResourceBundle(ResourceBundle.getBundle("bundles.scoutinghub"));
+        } catch (MissingResourceException mre) {
+            UIUtils.showError(mre, _main);
+
+            // NOTE: Do not internationalize this string
+            JOptionPane.showMessageDialog(_main, "Failed to load local strings. Exiting.", "Fatal Error", JOptionPane.ERROR_MESSAGE);
+
+            System.exit(1);
+        }
+
         long elapsed = System.currentTimeMillis();
 
         System.out.println(System.currentTimeMillis() + ", " + (System.currentTimeMillis() - elapsed) + " :  Initilizing UI...");
 
-        _main = new JFrame(PROGRAM_NAME);
+        _main = new JFrame(UIUtils.getString("program.name"));
 
         System.out.println(System.currentTimeMillis() + ", " + (System.currentTimeMillis() - elapsed) + " :  Loading logo images...");
 
@@ -383,20 +373,20 @@ public class Main {
         _newAction = new ActionBase("action.new") {
             @Override
             public void actionPerformed(ActionEvent e) {
-                File selectedDirectory = showSaveFileDialog(_main, "New Project", null, JFileChooser.DIRECTORIES_ONLY);
+                File selectedDirectory = showSaveFileDialog(_main, UIUtils.getString("file.dialog.newProject.title"), null, JFileChooser.DIRECTORIES_ONLY);
 
                 if(null != selectedDirectory) {
                     if (selectedDirectory.exists()) {
                         JOptionPane.showMessageDialog(_main,
-                                "File already exists. Please choose a different name.",
-                                "File Exists",
+                                UIUtils.getString("error.fileExists.text"),
+                                UIUtils.getString("error.fileExists.title"),
                                 JOptionPane.WARNING_MESSAGE);
                     } else {
                         try {
                             System.out.println("Creating project in " + selectedDirectory.getAbsolutePath());
 
                             GameConfig emptyConfig = new GameConfig();
-                            emptyConfig.setPageTitle(getString("title.new-project"));
+                            emptyConfig.setPageTitle(UIUtils.getString("title.new-project"));
                             loadProject(Project.createProject(selectedDirectory, emptyConfig));
                         } catch (Throwable t) {
                             showError(t);
@@ -410,7 +400,7 @@ public class Main {
             @Override
             public void actionPerformed(ActionEvent e) {
                 File selectedFile = showOpenFileDialog(_main,
-                        "Open Project",
+                        UIUtils.getString("file.dialog.openProject.title"),
                         JFileChooser.DIRECTORIES_ONLY,
                         new FileFilter[] {
                                 new FileFilter() {
@@ -421,7 +411,7 @@ public class Main {
 
                                     @Override
                                     public String getDescription() {
-                                        return "Project Directory";
+                                        return UIUtils.getString("file.dialog.filter.projectDirectory.description");
                                     }
                                 }
                         });
@@ -435,8 +425,8 @@ public class Main {
                         }
                     } else {
                         JOptionPane.showMessageDialog(_main,
-                                "You must select a project directory to open.",
-                                "Invalid Project",
+                                UIUtils.getString("error.invalidProject.text"),
+                                UIUtils.getString("error.invalidProject.title"),
                                 JOptionPane.ERROR_MESSAGE);
                     }
                 }
@@ -468,7 +458,7 @@ public class Main {
                     startWebServer();
 
                     if(null == webServer) {
-                        showError(new Throwable("Oh noes!"));
+                        showError(new Throwable(UIUtils.getString("error.webServer.launchFailed.text")));
                     }
 
                     URI uri = new URI("http://localhost:" + webServer.getPort() + "/");
@@ -478,10 +468,9 @@ public class Main {
                     ImageIcon qr = generateQRImageIcon(urlString, 200, 200);
                     panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS)); // Stack components vertically
 
-                 // Info text
+                    // Info text
                     JTextArea infoText = new JTextArea(
-                            "The web server is running at " + urlString +
-                            ". You may be able to scan this QR code on your phone to load it, if you are on the same network and there are no firewalls, etc. stopping you."
+                            MessageFormat.format(UIUtils.getString("info.webServer.running"), urlString)
                     );
                     infoText.setLineWrap(true);
                     infoText.setWrapStyleWord(true);
@@ -509,13 +498,13 @@ public class Main {
 
                     panel.add(Box.createVerticalStrut(10));
 
-                    JLabel questionLabel = new JLabel("Would you like to launch QR Scout in your web browser?");
+                    JLabel questionLabel = new JLabel(UIUtils.getString("question.webServer.launched.text"));
                     questionLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
                     panel.add(questionLabel);
 
                     int result = JOptionPane.showConfirmDialog(_main,
                             panel,
-                            "Web Server Started",
+                            UIUtils.getString("question.webServer.launched.title"),
                             JOptionPane.YES_NO_OPTION,
                             JOptionPane.INFORMATION_MESSAGE);
 
@@ -541,7 +530,7 @@ public class Main {
             @Override
             public void actionPerformed(ActionEvent e) {
                 File selectedFile = showSaveFileDialog(_main,
-                        "Export CSV",
+                        UIUtils.getString("file.dialog.exportCSV.title"),
                         new File(getFileDialogDirectory(), _project.getGameConfig().getPageTitle() + ".csv"),
                         JFileChooser.FILES_ONLY);
 
@@ -563,10 +552,9 @@ public class Main {
             @Override
             public void actionPerformed(ActionEvent e) {
                 File selectedFile = showSaveFileDialog(_main,
-                        "Save As",
+                        UIUtils.getString("file.dialog.saveAs.title"),
                         new File(getFileDialogDirectory(), _project.getGameConfig().getPageTitle() + ".zip"),
                         JFileChooser.FILES_ONLY);
-
                 if (null != selectedFile) {
                     new Thread(() -> {
                         try {
@@ -671,16 +659,16 @@ public class Main {
                         // This was an error
                         SwingUtilities.invokeLater(() ->
                         JOptionPane.showMessageDialog(_main,
-                                "Failed to open the camera. If you just gave permission to use the camera, please try one more time, or quit the app and re-launch it.",
-                                "Camera Failure",
+                                UIUtils.getString("error.camera.failedToOpen.text"),
+                                UIUtils.getString("error.camera.failedToOpen.title"),
                                 JOptionPane.INFORMATION_MESSAGE)
                                 );
                     } else if(-2 == cameraDeviceID) {
                         // No cameras detected
                         SwingUtilities.invokeLater(() ->
                         JOptionPane.showMessageDialog(_main,
-                                "No cameras detected. If you just gave permission to use the camera, please try one more time, or quit the app and re-launch it.",
-                                "No Cameras Found",
+                                UIUtils.getString("error.camera.noCamerasDetected.text"),
+                                UIUtils.getString("error.camera.noCamerasDetected.title"),
                                 JOptionPane.INFORMATION_MESSAGE)
                                 );
                     }
@@ -698,8 +686,8 @@ public class Main {
                         if(null != code) {
                             SwingUtilities.invokeLater(() ->
                             JOptionPane.showMessageDialog(_main,
-                                    "Code scanned; data:\n" + code.replaceAll("\t", "\u2409"),
-                                    "Code Scanned",
+                                    MessageFormat.format(UIUtils.getString("info.codeScanned.text"), code.replaceAll("\t", "\u2409")),
+                                    UIUtils.getString("info.codeScanned.title"),
                                     JOptionPane.INFORMATION_MESSAGE)
                                     );
                         }
@@ -707,8 +695,8 @@ public class Main {
                         if(cameraFailures.get() < 1) {
                             SwingUtilities.invokeLater(() ->
                                 JOptionPane.showMessageDialog(_main,
-                                    "Failed to open the camera. If you just gave permission to use the camera, please try one more time, or quit the app and re-launch it.",
-                                    "Camera Failure",
+                                        UIUtils.getString("error.camera.failedToOpen.text"),
+                                        UIUtils.getString("error.camera.failedToOpen.title"),
                                     JOptionPane.INFORMATION_MESSAGE)
                             );
                         } else {
@@ -754,7 +742,7 @@ public class Main {
                                         for(int row = e.getFirstRow(); row <= e.getLastRow(); ++row) {
                                             _project.updateRecord(de.getData(row));
                                         }
-                                        _statusLine.setText("Record count: " + _project.getRecordCount());
+                                        _statusLine.setText(MessageFormat.format(UIUtils.getString("info.statusBar.recordCount"), _project.getRecordCount()));
                                     } catch (RuntimeException rte) {
                                         // Throw this back to the TableModel to deal with
                                         throw rte;
@@ -779,8 +767,8 @@ public class Main {
             @Override
             public void actionPerformed(ActionEvent e) {
                 int option = JOptionPane.showConfirmDialog(_main,
-                        "You you sure you want to permanently DELETE all records marked for deletion?",
-                        "Confirm Purge",
+                        UIUtils.getString("question.confirmDatabasePurge.text"),
+                        UIUtils.getString("question.confirmDatabasePurge.title"),
                         JOptionPane.YES_NO_OPTION);
 
                 if(JOptionPane.YES_OPTION == option) {
@@ -834,7 +822,7 @@ public class Main {
                 if(null == helpFrame) {
 
                     URL url = getClass().getResource("/help/help.html");
-                    helpFrame = new FileViewer(null, getString("window.help.title"), url, "text/html");
+                    helpFrame = new FileViewer(null, UIUtils.getString("window.help.title"), url, "text/html");
 
                     helpFrame.addWindowListener(new WindowAdapter() {
                         @Override
@@ -856,8 +844,8 @@ public class Main {
                 Collection<Field> fields = _project.getGameConfig().getFields();
                 if(null != fields && fields.size() > 1) {
                     JOptionPane.showMessageDialog(_main,
-                            "You cannot import into a project with existing fields.",
-                            "Cannot Import",
+                            UIUtils.getString("error.import.existingFields.text"),
+                            UIUtils.getString("error.import.existingFields.title"),
                             JOptionPane.ERROR_MESSAGE);
 
                     return;
@@ -875,7 +863,7 @@ public class Main {
 
                                     @Override
                                     public String getDescription() {
-                                        return "JSON Files";
+                                        return UIUtils.getString("file.dialog.filter.json.description");
                                     }
 
                                 }
@@ -1347,7 +1335,10 @@ public class Main {
                 viewer.setModal(true);
                 viewer.setVisible(true);
             } else {
-                JOptionPane.showMessageDialog(_main, "Not Found", "Could not file LICENSES-THIRD-PARTY.txt", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(_main,
+                        MessageFormat.format(UIUtils.getString("error.fileNotFound.text"), "LICENSES-THIRD-PARTY.txt"),
+                        UIUtils.getString("error.fileNotFound.title"),
+                        JOptionPane.ERROR_MESSAGE);
             }
         });
         menu.add(item);
@@ -1613,7 +1604,7 @@ System.out.println("Loaded preferences: " + toString(prefs));
             }
 
             if(0 == copiedFiles.get()) {
-                throw new IOException("Could not find QR Scout web application source. Packaging error?");
+                throw new IOException(UIUtils.getString("error.webApp.noSource.text"));
             }
 
             ZipEntry zipEntry = new ZipEntry("config.json");
@@ -1629,8 +1620,8 @@ System.out.println("Loaded preferences: " + toString(prefs));
         }
 
         JOptionPane.showMessageDialog(_main,
-                "QR Scout successfully saved to " + file.getAbsolutePath(),
-                "QR Scout Exported",
+                MessageFormat.format(UIUtils.getString("info.qrScoutExported.text"), file.getAbsolutePath()),
+                UIUtils.getString("info.qrScoutExported.title"),
                 JOptionPane.INFORMATION_MESSAGE);
     }
 
@@ -1685,10 +1676,10 @@ System.out.println("Saving preferences: " + toString(prefs));
             File dbFile = new File(project, "db");
             File configFile = new File(project, "config.json");
 
-            if(!configFile.exists() || !dbFile.isDirectory()) {
-                throw new IllegalArgumentException("Directory " + project + " does not contain a valid scouting config.");
+            if(!configFile.isFile()) {
+                throw new IllegalArgumentException(MessageFormat.format(UIUtils.getString("error.projectDirectory.invalidConfig"), project));
             } else if(!dbFile.isDirectory()) {
-                throw new IllegalArgumentException("Directory " + project + " does not contain a valid database.");
+                throw new IllegalArgumentException(MessageFormat.format(UIUtils.getString("error.projectDirectory.invalidDatabase"), project));
             } else {
                 new Thread(() -> {
                         try {
@@ -1734,9 +1725,12 @@ System.out.println("Saving preferences: " + toString(prefs));
 
             setProjectLoaded(true);
 
-            _statusLine.setText("Record count: " + recordCount);
+            _statusLine.setText(MessageFormat.format(UIUtils.getString("info.statusBar.recordCount"), recordCount));
 
-            JOptionPane.showMessageDialog(_main, "Successfully loaded project \"" + projectName + "\"", "Project Loaded", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(_main,
+                    MessageFormat.format(UIUtils.getString("info.projectLoaded.text"), projectName),
+                    UIUtils.getString("info.projectLoaded.title"),
+                    JOptionPane.INFORMATION_MESSAGE);
         });
     }
     private void loadProject(File projectDir) throws IOException, SQLException {
@@ -1747,7 +1741,7 @@ System.out.println("Saving preferences: " + toString(prefs));
         setProjectLoaded(false);
 
         _main.setTitle(PROGRAM_NAME);
-        _statusLine.setText("Project closed.");
+        _statusLine.setText(UIUtils.getString("info.statusBar.projectClosed"));
 
         // Close any analytic windows
         for(Iterator<AnalyticWindow> i=_analyticWindows.iterator(); i.hasNext(); ) {
@@ -1776,8 +1770,8 @@ System.out.println("Saving preferences: " + toString(prefs));
             if(count > 2) {
                 SwingUtilities.invokeLater(() -> {
                     JOptionPane.showMessageDialog(_main,
-                            "You've already scanned this code " + _lastScannedCodeRepeatCount + " times. It's time to move on.",
-                            "Duplicate Code Scanned",
+                            MessageFormat.format(UIUtils.getString("warning.duplicateScans.title"), _lastScannedCodeRepeatCount),
+                            UIUtils.getString("warning.duplicateScans.title"),
                             JOptionPane.WARNING_MESSAGE);
 
                     if(getRescanImmediately()) {
@@ -1813,8 +1807,8 @@ System.out.println("Saving preferences: " + toString(prefs));
             int recordCount = _project.getRecordCount();
 
             SwingUtilities.invokeLater(() -> {
-                _recordText.setText("Import successful.");
-                _statusLine.setText("Record count: " + recordCount);
+                _recordText.setText(UIUtils.getString("recordText.importSuccessful"));
+                _statusLine.setText(MessageFormat.format(UIUtils.getString("info.statusBar.recordCount"), recordCount));
 
                 if(getRescanImmediately()) {
                     // Run this separately in its own thread.
@@ -1837,8 +1831,8 @@ System.out.println("Saving preferences: " + toString(prefs));
             _project.exportDatabase(out);
 
             SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(_main,
-                    "Exported database to " + targetFile,
-                    "Data Exported",
+                    MessageFormat.format(UIUtils.getString("info.exportedDatabase.title"), targetFile.getAbsolutePath()),
+                    UIUtils.getString("info.exportedDatabase.title"),
                     JOptionPane.INFORMATION_MESSAGE));
         }
     }
@@ -1922,7 +1916,7 @@ System.out.println("Saving preferences: " + toString(prefs));
         }
 
         if(0 == copiedFiles.get()) {
-            throw new IOException("Could not find QR Scout web application source. Packaging error?");
+            throw new IOException(UIUtils.getString("error.webApp.noSource.text"));
         }
 
         // Finally, copy the config.json file from the project into the target

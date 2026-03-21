@@ -65,7 +65,7 @@ public class AnalyticWindow
         contents.add(new JScrollPane(table), BorderLayout.CENTER);
 
         JPanel buttons = new JPanel();
-        JButton run = new JButton("Run");
+        JButton run = new JButton(UIUtils.getString("analytics.button.run.label"));
         run.addActionListener((e) -> {
             runQuery();
 
