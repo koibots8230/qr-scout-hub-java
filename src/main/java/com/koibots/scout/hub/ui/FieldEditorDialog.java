@@ -119,6 +119,7 @@ public class FieldEditorDialog
         // ---- Choices ----
         choicesModel = new ChoicesTableModel();
         choicesTable = new JTable(choicesModel);
+        choicesTable.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
         JScrollPane choicesScroll = new JScrollPane(choicesTable);
         choicesScroll.setPreferredSize(new Dimension(300, 120));
 
@@ -224,6 +225,12 @@ public class FieldEditorDialog
 
     @Override
     protected boolean validateInput() {
+        // Stop any editing session that is in progress in order
+        // to ensure we get any final edits.
+        if (choicesTable.isEditing()) {
+            choicesTable.getCellEditor().stopCellEditing();
+        }
+
         // Title
         if (titleField.getText() == null || titleField.getText().isBlank()) {
             showValidationError("Title is required.");
