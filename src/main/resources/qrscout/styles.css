@@ -47,6 +47,7 @@ body {
 }
 
 #qr-logo {
+  display:none;
   position:absolute;
   width:3.5rem;
   height:auto;
