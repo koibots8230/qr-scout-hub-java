@@ -1544,14 +1544,23 @@ System.out.println("Loaded preferences: " + toString(prefs));
                     Path srcDir = Paths.get(url.toURI());
                     Files.walk(srcDir).forEach(p -> {
                         try {
-                            ZipEntry zipEntry = new ZipEntry(srcDir.relativize(p).toString());
-                            zip.putNextEntry(zipEntry);
+                            Path relative = srcDir.relativize(p);
+                            String entryName = relative.toString().replace(File.separatorChar, '/'); // Use forward-slash for all paths
+                            if(Files.isDirectory(p)) {
+                                // ZIP directory entries end with /
+                                if(!entryName.isEmpty()) {
+                                    zip.putNextEntry(new ZipEntry(entryName + "/"));
+                                    zip.closeEntry();
+                                }
+                            } else {
+                                zip.putNextEntry(new ZipEntry(entryName));
 
-                            Files.copy(p, zip);
+                                Files.copy(p, zip);
 
-                            zip.closeEntry();
+                                zip.closeEntry();
 
-                            copiedFiles.incrementAndGet();
+                                copiedFiles.incrementAndGet();
+                            }
                         } catch (IOException e) {
                             // Must wrap this in an unchecked exception because
                             // Consumer.accept (which is what this lambda
