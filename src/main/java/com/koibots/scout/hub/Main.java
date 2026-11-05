@@ -98,12 +98,14 @@ import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
+import com.koibots.scout.hub.sftp.RemoteInfo;
 import com.koibots.scout.hub.ui.AnalyticWindow;
 import com.koibots.scout.hub.ui.AnalyticsWindow;
 import com.koibots.scout.hub.ui.CodeScanner;
 import com.koibots.scout.hub.ui.DatabaseEditor;
 import com.koibots.scout.hub.ui.FileViewer;
 import com.koibots.scout.hub.ui.GameConfigEditorDialog;
+import com.koibots.scout.hub.ui.SftpUploadDialog;
 import com.koibots.scout.hub.ui.UIUtils;
 import com.koibots.scout.hub.utils.AnalyticUpdater;
 import com.koibots.scout.hub.utils.Queryable;
@@ -124,6 +126,12 @@ public class Main {
     private static final String PREFS_KEY_INSERT_IMMEDIATELY = "insert.immediately";
     private static final String PREFS_KEY_RESCAN_IMMEDIATELY = "rescan.immediately";
     private static final String PREFS_KEY_USE_PLATFORM_FILE_DIALOGS = "file.use.platform.file.dialogs";
+    private static final String PREFS_KEY_SFTP_HOST = "sftp.host";
+    private static final String PREFS_KEY_SFTP_PORT = "sftp.port";
+    private static final String PREFS_KEY_SFTP_USERNAME = "sftp.username";
+    private static final String PREFS_KEY_SFTP_KNOWN_HOSTS_FILE = "sftp.known.hosts.file";
+    private static final String PREFS_KEY_SFTP_KEY_FILE = "sftp.key.file";
+    private static final String PREFS_KEY_SFTP_REMOTE_DIRECTORY = "sftp.remote.directory";
 
     private static final Collection<String> IMAGE_URLs = Arrays.asList(new String[] {
             "/icons/koibots-logo-16x16.png",
@@ -179,6 +187,11 @@ public class Main {
      */
     private Project _project;
 
+    /**
+     * SFTP connection information.
+     */
+    private RemoteInfo sftpInfo;
+
     // Actions which can be manifested as buttons or menu items
     private Action _newAction;
     private Action _openAction;
@@ -188,6 +201,7 @@ public class Main {
     private Action _importAction;
     private Action _exportAction;
     private Action _generateWebApplicationAction;
+    private Action _uploadWebApplicationAction;
     private Action _analyticsAction;
 
     private Action _justScanNow;
@@ -563,6 +577,31 @@ public class Main {
                             showError(t);
                         }
                     }).start();
+                }
+            }
+        };
+
+        _uploadWebApplicationAction = new ActionBase("action.uploadWebApp") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                SftpUploadDialog upload = new SftpUploadDialog(_main,
+                        sftpInfo.getHost(),
+                        sftpInfo.getPort(),
+                        sftpInfo.getUsername(),
+                        sftpInfo.getKeyFile(),
+                        sftpInfo.getKnownHostsFile(),
+                        sftpInfo.getPath(),
+                        new File(_project.getDirectory(), "config.json").toPath());
+
+                upload.setVisible(true);
+
+                if(upload.wasUploaded()) {
+                    // Capture successful settings
+                    sftpInfo = new RemoteInfo(upload.getHost(), upload.getUsername(), upload.getServerPath());
+                    sftpInfo.setPort(upload.getPort());
+                    // It's okay if these are "", we want to save them that way
+                    sftpInfo.setKeyFile(upload.getKeyFile());
+                    sftpInfo.setKnownHostsFile(upload.getKnownHostsFile());
                 }
             }
         };
@@ -1251,6 +1290,7 @@ public class Main {
         menu.add(new JMenuItem(_editGameConfigAction));
         menu.add(new JMenuItem(_launchWebappAction));
         menu.add(new JMenuItem(_generateWebApplicationAction));
+        menu.add(new JMenuItem(_uploadWebApplicationAction));
         menubar.add(menu);
 
         menu = new JMenu(getString("menu.database.name"));
@@ -1487,6 +1527,45 @@ System.out.println("Loaded preferences: " + toString(prefs));
         setInsertImmediately(prefs.getBoolean(PREFS_KEY_INSERT_IMMEDIATELY, false));
         setRescanImmediately(prefs.getBoolean(PREFS_KEY_RESCAN_IMMEDIATELY, false));
         setUsePlatformFileDialogs(prefs.getBoolean(PREFS_KEY_USE_PLATFORM_FILE_DIALOGS, false));
+
+        setSFTPRemoteInfo(prefs.get(PREFS_KEY_SFTP_HOST, "example.com"),
+                prefs.getInt(PREFS_KEY_SFTP_PORT, 22),
+                prefs.get(PREFS_KEY_SFTP_USERNAME, ""),
+                prefs.get(PREFS_KEY_SFTP_KEY_FILE, null),
+                prefs.get(PREFS_KEY_SFTP_KNOWN_HOSTS_FILE, null),
+                prefs.get(PREFS_KEY_SFTP_REMOTE_DIRECTORY, "/var/www/example.com/qrscout")
+                );
+    }
+
+    private void setSFTPRemoteInfo(String host, int port, String username, String keyFile, String knownHostsFile, String remoteDirectory) {
+        File f;
+
+        if(null == keyFile) {
+            f = new File(System.getProperty("user.home") + "/.ssh/id_ed25519");
+            if(f.exists() && f.canRead()) {
+                keyFile = f.getAbsolutePath();
+            } else {
+                f = new File(System.getProperty("user.home") + "/.ssh/id_rsa");
+
+                if(f.exists() && f.canRead()) {
+                    keyFile = f.getAbsolutePath();
+                }
+            }
+        }
+
+        if(null == knownHostsFile) {
+            f = new File(System.getProperty("user.home") + "/.ssh/known_hosts");
+            if(f.exists() && f.canRead()) {
+                knownHostsFile = f.getAbsolutePath();
+            }
+        }
+
+        RemoteInfo remote = new RemoteInfo(host, username, remoteDirectory);
+        remote.setPort(port);
+        remote.setKeyFile(keyFile);
+        remote.setKnownHostsFile(knownHostsFile);
+
+        sftpInfo = remote;
     }
 
     private void scan() {
@@ -1648,6 +1727,13 @@ System.out.println("Loaded preferences: " + toString(prefs));
         prefs.putBoolean(PREFS_KEY_RESCAN_IMMEDIATELY, getRescanImmediately());
         prefs.putBoolean(PREFS_KEY_USE_PLATFORM_FILE_DIALOGS, getUsePlatformFileDialogs());
 
+        prefs.put(PREFS_KEY_SFTP_HOST, sftpInfo.getHost());
+        prefs.putInt(PREFS_KEY_SFTP_PORT, sftpInfo.getPort());
+        prefs.put(PREFS_KEY_SFTP_USERNAME, sftpInfo.getUsername());
+        prefs.put(PREFS_KEY_SFTP_KEY_FILE, sftpInfo.getKeyFile());
+        prefs.put(PREFS_KEY_SFTP_KNOWN_HOSTS_FILE, sftpInfo.getKnownHostsFile());
+        prefs.put(PREFS_KEY_SFTP_REMOTE_DIRECTORY, sftpInfo.getPath());
+
 System.out.println("Saving preferences: " + toString(prefs));
         try {
             prefs.flush();
@@ -1708,6 +1794,7 @@ System.out.println("Saving preferences: " + toString(prefs));
         _launchWebappAction.setEnabled(loaded);
         _exportAction.setEnabled(loaded);
         _generateWebApplicationAction.setEnabled(loaded);
+        _uploadWebApplicationAction.setEnabled(loaded);
         _analyticsAction.setEnabled(loaded);
         _editGameConfigAction.setEnabled(loaded);
         _editDatabaseAction.setEnabled(loaded);
@@ -2075,5 +2162,15 @@ System.out.println("Saving preferences: " + toString(prefs));
 
             response.performQuit();
         }
+    }
+
+    private static String nullBlank(String s) {
+        if(null == s) {
+            return null;
+        }
+        if(s.isBlank()) {
+            return null;
+        }
+        return s;
     }
 }
